@@ -1,0 +1,287 @@
+# Car Customer Connect - Important Information Document
+*Version 1.0 - MVP Specification*
+
+## Product Overview
+
+**Product Name:** Car Customer Connect  
+**Product Type:** Micro-SaaS for Independent Auto Dealerships  
+**Core Purpose:** Transform vehicle lifecycle events into automated social media marketing content  
+**Target Users:** Independent auto dealership staff (sales managers, lot attendants, detailers, salespeople)
+
+## Wireframe & User Flow
+
+### Dashboard View
+```
+┌─────────────────────────────────────────────────────────┐
+│ Car Customer Connect                    [User] [Logout]  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│ [+ Add Vehicle]                    Search: [________]   │
+│                                                         │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐       │
+│ │   ACTIVE    │ │   PENDING   │ │    SOLD     │       │
+│ │     24      │ │      8      │ │     156     │       │
+│ └─────────────┘ └─────────────┘ └─────────────┘       │
+│                                                         │
+│ Recent Activity                                         │
+│ ┌─────────────────────────────────────────────────┐   │
+│ │ • 2021 Ford F-150 - Ready for Sale (2 hrs ago) │   │
+│ │ • 2019 Honda Civic - Just Traded In (4 hrs ago)│   │
+│ │ • 2020 Toyota Camry - Sold! (Yesterday)        │   │
+│ └─────────────────────────────────────────────────┘   │
+│                                                         │
+│ Quick Actions                                           │
+│ [Scan VIN] [Bulk Import] [View Posts] [Analytics]      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Vehicle Detail View
+```
+┌─────────────────────────────────────────────────────────┐
+│ < Back    2021 Ford Explorer XLT                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│ Status: [Ready for Sale ▼]        VIN: 1FMSK8DH6MGA... │
+│                                                         │
+│ ┌─────────────┐  Stock #: A2341                        │
+│ │             │  Price: $32,995                        │
+│ │   Vehicle   │  Mileage: 34,521                      │
+│ │    Photo    │  Color: Oxford White                   │
+│ │             │                                        │
+│ └─────────────┘  [Edit Details]                       │
+│                                                         │
+│ Lifecycle Events                                        │
+│ ┌─────────────────────────────────────────────────┐   │
+│ │ ✓ Acquired - 01/15/25 - Posted to FB, IG        │   │
+│ │ ✓ Service Complete - 01/18/25 - Posted to FB    │   │
+│ │ → Ready for Sale - Create Post                   │   │
+│ │ ○ Sold - Not Yet                               │   │
+│ └─────────────────────────────────────────────────┘   │
+│                                                         │
+│ [Create Post] [View All Posts] [Print Window Sticker]   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Post Creation Flow
+```
+┌─────────────────────────────────────────────────────────┐
+│ Create Post - 2021 Ford Explorer                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│ Event Type: [Ready for Sale ▼]                         │
+│                                                         │
+│ Photos (Required)                                       │
+│ ┌────┐ ┌────┐ ┌────┐ ┌────┐                          │
+│ │ +  │ │ +  │ │ +  │ │ +  │  Drag to reorder         │
+│ └────┘ └────┘ └────┘ └────┘                          │
+│                                                         │
+│ Additional Notes (Optional)                             │
+│ ┌─────────────────────────────────────────────────┐   │
+│ │ New tires, bluetooth, one owner...              │   │
+│ └─────────────────────────────────────────────────┘   │
+│                                                         │
+│ AI-Generated Caption                                    │
+│ ┌─────────────────────────────────────────────────┐   │
+│ │ Fresh on the lot! This 2021 Ford Explorer XLT   │   │
+│ │ just completed our 120-point inspection. With   │   │
+│ │ new tires and one-owner history, it's ready    │   │
+│ │ for adventure! DM us to schedule a test drive. │   │
+│ │ #UsedCars #FordExplorer #[DealershipName]      │   │
+│ └─────────────────────────────────────────────────┘   │
+│                                                         │
+│ Post to: ☑ Facebook  ☑ Instagram  ☐ Google Business    │
+│                                                         │
+│ [Generate New Caption] [Edit Caption] [Post Now]        │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Core MVP Features
+
+### 1. Vehicle Management
+- **VIN Scanner Integration**: Mobile camera-based VIN scanning with auto-population of vehicle details
+- **Manual Entry Option**: Fallback for damaged VINs or quick additions
+- **Bulk Import**: CSV upload for initial inventory setup
+- **Smart Search**: Filter by status, make, model, stock number
+- **Vehicle Status Tracking**: Acquisition → In Service → Ready for Sale → Sold
+
+### 2. Content Generation System
+- **AI-Powered Captions**: Context-aware post generation based on:
+  - Vehicle details (make, model, year, features)
+  - Event type (new arrival, ready for sale, sold)
+  - Dealership voice/tone settings
+  - Additional notes from staff
+- **Photo Guidelines**: On-screen overlays showing optimal angles
+- **Caption Variations**: Generate multiple options to choose from
+- **Hashtag Intelligence**: Auto-suggest relevant, trending hashtags
+
+### 3. Social Media Integration
+- **Direct Posting**: One-click posting to connected platforms
+- **Platform Optimization**: Adjust content for each platform's best practices
+- **Scheduling Option**: Post immediately or schedule for optimal times
+- **Multi-Account Support**: Manage multiple dealership locations
+
+### 4. User Experience Enhancements
+- **Mobile-First Design**: Optimized for lot staff using phones
+- **Quick Actions**: Common tasks accessible in 1-2 taps
+- **Voice-to-Text**: Add notes hands-free while inspecting vehicles
+- **Offline Mode**: Capture photos/data, sync when connected
+
+### 5. Analytics & Reporting
+- **Post Performance**: Track engagement metrics
+- **Inventory Turnover**: Time from acquisition to sale
+- **Staff Activity**: Who's creating the most content
+- **ROI Dashboard**: Connect social engagement to sales
+
+## Additional Features (Not in Original Spec)
+
+### 6. Customer Engagement Tools
+- **Review Request Automation**: Send review invites post-sale
+- **Birthday/Anniversary Reminders**: Re-engage past customers
+- **Service Reminder Posts**: Automated maintenance reminders
+
+### 7. Compliance & Legal
+- **Photo Release Management**: Digital consent forms for customer photos
+- **Disclosure Templates**: Ensure legal compliance in posts
+- **Watermark Options**: Add dealership branding to photos
+
+### 8. Team Collaboration
+- **Role-Based Access**: Sales, service, management permissions
+- **Approval Workflows**: Manager review before posting
+- **Internal Notes**: Communication between team members
+
+### 9. Inventory Showcase
+- **Virtual Showroom**: Auto-generated webpage with current inventory
+- **QR Code Generation**: For window stickers linking to vehicle details
+- **Video Tour Templates**: Guide staff through video walkarounds
+
+## Technical Architecture
+
+### Frontend
+- **Framework**: React with TypeScript for type safety
+- **UI Library**: Tailwind CSS for rapid, consistent styling
+- **State Management**: Zustand for simple, scalable state
+- **Image Handling**: Compression and optimization before upload
+
+### Backend
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with role-based access
+- **File Storage**: Supabase Storage for photos/videos
+- **API Structure**: RESTful endpoints with real-time subscriptions
+
+### Integrations
+- **Social Platforms**: Facebook Graph API, Instagram Basic Display API
+- **AI Service**: OpenAI GPT-4 for content generation
+- **VIN Decoder**: NHTSA API for vehicle details
+- **Analytics**: PostHog for product analytics
+
+## Pricing Structure
+
+### Starter Plan - $20/month
+- Up to 25 active vehicles
+- 2 social media accounts (Facebook + Instagram)
+- Basic AI captions
+- 5 users
+- Email support
+
+### All-Inclusive Plan - $50/month
+- Unlimited vehicles
+- All social platforms (FB, IG, Google Business, X)
+- Advanced AI with custom voice training
+- Unlimited users
+- Analytics dashboard
+- Review automation
+- Priority support
+- API access for DMS integration
+
+## User Personas & Use Cases
+
+### Primary Users
+
+1. **Lot Manager (Mike)**
+   - Needs: Quick inventory updates, bulk operations
+   - Uses: VIN scanner, status updates, analytics
+
+2. **Sales Rep (Sarah)**
+   - Needs: Showcase specific vehicles, celebrate sales
+   - Uses: Photo capture, customer photos, quick posts
+
+3. **Detailer (Tony)**
+   - Needs: Document before/after, mark vehicles ready
+   - Uses: Status updates, transformation photos
+
+4. **Owner/GM (Jennifer)**
+   - Needs: Oversight, ROI tracking, brand consistency
+   - Uses: Analytics, approval workflows, settings
+
+## Success Metrics
+
+### User Adoption
+- Time to first post: < 5 minutes
+- Daily active users: 80%+ of staff
+- Posts per vehicle: 3+ across lifecycle
+
+### Business Impact
+- Social engagement increase: 300%+ in 90 days
+- Lead attribution: Track DMs/calls from posts
+- Time saved: 10+ hours/week vs manual posting
+
+### Product Health
+- Post success rate: 99%+
+- AI caption satisfaction: 85%+ used without edits
+- Support tickets: < 2 per customer per month
+
+## Development Priorities (MVP)
+
+### Must Have (Week 1-2)
+1. User authentication & dealership setup
+2. Vehicle creation with photo upload
+3. Basic AI caption generation
+4. Facebook posting integration
+5. Mobile-responsive design
+
+### Should Have (Week 3-4)
+1. VIN scanner
+2. Instagram integration
+3. Post scheduling
+4. Basic analytics
+5. Bulk import
+
+### Nice to Have (Post-Launch)
+1. Google Business integration
+2. Video support
+3. Advanced analytics
+4. Review automation
+5. API for DMS integration
+
+## Key Design Principles
+
+1. **Speed First**: Every action optimized for speed on the lot
+2. **Mobile Native**: Assume 80% usage on phones
+3. **Foolproof**: Prevent errors, guide correct usage
+4. **Instant Value**: Show results immediately
+5. **Gradual Complexity**: Simple start, advanced features discoverable
+
+## Technical Constraints & Considerations
+
+- **API Rate Limits**: Queue system for social platform limits
+- **Image Storage**: Optimize for cost with automatic cleanup
+- **Offline Capability**: Critical for poor lot connectivity
+- **Multi-Tenancy**: Proper data isolation between dealerships
+- **Scalability**: Architecture supporting 1000+ dealerships
+
+## Launch Readiness Checklist
+
+- [ ] Core vehicle lifecycle workflow complete
+- [ ] AI generates quality captions 85%+ of time
+- [ ] Facebook integration fully tested
+- [ ] Mobile experience smooth on iOS/Android
+- [ ] Onboarding takes < 10 minutes
+- [ ] Support documentation complete
+- [ ] Billing system integrated
+- [ ] Analytics tracking key metrics
+- [ ] Beta tested with 3+ dealerships
+- [ ] Backup and recovery systems in place
+
+---
+
+*This document serves as the single source of truth for Car Customer Connect development. Update as features are completed or requirements change.*
