@@ -457,14 +457,25 @@ export const captionApi = {
 
   // Get caption by event ID
   getByEventId: async (eventId: number) => {
-    const { data, error } = await supabase
-      .from('captions')
-      .select('*')
-      .eq('event_id', eventId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') throw error;
-    return data as Caption | null;
+    try {
+      console.log('Fetching caption for event ID:', eventId);
+      
+      const { data, error } = await supabase
+        .from('captions')
+        .select('*')
+        .eq('event_id', eventId);
+      
+      if (error) {
+        console.error('Error fetching caption by event ID:', error);
+        throw error;
+      }
+      
+      // Return the first caption if found, or null if none found
+      return (data && data.length > 0) ? data[0] as Caption : null;
+    } catch (err) {
+      console.error('Error in getByEventId:', err);
+      return null; // Return null instead of throwing to prevent UI errors
+    }
   },
 
   // Create a new caption
