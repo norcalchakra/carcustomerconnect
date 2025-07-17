@@ -42,46 +42,63 @@ export const vehiclesApi = {
 
   // Create a new vehicle
   create: async (vehicle: VehicleInsert) => {
+    console.log('Creating vehicle with data:', vehicle);
+    
     try {
-      // Try direct fetch first with proper headers
-      try {
-        const data = await fetchFromSupabase('/rest/v1/vehicles', {
-          method: 'POST',
-          body: JSON.stringify(vehicle),
-        });
-        
-        if (data && data.length > 0) {
-          return data[0] as Vehicle;
-        }
-      } catch (fetchErr) {
-        console.error('Direct fetch for vehicle creation failed:', fetchErr);
+      // First, get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting current user:', userError);
+        throw userError;
       }
       
-      // Try Supabase client
+      if (!user) {
+        console.error('No user found');
+        throw new Error('No user found');
+      }
+      
+      console.log('Current user:', user);
+      
+      // Get the dealership for the current user
+      const { data: dealerships, error: dealershipError } = await supabase
+        .from('dealerships')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (dealershipError) {
+        console.error('Error getting dealership:', dealershipError);
+        throw dealershipError;
+      }
+      
+      if (!dealerships || dealerships.length === 0) {
+        console.error('No dealership found for user');
+        throw new Error('No dealership found for user');
+      }
+      
+      console.log('User dealerships:', dealerships);
+      
+      // Use the first dealership found
+      const dealership = dealerships[0];
+      console.log('Using dealership:', dealership);
+      
+      // Insert the vehicle with the dealership ID
       const { data, error } = await supabase
         .from('vehicles')
-        .insert(vehicle)
+        .insert({ ...vehicle, dealership_id: vehicle.dealership_id || dealership.id })
         .select()
         .single();
       
       if (error) {
-        console.error('Supabase client vehicle creation failed:', error);
+        console.error('Error inserting vehicle:', error);
         throw error;
       }
       
+      console.log('Vehicle created successfully:', data);
       return data as Vehicle;
     } catch (err) {
-      console.error('All vehicle creation methods failed:', err);
-      
-      // For development purposes, return a mock vehicle with the submitted data
-      // This allows the app to continue functioning even when backend permissions fail
-      console.log('Creating mock vehicle with data:', vehicle);
-      return {
-        id: Math.floor(Math.random() * 10000) + 1,
-        ...vehicle,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as Vehicle;
+      console.error('Error in create vehicle:', err);
+      throw err;
     }
   },
 
@@ -124,6 +141,7 @@ export const vehiclesApi = {
 
   // Count vehicles by status
   countByStatus: async (dealershipId: number) => {
+    // Get all vehicles for the dealership
     const { data, error } = await supabase
       .from('vehicles')
       .select('status')
@@ -131,15 +149,16 @@ export const vehiclesApi = {
     
     if (error) throw error;
     
+    // Count vehicles by status
     const counts = {
-      acquired: 0,
-      in_service: 0,
-      ready_for_sale: 0,
-      sold: 0
+      inventory: 0,
+      sold: 0,
+      service: 0,
+      pending: 0
     };
     
-    data.forEach(vehicle => {
-      counts[vehicle.status as keyof typeof counts]++;
+    data.forEach((vehicle: Vehicle) => {
+      counts[vehicle.status]++;
     });
     
     return counts;
@@ -154,7 +173,7 @@ export const eventsApi = {
       .from('vehicle_events')
       .select('*')
       .eq('vehicle_id', vehicleId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
     
     if (error) throw error;
     return data as VehicleEvent[];
@@ -181,7 +200,7 @@ export const photosApi = {
       .from('vehicle_photos')
       .select('*')
       .eq('vehicle_id', vehicleId)
-      .order('order', { ascending: true });
+      .order('created_at', { ascending: false });
     
     if (error) throw error;
     return data as VehiclePhoto[];
@@ -191,83 +210,89 @@ export const photosApi = {
   upload: async (vehicleId: number, file: File) => {
     // Generate a unique file name
     const fileExt = file.name.split('.').pop();
-    const fileName = `${vehicleId}/${Date.now()}.${fileExt}`;
-    const filePath = `vehicle-photos/${fileName}`;
-
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase
-      .storage
-      .from('photos')
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `vehicle-photos/${vehicleId}/${fileName}`;
+    
+    // Upload the file to storage
+    const { error: uploadError } = await supabase.storage
+      .from('public')
       .upload(filePath, file);
     
-    if (uploadError) throw uploadError;
-
-    // Get the public URL
-    const { data: { publicUrl } } = supabase
-      .storage
-      .from('photos')
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      throw uploadError;
+    }
+    
+    // Get the public URL for the file
+    const { data: { publicUrl } } = supabase.storage
+      .from('public')
       .getPublicUrl(filePath);
-
-    // Get the current highest order
-    const { data: photos, error: orderError } = await supabase
-      .from('vehicle_photos')
-      .select('order')
-      .eq('vehicle_id', vehicleId)
-      .order('order', { ascending: false })
-      .limit(1);
     
-    if (orderError) throw orderError;
-    
-    const nextOrder = photos.length > 0 ? photos[0].order + 1 : 0;
-
-    // Save to database
-    const photoInsert: VehiclePhotoInsert = {
-      vehicle_id: vehicleId,
-      url: publicUrl,
-      order: nextOrder
-    };
-
+    // Create a record in the vehicle_photos table
     const { data, error } = await supabase
       .from('vehicle_photos')
-      .insert(photoInsert)
+      .insert({
+        vehicle_id: vehicleId,
+        url: publicUrl,
+        file_path: filePath,
+        file_name: fileName,
+        file_type: file.type,
+        file_size: file.size
+      })
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating photo record:', error);
+      
+      // Try to delete the uploaded file if the record creation failed
+      await supabase.storage
+        .from('public')
+        .remove([filePath]);
+      
+      throw error;
+    }
+    
     return data as VehiclePhoto;
   },
 
   // Delete a photo
   delete: async (id: number) => {
-    // First get the photo to get the URL
+    // First, get the photo record to get the file path
     const { data: photo, error: getError } = await supabase
       .from('vehicle_photos')
-      .select('url')
+      .select('file_path')
       .eq('id', id)
       .single();
     
-    if (getError) throw getError;
-
-    // Extract the path from the URL
-    const url = new URL(photo.url);
-    const pathParts = url.pathname.split('/');
-    const storagePath = pathParts.slice(pathParts.indexOf('photos') + 1).join('/');
-
-    // Delete from storage
-    const { error: storageError } = await supabase
-      .storage
-      .from('photos')
-      .remove([storagePath]);
+    if (getError) {
+      console.error('Error getting photo record:', getError);
+      throw getError;
+    }
     
-    if (storageError) throw storageError;
-
-    // Delete from database
+    // Delete the file from storage
+    if (photo && photo.file_path) {
+      const { error: deleteFileError } = await supabase.storage
+        .from('public')
+        .remove([photo.file_path]);
+      
+      if (deleteFileError) {
+        console.error('Error deleting file from storage:', deleteFileError);
+        // Continue anyway to delete the record
+      }
+    }
+    
+    // Delete the record from the database
     const { error } = await supabase
       .from('vehicle_photos')
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error deleting photo record:', error);
+      throw error;
+    }
+    
     return true;
   }
 };
@@ -276,42 +301,55 @@ export const photosApi = {
 export const authApi = {
   // Sign up a new user
   signUp: async (email: string, password: string) => {
-    // Step 1: Create the user account
-    const { data, error } = await supabase.auth.signUp({
+    // Create the user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
     
-    if (error) throw error;
+    if (authError) throw authError;
     
-    // Step 2: Create a default dealership for the new user
-    if (data.user) {
+    // If the sign-up was successful, create a default dealership for the user
+    if (authData.user) {
       try {
-        // Create a default dealership using the user's email as the name
-        const dealershipName = email.split('@')[0] + ' Dealership';
+        // Create a default dealership
+        const { data: dealershipData, error: dealershipError } = await supabase
+          .from('dealerships')
+          .insert({
+            name: 'Default Dealership',
+            user_id: authData.user.id,
+            address: '',
+            city: '',
+            state: '',
+            zip: '',
+            phone: '',
+            email: email,
+            website: '',
+            logo_url: ''
+          })
+          .select()
+          .single();
         
-        const dealershipData = {
-          name: dealershipName,
-          address: '123 Main St',
-          city: 'Anytown',
-          state: 'CA',
-          zip: '12345',
-          phone: '555-123-4567',
-          website: null,
-          user_id: data.user.id
+        if (dealershipError) {
+          console.error('Error creating default dealership:', dealershipError);
+          // Continue anyway, as the user was created
+        }
+        
+        return {
+          user: authData.user,
+          dealership: dealershipData
         };
-        
-        // Create the dealership
-        await dealershipApi.create(dealershipData);
-        console.log('Created default dealership for new user:', data.user.id);
-      } catch (dealershipError) {
-        console.error('Failed to create default dealership:', dealershipError);
-        // We don't throw here to avoid blocking the signup process
-        // The user can create a dealership later
+      } catch (err) {
+        console.error('Error in sign-up process:', err);
+        // Return the user anyway
+        return {
+          user: authData.user,
+          dealership: null
+        };
       }
     }
     
-    return data;
+    return { user: null, dealership: null };
   },
 
   // Sign in a user
@@ -328,6 +366,7 @@ export const authApi = {
   // Sign out
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
+    
     if (error) throw error;
     return true;
   },
@@ -335,8 +374,9 @@ export const authApi = {
   // Get the current user
   getCurrentUser: async () => {
     const { data, error } = await supabase.auth.getUser();
+    
     if (error) throw error;
-    return data?.user || null;
+    return data.user;
   }
 };
 
@@ -345,62 +385,72 @@ export const dealershipApi = {
   // Get a dealership by user ID
   getByUserId: async (userId: string) => {
     try {
-      // Try using direct fetch with proper headers to avoid 406 errors
-      try {
-        const data = await fetchFromSupabase(`/rest/v1/dealerships?user_id=eq.${userId}&select=*`, {
-          method: 'GET'
-        });
+      console.log('Getting dealership for user ID:', userId);
+      
+      // First, check if the user exists
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting current user:', userError);
+        throw userError;
+      }
+      
+      if (!userData || !userData.user) {
+        console.error('No user found');
+        throw new Error('No user found');
+      }
+      
+      console.log('Current user:', userData.user);
+      
+      // Get the dealership for the user
+      const { data, error } = await supabase
+        .from('dealerships')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error getting dealership:', error);
         
-        if (data && data.length > 0) {
-          return data[0] as Dealership;
+        // If no dealership found, create a default one
+        if (error.code === 'PGRST116') {
+          console.log('No dealership found, creating default dealership');
+          
+          // Create a default dealership
+          const { data: newDealership, error: createError } = await supabase
+            .from('dealerships')
+            .insert({
+              name: 'Default Dealership',
+              user_id: userId,
+              address: '',
+              city: '',
+              state: '',
+              zip: '',
+              phone: '',
+              email: userData.user.email || '',
+              website: '',
+              logo_url: ''
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error('Error creating default dealership:', createError);
+            throw createError;
+          }
+          
+          console.log('Default dealership created:', newDealership);
+          return newDealership as Dealership;
         }
-      } catch (fetchErr) {
-        console.error('Direct fetch failed:', fetchErr);
-      }
-      
-      // Fallback to supabase client
-      try {
-        const { data, error } = await supabase
-          .from('dealerships')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle();
         
-        if (error) throw error;
-        if (data) return data as Dealership;
-      } catch (clientErr) {
-        console.error('Supabase client query failed:', clientErr);
+        throw error;
       }
       
-      // If all else fails, return a mock dealership for development
-      console.log('Using mock dealership data for user:', userId);
-      return {
-        id: 1,
-        name: 'Demo Dealership',
-        address: '123 Main St',
-        city: 'Anytown',
-        state: 'CA',
-        zip: '12345',
-        phone: '555-123-4567',
-        website: null,
-        user_id: userId,
-        created_at: new Date().toISOString()
-      } as Dealership;
+      console.log('Dealership found:', data);
+      return data as Dealership;
     } catch (err) {
-      console.error('Unexpected error in getByUserId:', err);
-      // Return a mock dealership as fallback
-      return {
-        id: 1,
-        name: 'Demo Dealership',
-        address: '123 Main St',
-        city: 'Anytown',
-        state: 'CA',
-        zip: '12345',
-        phone: '555-123-4567',
-        website: null,
-        user_id: userId,
-        created_at: new Date().toISOString()
-      } as Dealership;
+      console.error('Error in getByUserId:', err);
+      throw err;
     }
   },
 
@@ -438,13 +488,6 @@ export type Caption = {
   content: string;
   hashtags: string[];
   created_at?: string;
-  image_urls?: string[];
-  posted_to_facebook?: boolean;
-  facebook_post_id?: string;
-  facebook_posted_at?: string;
-  posted_to_instagram?: boolean;
-  instagram_post_id?: string;
-  instagram_posted_at?: string;
 };
 
 export type CaptionInsert = Omit<Caption, 'id' | 'created_at'>;

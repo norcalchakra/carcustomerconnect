@@ -1,7 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const Header: React.FC = () => {
+type HeaderProps = {
+  onNavigate: (view: 'dashboard' | 'settings' | 'vehicle' | 'facebook-test' | 'simple-facebook-test') => void;
+};
+
+const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   const { user, signOut } = useAuth();
 
   const handleLogout = async () => {
@@ -15,7 +19,35 @@ const Header: React.FC = () => {
   return (
     <header className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-xl font-bold">Car Customer Connect</h1>
+        <div className="flex items-center space-x-6">
+          <h1 className="text-xl font-bold cursor-pointer" onClick={() => onNavigate('dashboard')}>Car Customer Connect</h1>
+          <nav className="hidden md:flex space-x-4">
+            <button 
+              onClick={() => onNavigate('dashboard')} 
+              className="text-white hover:text-blue-200 text-sm font-medium"
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => onNavigate('settings')} 
+              className="text-white hover:text-blue-200 text-sm font-medium"
+            >
+              Settings
+            </button>
+            <button 
+              onClick={() => onNavigate('facebook-test')} 
+              className="text-white hover:text-blue-200 text-sm font-medium"
+            >
+              Facebook Test
+            </button>
+            <button 
+              onClick={() => onNavigate('simple-facebook-test')} 
+              className="text-white hover:text-blue-200 text-sm font-medium"
+            >
+              Simple FB Test
+            </button>
+          </nav>
+        </div>
         <div className="flex items-center space-x-4">
           {user && (
             <>

@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Caption, Vehicle, VehicleEvent } from '../../lib/api';
+// Import mock Facebook API instead of real one
+import { 
+  mockInitFacebookSDK as initFacebookSDK, 
+  mockIsFacebookConnected as isFacebookConnected, 
+  mockLoginWithFacebook as loginWithFacebook, 
+  mockGetUserPages as getUserPages, 
+  mockPostToFacebookPage as postToFacebookPage, 
+  // Still use real function for database updates
+  updateCaptionWithFacebookPost 
+} from '../../lib/mockFacebookApi';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -13,12 +23,80 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   onPost 
 }) => {
   const [platforms, setPlatforms] = useState<string[]>([]);
+  const [facebookConnected, setFacebookConnected] = useState<boolean>(false);
+  const [facebookPages, setFacebookPages] = useState<any[]>([]);
+  const [selectedFacebookPage, setSelectedFacebookPage] = useState<string>('');
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scheduleTime, setScheduleTime] = useState<string>('');
   const [isScheduled, setIsScheduled] = useState(false);
 
+  // Initialize Mock Facebook SDK on component mount
+  useEffect(() => {
+    const initFacebook = async () => {
+      try {
+        await initFacebookSDK();
+        const connected = isFacebookConnected();
+        setFacebookConnected(connected);
+        
+        if (connected) {
+          // Try to get saved pages using the stored token
+          const accessToken = localStorage.getItem('mock_fb_access_token'); // Use mock storage key
+          if (accessToken) {
+            try {
+              const pages = await getUserPages(accessToken);
+              setFacebookPages(pages);
+              if (pages.length > 0) {
+                setSelectedFacebookPage(pages[0].id);
+              }
+            } catch (err) {
+              console.error('Error fetching Facebook pages:', err);
+              // Token might be expired, clear it
+              localStorage.removeItem('mock_fb_access_token'); // Use mock storage key
+              setFacebookConnected(false);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing Facebook SDK:', err);
+      }
+    };
+    
+    initFacebook();
+  }, []);
+
+  const handleConnectFacebook = async () => {
+    try {
+      setError(null);
+      console.log('Connecting to Facebook using mock implementation...');
+      const accessToken = await loginWithFacebook();
+      console.log('Got mock access token:', accessToken);
+      const pages = await getUserPages(accessToken);
+      console.log('Got mock pages:', pages);
+      
+      setFacebookPages(pages);
+      setFacebookConnected(true);
+      
+      if (pages.length > 0) {
+        setSelectedFacebookPage(pages[0].id);
+        // Add Facebook to platforms if not already there
+        if (!platforms.includes('facebook')) {
+          setPlatforms([...platforms, 'facebook']);
+        }
+      }
+    } catch (err) {
+      console.error('Facebook login error:', err);
+      setError('Failed to connect to Facebook. Please try again.');
+    }
+  };
+
   const handleTogglePlatform = (platform: string) => {
+    if (platform === 'facebook' && !facebookConnected) {
+      // If Facebook is not connected, initiate the connection process
+      handleConnectFacebook();
+      return;
+    }
+    
     if (platforms.includes(platform)) {
       setPlatforms(platforms.filter(p => p !== platform));
     } else {
@@ -31,28 +109,74 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       setIsPosting(true);
       setError(null);
       
-      // This is a placeholder for actual social media API integration
-      // In a real implementation, we would call the appropriate APIs for each platform
-      console.log('Posting to platforms:', platforms);
-      console.log('Caption:', caption.content);
-      console.log('Hashtags:', caption.hashtags);
+      const results = [];
+      
+      // Format the caption content with hashtags
+      const fullCaption = caption.hashtags 
+        ? `${caption.content}\n\n${caption.hashtags}` 
+        : caption.content;
+      
+      // Post to each selected platform
+      if (platforms.includes('facebook')) {
+        if (!facebookConnected || !selectedFacebookPage) {
+          throw new Error('Facebook is not properly connected');
+        }
+        
+        // Find the selected page details
+        const selectedPage = facebookPages.find(page => page.id === selectedFacebookPage);
+        if (!selectedPage) {
+          throw new Error('Selected Facebook page not found');
+        }
+        
+        // Get image URLs if available
+        const imageUrls = caption.image_urls || [];
+        
+        // Post to Facebook
+        console.log('Posting to Facebook page:', selectedPage.name);
+        const postId = await postToFacebookPage(
+          selectedPage.id,
+          selectedPage.access_token,
+          fullCaption,
+          imageUrls
+        );
+        
+        // Update the caption record with Facebook post info
+        if (caption.id) {
+          await updateCaptionWithFacebookPost(caption.id, postId);
+        }
+        
+        results.push(`Facebook (${selectedPage.name})`);
+      }
+      
+      // Handle Instagram (placeholder for future implementation)
+      if (platforms.includes('instagram')) {
+        console.log('Instagram posting not yet implemented');
+      }
+      
+      // Handle Google Business (placeholder for future implementation)
+      if (platforms.includes('google')) {
+        console.log('Google Business posting not yet implemented');
+      }
       
       if (isScheduled && scheduleTime) {
         console.log('Scheduled for:', scheduleTime);
+        // Scheduling functionality would be implemented here
       }
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
       if (onPost) {
         onPost(platforms);
       }
       
       // Show success message
-      alert(`Successfully ${isScheduled ? 'scheduled' : 'posted'} to ${platforms.join(', ')}!`);
+      if (results.length > 0) {
+        alert(`Successfully ${isScheduled ? 'scheduled' : 'posted'} to ${results.join(', ')}!`);
+      } else {
+        alert('No platforms were selected for posting.');
+      }
     } catch (err) {
       console.error('Error posting to social media:', err);
-      setError('Failed to post to social media. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to post to social media: ${errorMessage}`);
     } finally {
       setIsPosting(false);
     }
@@ -84,6 +208,9 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                 <span className="text-white font-bold">f</span>
               </div>
               <span className="text-sm">Facebook</span>
+              {facebookConnected && (
+                <span className="text-xs text-green-600 ml-1">(Connected)</span>
+              )}
             </div>
             
             <div 
@@ -142,6 +269,23 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
               className="w-full border border-gray-300 rounded-md p-2 text-sm"
               min={new Date().toISOString().slice(0, 16)}
             />
+          </div>
+        )}
+        
+        {platforms.includes('facebook') && facebookPages.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Facebook Page
+            </label>
+            <select
+              value={selectedFacebookPage}
+              onChange={(e) => setSelectedFacebookPage(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2 text-sm"
+            >
+              {facebookPages.map(page => (
+                <option key={page.id} value={page.id}>{page.name}</option>
+              ))}
+            </select>
           </div>
         )}
         

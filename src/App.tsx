@@ -3,12 +3,15 @@ import Dashboard from './components/Dashboard';
 import VehicleDetail from './components/VehicleDetail';
 import Header from './components/Header';
 import Auth from './components/auth/Auth';
+import Settings from './pages/Settings';
+import FacebookTest from './pages/FacebookTest';
+import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'vehicle'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'vehicle' | 'settings' | 'facebook-test' | 'simple-facebook-test'>('dashboard');
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
 
   const handleViewVehicle = (vehicle: any) => {
@@ -38,15 +41,32 @@ const AppContent: React.FC = () => {
   // User is logged in, show the main application
   return (
     <div className="app-container">
-      <Header />
+      <Header onNavigate={(view) => {
+        setCurrentView(view);
+        if (view !== 'vehicle') setSelectedVehicle(null);
+      }} />
       <main className="main-content">
-        {currentView === 'dashboard' ? (
+        {currentView === 'dashboard' && (
           <Dashboard onViewVehicle={handleViewVehicle} />
-        ) : (
+        )}
+        
+        {currentView === 'vehicle' && selectedVehicle && (
           <VehicleDetail 
             vehicle={selectedVehicle} 
             onBack={handleBackToDashboard} 
           />
+        )}
+        
+        {currentView === 'settings' && (
+          <Settings />
+        )}
+        
+        {currentView === 'facebook-test' && (
+          <FacebookTest />
+        )}
+        
+        {currentView === 'simple-facebook-test' && (
+          <SimpleFacebookTest />
         )}
       </main>
     </div>
