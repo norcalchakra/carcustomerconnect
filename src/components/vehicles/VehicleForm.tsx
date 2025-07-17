@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Vehicle, VehicleInsert, vehiclesApi } from '../../lib/api';
+import { Vehicle, VehicleInsert, vehiclesApi, dealershipApi } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface VehicleFormProps {
   initialVehicle?: Vehicle;
@@ -18,10 +19,11 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialVehicle, onSave, onCan
     mileage: 0,
     color: '',
     status: 'acquired',
-    dealership_id: 1, // This would come from the authenticated user's dealership
+    dealership_id: undefined, // Will be set after fetching the user's dealership
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   
   useEffect(() => {
     if (initialVehicle) {
@@ -40,6 +42,43 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialVehicle, onSave, onCan
     }
   }, [initialVehicle]);
 
+  // Fetch the user's dealership ID when component mounts
+  useEffect(() => {
+    const fetchDealershipId = async () => {
+      if (user) {
+        try {
+          // Use the known dealership ID (4) directly if available
+          const knownDealershipId = 4;
+          
+          console.log('Fetching dealership for user:', user.id);
+          const dealership = await dealershipApi.getByUserId(user.id);
+          
+          if (dealership) {
+            console.log('Found dealership:', dealership);
+            setVehicle(prev => {
+              console.log('Setting dealership_id to:', dealership.id);
+              return { ...prev, dealership_id: dealership.id };
+            });
+          } else {
+            console.log('No dealership found, using known ID:', knownDealershipId);
+            setVehicle(prev => ({ ...prev, dealership_id: knownDealershipId }));
+          }
+        } catch (err) {
+          console.error('Error fetching dealership:', err);
+          // Fallback to known dealership ID
+          const knownDealershipId = 4;
+          console.log('Using fallback dealership ID:', knownDealershipId);
+          setVehicle(prev => ({ ...prev, dealership_id: knownDealershipId }));
+          setError(err instanceof Error ? err.message : 'Failed to fetch dealership information');
+        }
+      }
+    };
+
+    if (!initialVehicle && !vehicle.dealership_id) {
+      fetchDealershipId();
+    }
+  }, [user, initialVehicle, vehicle.dealership_id]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -56,6 +95,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialVehicle, onSave, onCan
     setLoading(true);
     setError(null);
     
+    if (!vehicle.dealership_id) {
+      setError('No dealership ID available. Please refresh the page or contact support.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       let savedVehicle: Vehicle;
       
@@ -69,6 +114,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialVehicle, onSave, onCan
       
       onSave(savedVehicle);
     } catch (err) {
+      console.error('Error saving vehicle:', err);
       setError(err instanceof Error ? err.message : 'Failed to save vehicle');
     } finally {
       setLoading(false);

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import VehicleList from './vehicles/VehicleList';
 import VehicleForm from './vehicles/VehicleForm';
 import Modal from './ui/Modal';
-import { Vehicle, VehicleEvent, vehiclesApi, eventsApi } from '../lib/api';
+import Debug from './Debug';
+import { Vehicle } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 interface DashboardProps {
@@ -44,7 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
     setIsAddVehicleModalOpen(true);
   };
 
-  const handleVehicleSaved = (vehicle: Vehicle) => {
+  const handleVehicleSaved = () => {
     setIsAddVehicleModalOpen(false);
     // In a real app, we'd refresh the vehicle list here
     // For now, just close the modal
@@ -52,6 +53,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
 
   return (
     <div className="p-4">
+      {/* Debug Component - Shows dealership information */}
+      <Debug />
+      
       {/* Vehicle List with Status Filters */}
       <VehicleList 
         onSelectVehicle={onViewVehicle} 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Vehicle, vehiclesApi } from '../../lib/api';
+import { Vehicle, vehiclesApi, dealershipApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface VehicleListProps {
@@ -26,8 +26,17 @@ const VehicleList: React.FC<VehicleListProps> = ({ onSelectVehicle, onAddVehicle
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        // In a real app, this would come from the authenticated user's dealership
-        const dealershipId = 1;
+        setLoading(true);
+        // Get the user's dealership
+        const dealership = await dealershipApi.getByUserId(user!.id);
+        
+        if (!dealership) {
+          setError('No dealership found for your account. Please set up a dealership first.');
+          setLoading(false);
+          return;
+        }
+        
+        const dealershipId = dealership.id;
         const data = await vehiclesApi.getAll(dealershipId);
         setVehicles(data);
         setFilteredVehicles(data);
@@ -36,6 +45,7 @@ const VehicleList: React.FC<VehicleListProps> = ({ onSelectVehicle, onAddVehicle
         const statusCounts = await vehiclesApi.countByStatus(dealershipId);
         setCounts(statusCounts);
       } catch (err) {
+        console.error('Error fetching vehicles:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch vehicles');
       } finally {
         setLoading(false);
@@ -44,6 +54,8 @@ const VehicleList: React.FC<VehicleListProps> = ({ onSelectVehicle, onAddVehicle
 
     if (user) {
       fetchVehicles();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
