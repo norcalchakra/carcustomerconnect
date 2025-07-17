@@ -157,8 +157,12 @@ CREATE POLICY "Users can delete photos for their vehicles"
   ));
 
 -- Insert sample data for testing
+
+-- For testing purposes, temporarily alter the dealerships table to make user_id nullable
+ALTER TABLE public.dealerships ALTER COLUMN user_id DROP NOT NULL;
+
 -- Insert a sample dealership with ID 1
-INSERT INTO public.dealerships (name, address, city, state, zip, phone, website, user_id)
+INSERT INTO public.dealerships (name, address, city, state, zip, phone, website)
 VALUES (
   'ABC Motors',
   '123 Main St',
@@ -166,8 +170,7 @@ VALUES (
   'CA',
   '12345',
   '(555) 123-4567',
-  'https://abcmotors.example.com',
-  auth.uid() -- This will use the current authenticated user's ID
+  'https://abcmotors.example.com'
 );
 
 -- Insert sample vehicles
