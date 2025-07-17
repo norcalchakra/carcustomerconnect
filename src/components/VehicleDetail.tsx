@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Vehicle, VehicleEvent, eventsApi } from '../lib/api';
 import Modal from './ui/Modal';
 import VehicleForm from './vehicles/VehicleForm';
+import EventForm from './events/EventForm';
+import EventTimeline from './events/EventTimeline';
 import { useAuth } from '../context/AuthContext';
 
 interface VehicleDetailProps {
@@ -32,27 +34,6 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
   const formatMileage = (mileage: number | null) => {
     if (mileage === null) return 'N/A';
     return new Intl.NumberFormat('en-US').format(mileage);
-  };
-
-  // Event type helpers
-  const getEventTypeDisplay = (type: string) => {
-    const types: Record<string, string> = {
-      'acquisition': 'Vehicle Acquired',
-      'service_complete': 'Service Completed',
-      'ready_for_sale': 'Listed for Sale',
-      'sold': 'Vehicle Sold'
-    };
-    return types[type] || type;
-  };
-
-  const getEventTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'acquisition': 'border-blue-500',
-      'service_complete': 'border-purple-500',
-      'ready_for_sale': 'border-green-500',
-      'sold': 'border-red-500'
-    };
-    return colors[type] || 'border-gray-500';
   };
 
   // Fetch vehicle events
@@ -89,6 +70,22 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
   const handleVehicleSaved = (updatedVehicle: Vehicle) => {
     setCurrentVehicle(updatedVehicle);
     setIsEditModalOpen(false);
+  };
+
+  const handleEventSaved = (newEvent: VehicleEvent) => {
+    setEvents(prev => [...prev, newEvent]);
+    setIsAddEventModalOpen(false);
+    
+    // If this is a status change event, update the vehicle status
+    if (newEvent.event_type === 'acquired') {
+      setCurrentVehicle(prev => ({ ...prev, status: 'acquired' }));
+    } else if (newEvent.event_type === 'service_complete') {
+      setCurrentVehicle(prev => ({ ...prev, status: 'in_service' }));
+    } else if (newEvent.event_type === 'ready_for_sale') {
+      setCurrentVehicle(prev => ({ ...prev, status: 'ready_for_sale' }));
+    } else if (newEvent.event_type === 'sold') {
+      setCurrentVehicle(prev => ({ ...prev, status: 'sold' }));
+    }
   };
 
   return (
@@ -178,7 +175,6 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
         </div>
         
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Lifecycle Events</h2>
           {loading ? (
             <div className="flex justify-center items-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -187,29 +183,11 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               <p>{error}</p>
             </div>
-          ) : events.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p className="mt-2 text-gray-600">No events recorded yet</p>
-              <button 
-                onClick={handleAddEvent}
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-              >
-                Add First Event
-              </button>
-            </div>
           ) : (
-            <div className="space-y-4">
-              {events.map((event) => (
-                <div key={event.id} className={`border-l-4 ${getEventTypeColor(event.event_type)} pl-4 py-2`}>
-                  <p className="font-medium">{getEventTypeDisplay(event.event_type)}</p>
-                  <p className="text-sm text-gray-500">{formatDate(event.created_at)}</p>
-                  {event.notes && <p className="text-sm mt-1">{event.notes}</p>}
-                </div>
-              ))}
-            </div>
+            <EventTimeline 
+              events={events} 
+              onAddEvent={handleAddEvent} 
+            />
           )}
         </div>
       </div>
@@ -228,60 +206,18 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
         />
       </Modal>
 
-      {/* Add Event Modal - Placeholder for now */}
+      {/* Add Event Modal */}
       <Modal
         isOpen={isAddEventModalOpen}
         onClose={() => setIsAddEventModalOpen(false)}
         title="Add Event"
         size="md"
       >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-              <option value="acquisition">Vehicle Acquired</option>
-              <option value="service_complete">Service Completed</option>
-              <option value="ready_for_sale">Listed for Sale</option>
-              <option value="sold">Vehicle Sold</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
-            <input 
-              type="date" 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea 
-              rows={3} 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Add any relevant details about this event..."
-            ></textarea>
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <button 
-              onClick={() => setIsAddEventModalOpen(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={() => {
-                // In a real app, we'd save the event here
-                setIsAddEventModalOpen(false);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Save Event
-            </button>
-          </div>
-        </div>
+        <EventForm
+          vehicleId={currentVehicle.id}
+          onSave={handleEventSaved}
+          onCancel={() => setIsAddEventModalOpen(false)}
+        />
       </Modal>
     </div>
   );
