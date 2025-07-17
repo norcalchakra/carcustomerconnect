@@ -8,11 +8,11 @@ Car Customer Connect helps auto dealerships manage their vehicle inventory and c
 
 ## Features (MVP)
 
-- Vehicle Management
-- Content Generation System
-- Social Media Integration
-- Mobile-First Design
-- Analytics & Reporting
+- Vehicle Management: Track inventory with detailed vehicle information and lifecycle events
+- AI Caption Generation: Automatically generate social media captions based on vehicle details and events
+- Social Media Integration: Post content to Facebook (Instagram and Google Business coming soon)
+- Mobile-First Design: Optimized for use on the lot with mobile devices
+- Analytics & Reporting: Track post performance and inventory metrics
 
 ## Getting Started
 
@@ -35,11 +35,14 @@ Car Customer Connect helps auto dealerships manage their vehicle inventory and c
    npm install
    ```
 
-3. Create a `.env` file in the root directory with your Supabase credentials:
+3. Create a `.env` file in the root directory with your Supabase and OpenAI credentials:
    ```
    VITE_SUPABASE_URL=your-supabase-url
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+   VITE_OPENAI_API_KEY=your-openai-api-key
    ```
+   
+   > **Note:** You'll need an OpenAI API key for the AI caption generation feature. Get one at [OpenAI's website](https://platform.openai.com/api-keys).
 
 4. Start the development server:
    ```

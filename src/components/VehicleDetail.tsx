@@ -4,6 +4,7 @@ import Modal from './ui/Modal';
 import VehicleForm from './vehicles/VehicleForm';
 import EventForm from './events/EventForm';
 import EventTimeline from './events/EventTimeline';
+import { CaptionManager } from './captions/CaptionManager';
 import { useAuth } from '../context/AuthContext';
 
 interface VehicleDetailProps {
@@ -19,6 +20,8 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<VehicleEvent | null>(null);
 
   // Format helpers
   const formatDate = (dateString: string | null) => {
@@ -156,7 +159,22 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
                 Add Event
               </button>
               
-              <button className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+              <button 
+                onClick={() => {
+                  // Find the most recent event for this vehicle
+                  const latestEvent = events.length > 0 
+                    ? events.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())[0]
+                    : null;
+                  
+                  if (latestEvent) {
+                    setSelectedEvent(latestEvent);
+                    setIsCreatePostModalOpen(true);
+                  } else {
+                    alert('Please add an event first before creating a post.');
+                  }
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
                   <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
@@ -218,6 +236,21 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
           onSave={handleEventSaved}
           onCancel={() => setIsAddEventModalOpen(false)}
         />
+      </Modal>
+
+      {/* Create Post Modal */}
+      <Modal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+        title="Create Social Media Post"
+        size="lg"
+      >
+        {selectedEvent && (
+          <CaptionManager 
+            vehicle={currentVehicle}
+            event={selectedEvent}
+          />
+        )}
       </Modal>
     </div>
   );

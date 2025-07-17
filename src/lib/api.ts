@@ -317,3 +317,77 @@ export const dealershipApi = {
     return data as Dealership;
   }
 };
+
+// Social Media Caption API
+export type Caption = {
+  id?: number;
+  vehicle_id: number;
+  event_id: number;
+  content: string;
+  hashtags: string[];
+  created_at?: string;
+};
+
+export type CaptionInsert = Omit<Caption, 'id' | 'created_at'>;
+
+export const captionApi = {
+  // Get all captions for a vehicle
+  getForVehicle: async (vehicleId: number) => {
+    const { data, error } = await supabase
+      .from('captions')
+      .select('*')
+      .eq('vehicle_id', vehicleId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data as Caption[];
+  },
+
+  // Get caption by event ID
+  getByEventId: async (eventId: number) => {
+    const { data, error } = await supabase
+      .from('captions')
+      .select('*')
+      .eq('event_id', eventId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Caption | null;
+  },
+
+  // Create a new caption
+  create: async (caption: CaptionInsert) => {
+    const { data, error } = await supabase
+      .from('captions')
+      .insert(caption)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Caption;
+  },
+
+  // Update a caption
+  update: async (id: number, caption: Partial<Omit<Caption, 'id' | 'created_at'>>) => {
+    const { data, error } = await supabase
+      .from('captions')
+      .update(caption)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Caption;
+  },
+
+  // Delete a caption
+  delete: async (id: number) => {
+    const { error } = await supabase
+      .from('captions')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  }
+};
