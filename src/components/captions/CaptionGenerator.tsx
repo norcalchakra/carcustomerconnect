@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Vehicle, VehicleEvent, captionApi, dealershipApi } from '../../lib/api';
 import { generateCaption, CaptionRequest, CaptionResponse } from '../../lib/openai';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { Spinner } from '../ui/Spinner';
 
 interface CaptionGeneratorProps {
