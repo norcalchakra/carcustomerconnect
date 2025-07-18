@@ -7,14 +7,44 @@ import { supabase } from './supabase';
  * @returns A Promise that resolves to a data URL or the original URL if fetching fails
  */
 export async function getImageAsDataUrl(url: string): Promise<string> {
-  // If it's not a Supabase URL or is already a data URL, return it as is
-  if (!url || !url.includes('supabase.co/storage') || url.startsWith('data:')) {
-    return url;
+  // If URL is empty or null, return empty string
+  if (!url) {
+    return '';
   }
 
+  // If it's already a data URL, return as is
+  if (url.startsWith('data:')) {
+    return url;
+  }
+  
+  // If it's a blob URL, verify it exists and convert it
+  if (url.startsWith('blob:')) {
+    try {
+      console.log('Converting blob URL to data URL:', url);
+      const response = await fetch(url);
+      if (response.ok) {
+        const blob = await response.blob();
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        console.warn('Blob URL fetch failed with status:', response.status);
+        return url; // Return original URL as fallback
+      }
+    } catch (error) {
+      console.error('Error converting blob URL to data URL:', error);
+      return url; // Return original URL as fallback
+    }
+  }
+  
+  // If it's not a Supabase URL, return as is
+  if (!url.includes('supabase.co/storage')) {
+    return url;
+  }
+  
   try {
-    console.log('Processing Supabase URL:', url);
-    
     // Extract the bucket and path from the URL
     // URL format: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
     const urlParts = url.split('/storage/v1/object/public/');
@@ -49,6 +79,8 @@ export async function getImageAsDataUrl(url: string): Promise<string> {
       console.error('No data received from Supabase storage');
       return url; // Return original URL if no data
     }
+    
+    console.log('Successfully downloaded image via Supabase SDK, content type:', data.type);
 
     // Convert the blob to a data URL
     return new Promise((resolve) => {
@@ -57,10 +89,10 @@ export async function getImageAsDataUrl(url: string): Promise<string> {
       reader.onloadend = () => {
         const result = reader.result as string;
         if (result && result.startsWith('data:')) {
-          console.log('Successfully converted to data URL');
+          console.log('Successfully converted to data URL via SDK');
           resolve(result);
         } else {
-          console.error('Failed to create valid data URL');
+          console.error('Failed to create valid data URL via SDK');
           resolve(url); // Return original URL on failure
         }
       };

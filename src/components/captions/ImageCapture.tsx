@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { getImageAsDataUrl } from '../../lib/imageUtils';
 import './ImageCapture.css';
 
 // Add TypeScript declarations for our global variables
@@ -98,7 +97,7 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured, dealership
           if (blob) {
             // Create a File object from the Blob for compatibility
             const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
-            await uploadImage(file, file.name);
+            await uploadImage(file);
           }
         }, 'image/jpeg', 0.8);
       }
@@ -117,140 +116,244 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured, dealership
         return;
       }
       
-      await uploadImage(file, file.name);
+      await uploadImage(file);
     }
   };
 
-  // Function to create a blob URL and track it for cleanup
-  const createAndTrackBlobUrl = (file: File | Blob) => {
-    const tempUrl = URL.createObjectURL(file);
-    setBlobUrls(prev => [...prev, tempUrl]);
-    // We don't need to store the blobs themselves, just track the URLs for cleanup
-    return tempUrl;
-  };
+  // We'll use the blobUrls state directly in the uploadImage function
 
-  // Cleanup blob URLs when component unmounts
+  // Only clean up blob URLs when component is unmounted AND after a delay
+  // This ensures the ImageProxy component has time to convert blob URLs to data URLs
   useEffect(() => {
     return () => {
-      // Revoke all blob URLs to prevent memory leaks
-      blobUrls.forEach(url => {
-        try {
-          URL.revokeObjectURL(url);
-          console.log('Revoked blob URL:', url);
-        } catch (e) {
-          console.error('Failed to revoke blob URL:', e);
-        }
-      });
-      
-      // Also clean up any URLs stored in the window object
-      if (window.tempImageUrls && window.tempImageUrls.length > 0) {
-        window.tempImageUrls.forEach(url => {
+      // Delay revoking blob URLs to give ImageProxy time to process them
+      setTimeout(() => {
+        // Clean up any blob URLs we created
+        blobUrls.forEach(url => {
           try {
             URL.revokeObjectURL(url);
-            console.log('Revoked window blob URL:', url);
+            console.log('Revoked blob URL after delay:', url);
           } catch (e) {
-            console.error('Failed to revoke window blob URL:', e);
+            console.error('Error revoking blob URL:', e);
           }
         });
-        window.tempImageUrls = [];
-      }
+        
+        // Also clean up any globally tracked URLs
+        if (window.tempImageUrls && window.tempImageUrls.length > 0) {
+          console.log('Cleaning up global temp image URLs');
+          window.tempImageUrls = [];
+        }
+      }, 5000); // 5 second delay before revoking
     };
   }, [blobUrls]);
 
-  const uploadImage = async (file: File | Blob, fileName: string) => {
-    if (!dealershipId) {
-      setError('No dealership ID available. Please try again later.');
-      return;
-    }
-    
+  const uploadImage = async (file: File | Blob): Promise<{ previewUrl: string; storageUrl: string | null }> => {
     setIsUploading(true);
     setUploadProgress(0);
-    setError(null);
     
     try {
-      console.log('Starting image upload process...');
+      // Generate a unique filename with timestamp
+      const timestamp = new Date().getTime();
+      const randomString = Math.random().toString(36).substring(2, 10);
       
-      // Determine the correct file extension based on MIME type
-      let fileExt = fileName.split('.').pop()?.toLowerCase();
-      const mimeType = file.type || 'image/jpeg';
+      // Determine file extension and content type
+      let fileExtension = '';
+      let contentType = '';
+      let fileName = '';
       
-      // If no extension or doesn't match MIME type, use MIME type to determine extension
-      if (!fileExt || !fileExt.match(/^(jpg|jpeg|png|gif|webp|bmp|svg)$/)) {
-        switch(mimeType) {
-          case 'image/jpeg': fileExt = 'jpg'; break;
-          case 'image/png': fileExt = 'png'; break;
-          case 'image/gif': fileExt = 'gif'; break;
-          case 'image/webp': fileExt = 'webp'; break;
-          case 'image/bmp': fileExt = 'bmp'; break;
-          case 'image/svg+xml': fileExt = 'svg'; break;
-          default: fileExt = 'jpg'; // Default to jpg
-        }
+      if (file instanceof File) {
+        // For File objects, we can get the name and type directly
+        fileName = file.name;
+        fileExtension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+        contentType = file.type || 'image/jpeg';
+      } else {
+        // For Blob objects (from canvas), we need to infer the type
+        contentType = file.type || 'image/jpeg';
+        fileExtension = contentType.split('/').pop() || 'jpg';
+        fileName = `image-${timestamp}.${fileExtension}`;
       }
       
-      // Generate a unique file name to prevent collisions
-      const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      const filePath = `dealership-${dealershipId}/${uniqueFileName}`;
+      // Ensure we have a valid extension and content type match
+      if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension.toLowerCase())) {
+        fileExtension = 'jpg'; // Default to jpg if unknown extension
+      }
       
-      console.log(`Uploading to path: ${filePath} with type: ${mimeType}`);
+      // Make sure content type matches the extension
+      const extensionToContentType: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+      };
       
-      // Create a blob URL for immediate preview while uploading
-      const previewUrl = createAndTrackBlobUrl(file);
+      // Override content type based on extension for consistency
+      contentType = extensionToContentType[fileExtension.toLowerCase()] || 'image/jpeg';
       
-      try {
-        // Try to upload directly to the bucket
-        const { error } = await supabase.storage
+      console.log(`File: ${fileName}, Extension: ${fileExtension}, Content-Type: ${contentType}`);
+      
+      // Use the dealership ID from props if available, otherwise fetch it
+      let dealershipFolderName: string;
+      
+      if (dealershipId) {
+        dealershipFolderName = `dealership-${dealershipId}`;
+      } else {
+        // Fallback to fetching the dealership ID if not provided in props
+        const { data: dealershipData } = await supabase
+          .from('dealerships')
+          .select('id')
+          .single();
+        
+        if (!dealershipData) {
+          throw new Error('Could not determine dealership ID');
+        }
+        
+        dealershipFolderName = `dealership-${dealershipData.id}`;
+      }
+      const filePath = `${dealershipFolderName}/${timestamp}-${randomString}.${fileExtension}`;
+      
+      // Create a blob URL for immediate preview
+      const blobUrl = URL.createObjectURL(file);
+      
+      // Track this blob URL for cleanup
+      if (!window.tempImageUrls) window.tempImageUrls = [];
+      window.tempImageUrls.push(blobUrl);
+      
+      // Also track in our component state for cleanup
+      setBlobUrls(prev => [...prev, blobUrl]);
+      
+      // If the file is not already in the correct format, convert it
+      let fileToUpload = file;
+      if (file instanceof File && file.type !== contentType) {
+        console.log(`Converting file from ${file.type} to ${contentType}`);
+        // Create a new file with the correct content type
+        const blob = await file.arrayBuffer().then(buffer => new Blob([buffer], { type: contentType }));
+        fileToUpload = new File([blob], `${timestamp}-${randomString}.${fileExtension}`, { type: contentType });
+      }
+      
+      // IMPORTANT: Create a proper File object with the correct MIME type
+      // This is critical to ensure Supabase stores the file with the right content type
+      let fileToUploadWithCorrectType: File;
+      
+      // Always create a new File object with explicit content type to ensure it's preserved
+      if (fileToUpload instanceof File) {
+        // Create a new File from the existing File to ensure content type is set correctly
+        const buffer = await fileToUpload.arrayBuffer();
+        fileToUploadWithCorrectType = new File([buffer], `${timestamp}-${randomString}.${fileExtension}`, {
+          type: contentType
+        });
+      } else {
+        // Create a File from the Blob
+        fileToUploadWithCorrectType = new File([fileToUpload], `${timestamp}-${randomString}.${fileExtension}`, {
+          type: contentType
+        });
+      }
+      
+      console.log(`Uploading file with explicit content type: ${fileToUploadWithCorrectType.type}`);
+      console.log(`File size: ${fileToUploadWithCorrectType.size} bytes`);
+      
+      // Use a FormData approach to ensure content type is preserved
+      const formData = new FormData();
+      formData.append('file', fileToUploadWithCorrectType);
+      
+      // Get the Supabase URL and key from environment variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      console.log(`Uploading file with direct fetch API, content type: ${fileToUploadWithCorrectType.type}`);
+      
+      // Use fetch directly to upload with proper content type headers
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/social-media-images/${filePath}`;
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          // Don't set Content-Type here, let the browser set it with the boundary for FormData
+        },
+        body: formData
+      });
+      
+      let uploadError = null;
+      
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Error uploading image with fetch API:', errorData);
+        uploadError = errorData;
+        
+        // Fall back to Supabase client as a backup method
+        console.log('Trying fallback upload with Supabase client...');
+        
+        // For the fallback, use a Blob with the correct MIME type to force Supabase to use it
+        const blobWithCorrectType = new Blob([await fileToUploadWithCorrectType.arrayBuffer()], { type: contentType });
+        
+        const { error: supabaseError } = await supabase.storage
           .from('social-media-images')
-          .upload(filePath, file, {
+          .upload(filePath, blobWithCorrectType, {
+            contentType: contentType, // Explicitly set the content type
             cacheControl: '3600',
-            upsert: true,
-            contentType: mimeType // Explicitly set content type
+            upsert: true
           });
           
-        if (error) {
-          throw error;
+        if (supabaseError) {
+          console.error('Supabase client upload also failed:', supabaseError);
+          return { previewUrl: blobUrl, storageUrl: null };
+        } else {
+          // Supabase client succeeded after fetch failed
+          console.log('Upload successful via Supabase client fallback');
+          uploadError = null;
         }
-        
-        // Construct the public URL manually
-        // This is more reliable than using getPublicUrl which might not work correctly
-        // with certain Supabase configurations
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/social-media-images/${filePath}`;
-        console.log('Image uploaded successfully:', publicUrl);
-        
-        // We'll use the blob URL for preview and the public URL for storage
-        setIsUploading(false);
-        setUploadProgress(100);
-        onImageCaptured(previewUrl, publicUrl);
-      } catch (uploadError) {
-        console.error('Supabase storage upload error:', uploadError);
-        
-        setError('Failed to upload image to storage. Using local preview instead.');
-        setIsUploading(false);
-        setUploadProgress(100);
-        onImageCaptured(previewUrl, null);
+      } else {
+        console.log('Upload successful via fetch API with FormData');
       }
-    } catch (error) {
-      console.error('Error in image processing:', error);
       
-      // Create a temporary URL for the image as fallback
-      const tempUrl = createAndTrackBlobUrl(file);
+      if (uploadError) {
+        console.error('All upload attempts failed');
+        // Return the blob URL for preview, but null for storage URL
+        return { previewUrl: blobUrl, storageUrl: null };
+      }
       
-      setError('Failed to process image. Using local preview instead.');
+      // Use Supabase's getPublicUrl method to get the correct URL format
+      const { data: { publicUrl } } = supabase.storage
+        .from('social-media-images')
+        .getPublicUrl(filePath);
+      
+      console.log('Image uploaded successfully with getPublicUrl:', publicUrl);
+      
+      // We'll use the blob URL for preview and the public URL for storage
       setIsUploading(false);
       setUploadProgress(100);
-      onImageCaptured(tempUrl, null);
+      
+      // Call the onImageCaptured callback with both URLs
+      onImageCaptured(blobUrl, publicUrl);
+      
+      return { previewUrl: blobUrl, storageUrl: publicUrl };
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      setIsUploading(false);
+      setUploadProgress(0);
+      
+      // Create a blob URL for immediate preview as fallback
+      const blobUrl = URL.createObjectURL(file);
+      
+      // Track this blob URL for cleanup
+      if (!window.tempImageUrls) window.tempImageUrls = [];
+      window.tempImageUrls.push(blobUrl);
+      
+      // Return the blob URL for preview, but null for storage URL
+      onImageCaptured(blobUrl, null);
+      return { previewUrl: blobUrl, storageUrl: null };
     }
     
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // Reset file input using non-null assertion
+    // We're inside a try-catch block, so it's safe to use non-null assertion
+    if (fileInputRef && fileInputRef.current) {
+      (fileInputRef.current as HTMLInputElement).value = '';
     }
   };
 
   const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    // Use optional chaining to safely handle null reference
+    fileInputRef.current?.click();
   };
 
   return (

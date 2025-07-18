@@ -29,23 +29,72 @@ const ImageProxy: React.FC<ImageProxyProps> = ({
   const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
-    // Reset states when src changes
     setLoading(true);
     setError(false);
     
-    // Handle blob URLs directly - they're already optimized for local preview
-    if (src.startsWith('blob:')) {
-      console.log('Using blob URL directly:', src);
+    // If it's a data URL, use it directly
+    if (src.startsWith('data:')) {
+      console.log('Using data URL directly');
       setImageSrc(src);
       setLoading(false);
       return;
     }
     
-    // Handle data URLs directly
-    if (src.startsWith('data:')) {
-      console.log('Using data URL directly');
-      setImageSrc(src);
-      setLoading(false);
+    // If it's a blob URL, try to convert it to a data URL immediately to prevent issues with revocation
+    if (src.startsWith('blob:')) {
+      console.log('Processing blob URL:', src);
+      
+      try {
+        // First check if we already have this blob URL cached
+        if (dataUrlCache[src]) {
+          console.log('Using cached data URL for blob');
+          setImageSrc(dataUrlCache[src]);
+          setLoading(false);
+          return;
+        }
+        
+        // Try to convert the blob URL to a data URL immediately
+        const xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              const dataUrl = reader.result as string;
+              // Cache the data URL for future use
+              dataUrlCache[src] = dataUrl;
+              console.log('Successfully converted blob URL to data URL');
+              setImageSrc(dataUrl);
+              setLoading(false);
+            };
+            reader.onerror = function() {
+              console.error('Failed to convert blob to data URL');
+              setError(true);
+              setImageSrc(imagePlaceholder);
+              onError?.();
+              setLoading(false);
+            };
+            reader.readAsDataURL(xhr.response);
+          } else {
+            throw new Error(`XHR failed with status ${xhr.status}`);
+          }
+        };
+        xhr.onerror = function() {
+          console.error('XHR request failed for blob URL');
+          setError(true);
+          setImageSrc(imagePlaceholder);
+          onError?.();
+          setLoading(false);
+        };
+        xhr.open('GET', src);
+        xhr.send();
+      } catch (err) {
+        console.error('Error handling blob URL:', err);
+        setError(true);
+        setImageSrc(imagePlaceholder);
+        onError?.();
+        setLoading(false);
+      }
       return;
     }
     
@@ -60,13 +109,19 @@ const ImageProxy: React.FC<ImageProxyProps> = ({
       }
       
       console.log('Converting Supabase URL to data URL:', src);
-      getImageAsDataUrl(src)
+      
+      // Add a timestamp to bust cache
+      const cacheBustUrl = `${src}?t=${Date.now()}`;
+      console.log('Cache-busted URL:', cacheBustUrl);
+      
+      getImageAsDataUrl(cacheBustUrl)
         .then(dataUrl => {
           // If getImageAsDataUrl returned the original URL, it means conversion failed
           // but we'll still try to use it directly
-          if (dataUrl === src) {
-            console.log('Using original URL as fallback');
-            setImageSrc(src);
+          if (dataUrl === cacheBustUrl || dataUrl === src) {
+            console.log('Conversion failed, using original URL with cache busting');
+            // Try direct image load with cache busting
+            setImageSrc(cacheBustUrl);
             setLoading(false);
             return;
           }
@@ -80,8 +135,8 @@ const ImageProxy: React.FC<ImageProxyProps> = ({
         })
         .catch(err => {
           console.error('Failed to convert to data URL:', err);
-          // Try using the original URL as a fallback
-          setImageSrc(src);
+          // Try using the original URL with cache busting as a fallback
+          setImageSrc(cacheBustUrl);
           setLoading(false);
         });
     } else {

@@ -13,8 +13,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      // Don't set Content-Type globally as it interferes with file uploads
+      // Let the browser set the appropriate Content-Type for multipart form data
+      'Accept': '*/*', // Accept all content types
       'apikey': supabaseAnonKey,
       'Prefer': 'return=representation'
     },
