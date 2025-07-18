@@ -11,6 +11,7 @@ import {
   updateCaptionWithFacebookPost 
 } from '../../lib/mockFacebookApi';
 import PostScheduler from './PostScheduler';
+import './SocialPostForm.css';
 import { createScheduledPost } from '../../lib/scheduledPostsService';
 import { supabase } from '../../lib/supabase';
 
@@ -109,15 +110,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     }
   };
 
-  const handlePost = async () => {
-    if (platforms.length === 0) {
-      setError('Please select at least one platform');
-      return;
-    }
-    
-    // Show the scheduler instead of posting immediately
-    setShowScheduler(true);
-  };
+  // Scheduling functionality will be implemented in the future
   
   const handleSchedulePost = async (scheduledTime: Date, selectedPlatforms: string[]) => {
     setIsPosting(true);
@@ -250,7 +243,17 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                 {!facebookConnected && <span className="connect-note">Click to connect</span>}
               </div>
               
-              {/* Add more platforms here */}
+              <div className="platform coming-soon">
+                <span className="platform-icon instagram">i</span>
+                <span className="platform-name">Instagram</span>
+                <span className="coming-soon-badge">Coming Soon</span>
+              </div>
+              
+              <div className="platform coming-soon">
+                <span className="platform-icon google">g</span>
+                <span className="platform-name">Google Business</span>
+                <span className="coming-soon-badge">Coming Soon</span>
+              </div>
             </div>
           </div>
           
@@ -276,23 +279,35 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
             <div className="content-preview">
               {caption.content}
             </div>
+            {imageUrls.length > 0 && (
+              <div className="image-preview">
+                {imageUrls.map((url, index) => (
+                  <div key={index} className="preview-image-container">
+                    <img src={url} alt="Preview" className="preview-image" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="post-actions">
             <button 
-              className="post-button schedule"
-              onClick={handlePost}
-              disabled={isPosting || platforms.length === 0}
-            >
-              {isPosting ? 'Processing...' : 'Schedule Post'}
-            </button>
-            <button 
-              className="post-button immediate"
+              className="post-button immediate primary"
               onClick={handleImmediatePost}
               disabled={isPosting || platforms.length === 0}
             >
               {isPosting ? 'Posting...' : 'Post Now'}
             </button>
+            <div className="schedule-option">
+              <button 
+                className="post-button schedule secondary"
+                disabled={true}
+                title="Scheduling feature coming soon"
+              >
+                Schedule Post
+              </button>
+              <span className="coming-soon-label">Coming Soon</span>
+            </div>
           </div>
         </>
       )}
