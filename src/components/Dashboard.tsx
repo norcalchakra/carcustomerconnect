@@ -208,15 +208,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
                   </div>
 
                   <div className="activity-content">
-                    {activity.notes}
-
-                    {activity.isSocialPost && (
-                      <button
-                        className="view-details-btn"
-                        onClick={() => handleViewPostDetails(activity.id)}
-                      >
-                        View Post
-                      </button>
+                    {activity.isSocialPost ? (
+                      <>
+                        <div className="abbreviated-content">
+                          {activity.notes && activity.notes.length > 60 
+                            ? `${activity.notes.substring(0, 60)}...` 
+                            : activity.notes}
+                        </div>
+                        <button
+                          className="view-details-btn"
+                          onClick={() => handleViewPostDetails(activity.id)}
+                        >
+                          View Full Post
+                        </button>
+                      </>
+                    ) : (
+                      <div>{activity.notes}</div>
                     )}
                   </div>
 

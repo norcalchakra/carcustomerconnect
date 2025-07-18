@@ -67,9 +67,10 @@
 }
 
 .activity-item {
-  padding: 16px;
+  padding: 12px;
   border-bottom: 1px solid #edf2f7;
   position: relative;
+  transition: background-color 0.2s ease;
 }
 
 .activity-item:last-child {
@@ -108,20 +109,36 @@
 
 .activity-content {
   color: #4a5568;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  margin-bottom: 10px;
+  line-height: 1.4;
   position: relative;
+  font-size: 0.95rem;
+}
+
+.abbreviated-content {
+  color: #4a5568;
+  margin-bottom: 4px;
+  line-height: 1.4;
+  position: relative;
+  font-size: 0.95rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .view-details-btn {
   background: none;
   border: none;
   color: #4299e1;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   padding: 0;
-  margin-left: 8px;
-  text-decoration: underline;
+  margin-left: 0;
+  text-decoration: none;
+  font-weight: 500;
 }
 
 .view-details-btn:hover {
@@ -130,8 +147,9 @@
 
 .platform-badges {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .platform-badge {
