@@ -106,12 +106,98 @@ const DealerOnboardingPage: React.FC = () => {
         // Fetch all onboarding data
         const profile = await dealerOnboardingApi.getDealershipProfile(dealershipId);
         const brandVoice = await dealerOnboardingApi.getBrandVoiceSettings(dealershipId);
-        const lifecycleTemplates = await dealerOnboardingApi.getLifecycleTemplates(dealershipId);
+        const lifecycleTemplates = await dealerOnboardingApi.getLifecycleTemplates(dealershipId) || [];
         const customizationParams = await dealerOnboardingApi.getCustomizationParameters(dealershipId);
-        const differentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(dealershipId);
+        const differentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(dealershipId) || [];
         const contentGovernance = await dealerOnboardingApi.getContentGovernance(dealershipId);
-        const exampleCaptions = await dealerOnboardingApi.getExampleCaptions(dealershipId);
+        const exampleCaptions = await dealerOnboardingApi.getExampleCaptions(dealershipId) || [];
         const technicalIntegrations = await dealerOnboardingApi.getTechnicalIntegrations(dealershipId);
+        
+        // Initialize default values for missing data
+        const defaultProfile = profile || {
+          id: dealershipId,
+          legal_name: '',
+          dba_name: '',
+          primary_phone: '',
+          service_phone: '',
+          website_url: '',
+          physical_address: '',
+          google_maps_plus_code: '',
+          years_in_business: 0,
+          dealership_type: 'independent',
+          primary_market_radius: 0
+        };
+        
+        const defaultBrandVoice = brandVoice || {
+          id: dealershipId,
+          formality_level: 3,
+          energy_level: 3,
+          technical_detail_preference: 'benefit-focused' as const,
+          community_connection: 'regional' as const,
+          emoji_usage_level: 2
+        };
+        
+        const defaultCustomizationParams = customizationParams || {
+          id: dealershipId,
+          seasonal_adaptations: {
+            summer: '',
+            winter: '',
+            spring: '',
+            fall: ''
+          },
+          vehicle_type_preferences: {
+            trucks: {
+              emphasis: 'both' as const,
+              key_features: []
+            },
+            suvs: {
+              emphasis: 'both' as const,
+              key_features: []
+            }
+          },
+          price_range_messaging: {
+            budget: 'Great value options',
+            mid_range: 'Premium features at competitive prices',
+            premium: 'Luxury and performance'
+          }
+        };
+        
+        const defaultContentGovernance = contentGovernance || {
+          id: dealershipId,
+          never_mention: [],
+          always_include: [],
+          hashtag_strategy: {
+            branded: [],
+            location: [],
+            vehicle: [],
+            lifestyle: [],
+            limit_per_post: 5
+          }
+        };
+        
+        const defaultTechnicalIntegrations = technicalIntegrations || {
+          id: dealershipId,
+          dms_integration: {
+            system: 'None',
+            integration_type: 'Manual'
+          },
+          website_platform: '',
+          social_media_tools: {
+            facebook: true,
+            instagram: false,
+            twitter: false
+          },
+          photo_management_system: '',
+          crm_preferences: {
+            system: 'None',
+            sync_frequency: 'Daily'
+          },
+          workflow_preferences: {
+            approval_required: true,
+            posting_times: [],
+            departments_involved: []
+          }
+        };
         
         // Calculate completed steps
         const completedSteps = [];
@@ -157,16 +243,16 @@ const DealerOnboardingPage: React.FC = () => {
           currentStep = 8;
         }
         
-        // Update onboarding state
+        // Update onboarding state with data or defaults
         setOnboardingState({
-          profile,
-          brandVoice,
+          profile: defaultProfile,
+          brandVoice: defaultBrandVoice,
           lifecycleTemplates,
-          customizationParams,
+          customizationParams: defaultCustomizationParams,
           differentiators,
-          contentGovernance,
+          contentGovernance: defaultContentGovernance,
           exampleCaptions,
-          technicalIntegrations,
+          technicalIntegrations: defaultTechnicalIntegrations,
           currentStep,
           completedSteps
         });

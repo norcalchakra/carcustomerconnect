@@ -1,0 +1,274 @@
+# Dealer Onboarding & RAG Context Documentation
+*For Car Customer Connect - AI Caption Generation System*
+
+## Purpose Statement
+
+This document outlines the comprehensive information collection system during dealer onboarding that will serve as the foundation for our AI-powered caption generation. The goal is to capture the unique voice, style, and business characteristics of each dealership to ensure generated content authentically represents their brand while maintaining effectiveness across all vehicle lifecycle stages.
+
+## Core Dealership Information
+
+### Business Identity
+- **Dealership Legal Name**: The registered business name for compliance and formal communications
+- **DBA/Marketing Name**: The name customers know them by (e.g., "Bob's Auto Palace" vs "Johnson Automotive LLC")
+- **Primary Phone Number**: Main sales line for customer inquiries
+- **Service Department Phone**: Separate number if applicable
+- **Website URL**: Primary domain for inventory browsing
+- **Physical Address**: Complete street address for location-based marketing
+- **Google Maps Plus Code**: For precise location services
+- **Years in Business**: Establishes credibility in generated content
+- **Dealership Type**: Independent, franchise, specialty (luxury, budget, specific makes)
+- **Primary Market Radius**: How far customers typically travel (affects localization in posts)
+
+### Brand Voice Configuration
+
+The onboarding process should present dealers with a sophisticated but approachable system for defining their communication style across multiple dimensions:
+
+**Formality Spectrum**
+- Casual & Friendly: "Hey folks, check out this sweet ride!"
+- Professional & Approachable: "We're excited to showcase this excellent vehicle"
+- Formal & Sophisticated: "We are pleased to present this distinguished automobile"
+
+**Energy Level**
+- High Energy: Exclamation points, dynamic language, enthusiasm
+- Moderate: Balanced, informative, steady
+- Understated: Calm, factual, letting quality speak for itself
+
+**Technical Detail Preference**
+- Feature-Heavy: Emphasize specifications, technology, performance metrics
+- Benefit-Focused: Translate features into customer advantages
+- Lifestyle-Oriented: Focus on how the vehicle fits into customer's life
+
+**Community Connection**
+- Hyper-Local: References to local landmarks, events, weather
+- Regional: State/area pride, regional preferences
+- Universal: Broad appeal without geographic specifics
+
+## Lifecycle Stage Templates
+
+The system should collect example captions for each stage, allowing dealers to provide multiple variations that demonstrate their preferred style, length, and focus areas.
+
+### Stage 1: Vehicle Acquisition Templates
+
+**Information to Collect:**
+- 3-5 example captions for newly acquired vehicles
+- Preferred announcement style (immediate vs. teaser)
+- Whether to mention trade-in source
+- Emphasis preferences (variety, value, selection)
+
+**Template Variations to Request:**
+
+*Short & Sweet Example:*
+"Dealer should provide something like: 'Just in! 2015 Honda Civic LX'"
+
+*Detailed Announcement Example:*
+"Or something fuller like: 'New arrival alert! This one-owner 2015 Honda Civic just joined our family. With its renowned reliability and fantastic fuel economy, this beauty won't last long on our lot!'"
+
+*Story-Driven Example:*
+"Or narrative style: 'We just helped a local family upgrade to their dream SUV, and their trusty 2015 Civic is now looking for its next adventure. Meticulously maintained and loved – exactly the kind of pre-owned vehicle we're proud to offer.'"
+
+### Stage 2: Service & Preparation Templates
+
+**Information to Collect:**
+- Preferred terminology (serviced, inspected, detailed, reconditioned)
+- Inspection point count (120-point, 150-point, comprehensive)
+- Service transparency level
+- Unique service differentiators
+
+**Template Requests:**
+
+*Progress Update Style:*
+"Example: 'Update on that Civic we posted yesterday – our team is giving it the full treatment! New tires going on as we speak.'"
+
+*Completion Announcement:*
+"Example: 'Transformation complete! That 2015 Civic is now showroom-ready with new tires, fresh detail, and our signature inspection completed.'"
+
+### Stage 3: Ready for Sale Templates
+
+**Information to Collect:**
+- Key selling points emphasis order
+- Pricing mention preferences (direct, "competitive," contact for price)
+- Call-to-action strength
+- Urgency indicators usage
+
+**Template Variations:**
+
+*Feature-Focused:*
+"Example: 'READY NOW! 2015 Honda Civic LX – Bluetooth, backup camera, stellar MPG, and Honda's legendary reliability. Schedule your test drive today!'"
+
+*Value-Proposition:*
+"Example: 'Why choose our 2015 Civic? ✓ One owner ✓ Complete service records ✓ New tires ✓ Priced to move ✓ Financing available. Your perfect commuter awaits!'"
+
+### Stage 4: Customer Delivery Templates
+
+**Information to Collect:**
+- Privacy preferences for customer mentions
+- Celebration tone level
+- Community building approach
+- Referral encouragement style
+
+**Template Examples:**
+
+*Simple Celebration:*
+"Example: 'Another happy customer! Congratulations on your 2015 Civic – welcome to the family!'"
+
+*Community Focused:*
+"Example: 'The Johnsons just drove off in their 2015 Civic! We love seeing our neighbors find their perfect match. Thank you for trusting us with your automotive needs!'"
+
+## Advanced Customization Parameters
+
+### Seasonal Adaptations
+- Summer messaging themes (road trips, AC emphasis)
+- Winter preparations (AWD focus, safety features)
+- Back-to-school (reliability, safety for young drivers)
+- Holiday shopping (gift of transportation, year-end deals)
+
+### Inventory-Specific Preferences
+
+**By Vehicle Type:**
+- Trucks: Work capability vs. lifestyle emphasis
+- SUVs: Family focus vs. adventure orientation  
+- Sedans: Efficiency vs. comfort vs. technology
+- Sports cars: Performance vs. prestige vs. fun
+
+**By Price Range:**
+- Budget-friendly: Value, reliability, affordable payments
+- Mid-range: Best of both worlds, smart choice
+- Premium: Luxury, exclusivity, investment
+
+### Compliance & Disclosure Templates
+
+**Required Disclosures:**
+- "Price plus tax, title, and fees"
+- "Subject to prior sale"
+- "Photos for illustration purposes"
+- State-specific requirements
+
+**Preferred Placement:**
+- Integrated naturally in text
+- Separate line at end
+- Hashtag format (#PricePlusTTL)
+
+## Competitive Differentiation Factors
+
+The system should capture what makes this dealership unique:
+
+### Service Differentiators
+- Free lifetime oil changes
+- Warranty offerings
+- Loaner car program
+- Pick-up/delivery service
+- Extended service hours
+
+### Customer Experience Elements
+- Family-owned messaging
+- Years of experience
+- Community involvement
+- Customer satisfaction metrics
+- Awards and recognition
+
+### Financial Options
+- In-house financing
+- Credit rebuilding programs
+- First-time buyer specials
+- Military/veteran discounts
+- Senior citizen benefits
+
+## Content Governance Rules
+
+### Never Mention List
+- Competitor names
+- Specific customer financial information
+- Accident history (unless specifically approved)
+- Internal pricing strategies
+- Negative comparisons
+
+### Always Include Elements
+- Dealership name or identifier
+- Contact method (phone, website, or DM)
+- Positive, welcoming tone
+- Proper spelling and grammar
+- Appropriate emoji usage per brand guidelines
+
+### Hashtag Strategy
+- Branded hashtags (#BobsAutoDifference)
+- Location tags (#CarsInDenver)
+- Vehicle specific (#HondaCivicForSale)
+- Lifestyle tags (#FamilyCar #CommuterSpecial)
+- Limit per post (typically 5-10)
+
+## Performance Feedback Loop
+
+The onboarding should establish how dealers want to provide feedback:
+
+### Feedback Mechanisms
+- Star rating per generated caption
+- Specific edit tracking
+- Monthly style review sessions
+- A/B testing preferences
+- Performance metric priorities
+
+### Learning Preferences
+- Aggressive adaptation (quick style changes based on feedback)
+- Conservative approach (gradual refinement)
+- Seasonal adjustment allowance
+- Special event overrides
+
+## Technical Integration Points
+
+### Existing System Connections
+- DMS integration requirements
+- Current website platform
+- Existing social media tools
+- Photo management systems
+- CRM preferences
+
+### Workflow Preferences
+- Approval requirements
+- Posting time preferences
+- Multi-location coordination
+- Department responsibilities
+- Escalation procedures
+
+## Cultural & Regional Considerations
+
+### Language Preferences
+- English-only
+- Bilingual posts (Spanish-English)
+- Regional dialects/phrases
+- Cultural holiday acknowledgments
+- Sports team affiliations
+
+### Market-Specific Adaptations
+- Rural vs. urban messaging
+- Climate-specific features
+- Local economy considerations
+- Regional vehicle preferences
+- Community event tie-ins
+
+## Quality Assurance Guidelines
+
+### Pre-Publication Checklist
+- Accuracy verification
+- Brand voice consistency
+- Legal compliance
+- Photo quality standards
+- Competitive sensitivity
+
+### Post-Publication Monitoring
+- Engagement tracking preferences
+- Response time commitments
+- Escalation triggers
+- Archive requirements
+- Performance reporting
+
+## Implementation Notes
+
+This comprehensive onboarding system should be presented progressively, not as an overwhelming form. Consider a guided wizard approach that:
+
+1. Starts with essential business information
+2. Uses AI to suggest voice settings based on initial examples
+3. Allows skipping sections with smart defaults
+4. Provides immediate preview of how choices affect output
+5. Enables ongoing refinement post-launch
+
+The richness of this contextual data will enable the AI to generate authentic, effective, and dealership-specific content that truly sounds like it comes from their team rather than a generic bot.

@@ -26,14 +26,14 @@ export const dealerOnboardingApi = {
       .from('dealership_profiles')
       .select('*')
       .eq('id', dealershipId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching dealership profile:', error);
       return null;
     }
     
-    return data;
+    return data || null;
   },
   
   /**
@@ -62,14 +62,14 @@ export const dealerOnboardingApi = {
       .from('brand_voice_settings')
       .select('*')
       .eq('id', dealershipId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching brand voice settings:', error);
       return null;
     }
     
-    return data;
+    return data || null;
   },
   
   /**
@@ -151,14 +151,14 @@ export const dealerOnboardingApi = {
       .from('customization_parameters')
       .select('*')
       .eq('id', dealershipId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching customization parameters:', error);
       return null;
     }
     
-    return data;
+    return data || null;
   },
   
   /**
@@ -240,14 +240,14 @@ export const dealerOnboardingApi = {
       .from('content_governance')
       .select('*')
       .eq('id', dealershipId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching content governance:', error);
       return null;
     }
     
-    return data;
+    return data || null;
   },
   
   /**
@@ -329,14 +329,14 @@ export const dealerOnboardingApi = {
       .from('technical_integrations')
       .select('*')
       .eq('id', dealershipId)
-      .single();
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching technical integrations:', error);
       return null;
     }
     
-    return data;
+    return data || null;
   },
   
   /**

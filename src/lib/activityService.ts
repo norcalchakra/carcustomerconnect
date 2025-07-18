@@ -17,7 +17,7 @@ export interface ActivityEvent {
 }
 
 export interface RecentActivity {
-  id: number;
+  id: string | number; // Changed to string | number to support compound IDs
   vehicle: string;
   vehicleId: number;
   status: string;
@@ -271,8 +271,25 @@ export const fetchAllActivity = async (dealershipId: number, limit: number = 10)
     
     // Combine and sort all activities by date (newest first)
     const allActivities = [...vehicleActivities, ...socialActivities];
+    
+    // Ensure unique IDs by prefixing with source type
+    allActivities.forEach(activity => {
+      // Create a compound ID that includes the source type (vehicle event or social post)
+      activity.id = activity.isSocialPost ? `social_${activity.id}` : `vehicle_${activity.id}`;
+    });
+    
     allActivities.sort((a, b) => {
-      return new Date(b.time).getTime() - new Date(a.time).getTime();
+      // Try to parse the relative time strings or fall back to string comparison
+      const dateA = new Date(b.time).getTime();
+      const dateB = new Date(a.time).getTime();
+      
+      // If both are valid dates, compare them
+      if (!isNaN(dateA) && !isNaN(dateB)) {
+        return dateA - dateB;
+      }
+      
+      // Otherwise fall back to string comparison
+      return b.time.localeCompare(a.time);
     });
     
     // Limit to requested number

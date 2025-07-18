@@ -58,6 +58,12 @@ const Header: React.FC<HeaderProps> = () => {
             >
               VIN Scanner
             </Link>
+            <Link 
+              to="/dealer-onboarding" 
+              className="px-3 py-2 rounded hover:bg-blue-700 bg-yellow-600"
+            >
+              Dealer Onboarding
+            </Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">

@@ -19,21 +19,21 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
   const [formData, setFormData] = useState<DealershipProfile>({
     id: dealershipId || 0,
     legal_name: '',
-    marketing_name: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    phone: '',
-    email: '',
-    website: '',
+    dba_name: '',
+    primary_phone: '',
+    service_phone: '',
+    website_url: '',
+    physical_address: '',
+    google_maps_plus_code: '',
     years_in_business: 0,
-    dealership_type: 'new',
-    brands_carried: [],
-    market_radius: 0,
+    dealership_type: 'independent',
+    primary_market_radius: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   });
+  
+  // Additional state for brands carried (not in DealershipProfile interface)
+  const [brandsCarried, setBrandsCarried] = useState<string[]>([]);
 
   const [aiSuggestions, setAiSuggestions] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,6 +43,11 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
   useEffect(() => {
     if (profile) {
       setFormData(profile);
+      
+      // If there are brands stored in metadata or elsewhere, load them
+      // For now, we'll just initialize with an empty array
+      // In a real implementation, you would fetch this from a separate table or metadata
+      setBrandsCarried([]);
     }
   }, [profile]);
 
@@ -52,9 +57,10 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
       if (aiAssistEnabled && dealershipId && formData.legal_name) {
         setIsLoading(true);
         try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('business_profile', {
-            dealershipId,
-            partialData: formData
+          const suggestions = await dealerOnboardingApi.getAISuggestions({
+            dealership_id: dealershipId,
+            section: 'business_profile',
+            current_data: formData
           });
           setAiSuggestions(suggestions);
         } catch (err) {
@@ -74,11 +80,8 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
     
     if (name === 'brands_carried') {
       // Handle brands as a comma-separated list
-      setFormData({
-        ...formData,
-        brands_carried: value.split(',').map(brand => brand.trim())
-      });
-    } else if (name === 'years_in_business' || name === 'market_radius') {
+      setBrandsCarried(value.split(',').map(brand => brand.trim()));
+    } else if (name === 'years_in_business' || name === 'primary_market_radius') {
       // Convert numeric fields
       setFormData({
         ...formData,
@@ -95,17 +98,26 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Save the profile data with the updated timestamp
+    // Note: brandsCarried is stored separately as it's not part of the DealershipProfile interface
     onSave({
       ...formData,
       updated_at: new Date().toISOString()
     });
+    
+    // You might want to store brandsCarried in a separate table or as metadata
+    console.log('Brands carried:', brandsCarried);
   };
 
   const applySuggestion = (field: string, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
+    if (field === 'brands_carried') {
+      setBrandsCarried(value);
+    } else {
+      setFormData({
+        ...formData,
+        [field]: value
+      });
+    }
   };
 
   return (
@@ -130,96 +142,72 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="marketing_name">Marketing/DBA Name</label>
+            <label htmlFor="dba_name">Marketing/DBA Name</label>
             <input
               type="text"
-              id="marketing_name"
-              name="marketing_name"
-              value={formData.marketing_name}
+              id="dba_name"
+              name="dba_name"
+              value={formData.dba_name || ''}
               onChange={handleChange}
               placeholder="If different from legal name"
             />
           </div>
 
           <div className="form-group full-width">
-            <label htmlFor="address">Street Address*</label>
+            <label htmlFor="physical_address">Street Address*</label>
             <input
               type="text"
-              id="address"
-              name="address"
-              value={formData.address}
+              id="physical_address"
+              name="physical_address"
+              value={formData.physical_address}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="city">City*</label>
+            <label htmlFor="google_maps_plus_code">Google Maps Plus Code</label>
             <input
               type="text"
-              id="city"
-              name="city"
-              value={formData.city}
+              id="google_maps_plus_code"
+              name="google_maps_plus_code"
+              value={formData.google_maps_plus_code || ''}
               onChange={handleChange}
-              required
+              placeholder="Optional"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="state">State*</label>
-            <input
-              type="text"
-              id="state"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="zip_code">ZIP Code*</label>
-            <input
-              type="text"
-              id="zip_code"
-              name="zip_code"
-              value={formData.zip_code}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number*</label>
+            <label htmlFor="primary_phone">Primary Phone*</label>
             <input
               type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
+              id="primary_phone"
+              name="primary_phone"
+              value={formData.primary_phone}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email Address*</label>
+            <label htmlFor="service_phone">Service Phone</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="tel"
+              id="service_phone"
+              name="service_phone"
+              value={formData.service_phone || ''}
               onChange={handleChange}
-              required
+              placeholder="Optional"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="website">Website URL</label>
+            <label htmlFor="website_url">Website URL</label>
             <input
               type="url"
-              id="website"
-              name="website"
-              value={formData.website}
+              id="website_url"
+              name="website_url"
+              value={formData.website_url || ''}
               onChange={handleChange}
               placeholder="https://www.example.com"
             />
@@ -254,12 +242,12 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="market_radius">Market Radius (miles)</label>
+            <label htmlFor="primary_market_radius">Market Radius (miles)</label>
             <input
               type="number"
-              id="market_radius"
-              name="market_radius"
-              value={formData.market_radius}
+              id="primary_market_radius"
+              name="primary_market_radius"
+              value={formData.primary_market_radius || 0}
               onChange={handleChange}
               min="0"
             />
@@ -271,7 +259,7 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
               type="text"
               id="brands_carried"
               name="brands_carried"
-              value={formData.brands_carried.join(', ')}
+              value={brandsCarried.join(', ')}
               onChange={handleChange}
               placeholder="e.g. Toyota, Honda, Ford"
             />
@@ -285,37 +273,37 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
               <p>Loading suggestions...</p>
             ) : (
               <>
-                {aiSuggestions.marketing_name && formData.marketing_name === '' && (
+                {aiSuggestions.dba_name && formData.dba_name === '' && (
                   <div className="suggestion-item">
                     <p>
-                      <strong>Marketing Name:</strong> {aiSuggestions.marketing_name}
+                      <strong>Marketing Name:</strong> {aiSuggestions.dba_name}
                     </p>
                     <button
                       type="button"
                       className="apply-suggestion"
-                      onClick={() => applySuggestion('marketing_name', aiSuggestions.marketing_name)}
+                      onClick={() => applySuggestion('dba_name', aiSuggestions.dba_name)}
                     >
                       Apply
                     </button>
                   </div>
                 )}
                 
-                {aiSuggestions.market_radius && formData.market_radius === 0 && (
+                {aiSuggestions.primary_market_radius && formData.primary_market_radius === 0 && (
                   <div className="suggestion-item">
                     <p>
-                      <strong>Suggested Market Radius:</strong> {aiSuggestions.market_radius} miles
+                      <strong>Suggested Market Radius:</strong> {aiSuggestions.primary_market_radius} miles
                     </p>
                     <button
                       type="button"
                       className="apply-suggestion"
-                      onClick={() => applySuggestion('market_radius', aiSuggestions.market_radius)}
+                      onClick={() => applySuggestion('primary_market_radius', aiSuggestions.primary_market_radius)}
                     >
                       Apply
                     </button>
                   </div>
                 )}
                 
-                {aiSuggestions.brands_carried && formData.brands_carried.length === 0 && (
+                {aiSuggestions.brands_carried && brandsCarried.length === 0 && (
                   <div className="suggestion-item">
                     <p>
                       <strong>Suggested Brands:</strong> {aiSuggestions.brands_carried.join(', ')}

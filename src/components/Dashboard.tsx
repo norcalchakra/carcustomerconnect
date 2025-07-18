@@ -100,8 +100,10 @@ const Dashboard: React.FC<DashboardProps> = () => {
   // Handle viewing post details
   const navigate = useNavigate();
   
-  const handleViewPostDetails = (postId: number) => {
-    navigate(`/social/posts/${postId}`);
+  const handleViewPostDetails = (postId: string | number) => {
+    // Extract the numeric ID if it's a prefixed string ID (e.g., 'social_123' → '123')
+    const numericId = typeof postId === 'string' ? postId.split('_')[1] : postId;
+    navigate(`/social/posts/${numericId}`);
   };
 
   // No longer needed with React Router
@@ -195,7 +197,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
           ) : (
             <ul className="activity-list">
               {recentActivity.map((activity) => (
-                <li key={activity.id} className="activity-item">
+                <li key={String(activity.id)} className="activity-item">
                   <div className="activity-header">
                     <span className="activity-status">{activity.status}</span>
                     <span className="activity-time">{activity.time}</span>
