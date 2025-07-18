@@ -6,7 +6,9 @@ import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.impro
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import ImageCapture from './ImageCapture';
+import ImageProxy from '../common/ImageProxy';
 import './SocialPostForm.improved.css';
+import '../common/ImageProxy.css';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -32,6 +34,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [showScheduler, setShowScheduler] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [storageUrls, setStorageUrls] = useState<(string | null)[]>([]);
   const [postContent, setPostContent] = useState<string>(caption.content);
   const [characterCount, setCharacterCount] = useState<number>(caption.content.length);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -161,30 +164,48 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   };
 
   // Function to create a social media post record
-  const createSocialPost = async (platform: string, content: string, postId: string, vehicleId?: number): Promise<boolean> => {
+  const createSocialPost = async (platform: string, content: string, postId: string, vehicleId?: number) => {
     try {
       if (!dealershipId) {
         console.error('No dealership ID available');
         return false;
       }
-      
-      console.log(`Creating social post record for platform: ${platform}`);
-      
+
+      // Process image URLs before saving
+      // Use the storage URLs if available, otherwise use placeholders
+      const processedImageUrls = imageUrls.map((previewUrl, index) => {
+        // If we have a storage URL for this image, use it
+        if (storageUrls[index]) {
+          console.log('Using Supabase storage URL for database:', storageUrls[index]);
+          return storageUrls[index] as string;
+        }
+        
+        // If the preview URL is a blob URL but we don't have a storage URL,
+        // we need to use a placeholder since blob URLs won't persist
+        if (previewUrl.startsWith('blob:')) {
+          const placeholder = `temp-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          console.log('Using placeholder for blob URL:', placeholder);
+          return placeholder;
+        }
+        
+        // For any other type of URL, just use it as is
+        return previewUrl;
+      });
+
       // Generate a mock post URL based on the platform
       const postUrl = platform === 'facebook' 
         ? `https://facebook.com/posts/${postId}` 
         : platform === 'instagram'
           ? `https://instagram.com/p/${postId}`
           : `https://business.google.com/posts/${postId}`;
-      
+
       const socialPost: SocialPostInsert = {
         dealership_id: dealershipId,
-        vehicle_id: vehicleId,
         content: content,
         platform: platform,
         post_id: postId,
         post_url: postUrl,
-        image_urls: imageUrls,
+        image_urls: processedImageUrls,
         status: 'posted',
         engagement: {
           likes: 0,
@@ -192,7 +213,11 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           shares: 0
         }
       };
-      
+
+      if (vehicleId) {
+        socialPost.vehicle_id = vehicleId;
+      }
+
       const result = await socialPostsApi.create(socialPost);
       
       console.log('Social post record created:', result);
@@ -201,6 +226,10 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       console.log('Emitting SOCIAL_POST_CREATED event');
       eventBus.emit(EVENTS.SOCIAL_POST_CREATED, { vehicleId, platform });
       
+      if (!result) {
+        console.error('Error creating social post record');
+        return false;
+      }
       return true;
     } catch (error) {
       console.error('Error in createSocialPost:', error);
@@ -276,9 +305,11 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   };
 
   // Function to handle image capture from camera or file upload
-  const handleImageCaptured = (imageUrl: string) => {
-    console.log('Image captured/uploaded:', imageUrl);
-    setImageUrls([...imageUrls, imageUrl]);
+  const handleImageCaptured = (previewUrl: string, storageUrl: string | null) => {
+    console.log('Image captured/uploaded - Preview URL:', previewUrl);
+    console.log('Storage URL for database:', storageUrl);
+    setImageUrls([...imageUrls, previewUrl]);
+    setStorageUrls([...storageUrls, storageUrl]);
   };
 
   // Function to remove an image
@@ -440,16 +471,10 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                 <div className="image-preview">
                   {imageUrls.map((url, index) => (
                     <div key={index} className="preview-image-container">
-                      <img 
+                      <ImageProxy 
                         src={url} 
                         alt="Preview" 
-                        className="preview-image" 
-                        onError={(e) => {
-                          // Handle broken images by showing a placeholder
-                          console.error(`Failed to load image: ${url}`);
-                          e.currentTarget.src = 'https://via.placeholder.com/120?text=Image+Error';
-                          e.currentTarget.classList.add('image-error');
-                        }}
+                        className="preview-image"
                       />
                       <button 
                         className="remove-image-btn"

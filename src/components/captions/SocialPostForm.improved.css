@@ -247,12 +247,15 @@
 
 .preview-image-container {
   position: relative;
+  margin-right: 10px;
+  margin-bottom: 10px;
   width: 120px;
   height: 120px;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
+  background-color: #f8f9fa;
 }
 
 .preview-image-container:hover {
