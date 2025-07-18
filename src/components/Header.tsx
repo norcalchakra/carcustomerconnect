@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
 type HeaderProps = {
-  onNavigate: (view: 'dashboard' | 'settings' | 'vehicle' | 'facebook-test' | 'simple-facebook-test') => void;
+  onNavigate: (view: 'dashboard' | 'settings' | 'vehicle' | 'facebook-test' | 'simple-facebook-test' | 'vin-scanner') => void;
 };
 
 const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
@@ -45,6 +45,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
               className="text-white hover:text-blue-200 text-sm font-medium"
             >
               Simple FB Test
+            </button>
+            <button 
+              onClick={() => onNavigate('vin-scanner')} 
+              className="text-white hover:text-blue-200 text-sm font-medium bg-green-600 px-3 py-1 rounded"
+            >
+              VIN Scanner
             </button>
           </nav>
         </div>

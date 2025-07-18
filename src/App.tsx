@@ -6,12 +6,13 @@ import Auth from './components/auth/Auth';
 import Settings from './pages/Settings';
 import FacebookTest from './pages/FacebookTest';
 import SimpleFacebookTest from './pages/SimpleFacebookTest';
+import VinScannerPage from './pages/VinScannerPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'vehicle' | 'settings' | 'facebook-test' | 'simple-facebook-test'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'vehicle' | 'settings' | 'facebook-test' | 'simple-facebook-test' | 'vin-scanner'>('dashboard');
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
 
   const handleViewVehicle = (vehicle: any) => {
@@ -67,6 +68,10 @@ const AppContent: React.FC = () => {
         
         {currentView === 'simple-facebook-test' && (
           <SimpleFacebookTest />
+        )}
+        
+        {currentView === 'vin-scanner' && (
+          <VinScannerPage />
         )}
       </main>
     </div>
