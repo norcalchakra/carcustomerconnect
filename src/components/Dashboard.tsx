@@ -5,6 +5,8 @@ import Modal from './ui/Modal';
 import Debug from './Debug';
 import { Vehicle } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { fetchRecentActivity, fetchSocialMediaActivity, RecentActivity } from '../lib/activityService';
+import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
   onViewVehicle: (vehicle: Vehicle) => void;
@@ -13,33 +15,59 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
   const { user } = useAuth();
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
-  const [recentActivity, setRecentActivity] = useState<Array<{
-    id: number;
-    vehicle: string;
-    status: string;
-    time: string;
-  }>>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [socialActivity, setSocialActivity] = useState<RecentActivity[]>([]);
+  const [dealershipId, setDealershipId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch dealership ID for the current user
+  useEffect(() => {
+    const getDealershipId = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('dealerships')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) throw error;
+        if (data) setDealershipId(data.id);
+      } catch (err) {
+        console.error('Error fetching dealership:', err);
+        setError('Failed to load dealership information');
+      }
+    };
+    
+    getDealershipId();
+  }, [user]);
   
   // Fetch recent activity
   useEffect(() => {
-    const fetchRecentActivity = async () => {
+    const getRecentActivity = async () => {
+      if (!dealershipId) return;
+      
+      setIsLoading(true);
       try {
-        // In a real app, we'd fetch this from the API
-        // For now, using mock data
-        setRecentActivity([
-          { id: 1, vehicle: '2021 Ford F-150', status: 'Ready for Sale', time: '2 hrs ago' },
-          { id: 2, vehicle: '2019 Honda Civic', status: 'Just Traded In', time: '4 hrs ago' },
-          { id: 3, vehicle: '2020 Toyota Camry', status: 'Sold', time: 'Yesterday' },
-        ]);
-      } catch (error) {
-        console.error('Error fetching recent activity:', error);
+        const activity = await fetchRecentActivity(dealershipId, 5);
+        setRecentActivity(activity);
+        
+        const socialPosts = await fetchSocialMediaActivity(dealershipId, 3);
+        setSocialActivity(socialPosts);
+      } catch (err) {
+        console.error('Error fetching activity:', err);
+        setError('Failed to load recent activity');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (user) {
-      fetchRecentActivity();
+    if (dealershipId) {
+      getRecentActivity();
     }
-  }, [user]);
+  }, [dealershipId]);
 
   const handleAddVehicle = () => {
     setIsAddVehicleModalOpen(true);
@@ -63,9 +91,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
       />
       
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+        <h2 className="text-xl font-semibold mb-4">Recent Vehicle Activity</h2>
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {recentActivity.length === 0 ? (
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">
+              Loading activity...
+            </div>
+          ) : error ? (
+            <div className="p-4 text-center text-red-500">
+              {error}
+            </div>
+          ) : recentActivity.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               No recent activity
             </div>
@@ -76,30 +112,84 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
                   <div className="flex items-center">
                     <div className="flex-1">
                       <p className="font-medium">{activity.vehicle} - {activity.status}</p>
+                      {activity.notes && (
+                        <p className="text-sm text-gray-700">{activity.notes}</p>
+                      )}
                       <p className="text-sm text-gray-500">{activity.time}</p>
                     </div>
                     <button 
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
                       onClick={() => {
-                        // In a real app, we'd find the actual vehicle
-                        // For now, just show a mock vehicle
-                        const mockVehicle = {
-                          id: activity.id,
-                          year: 2021,
-                          make: activity.vehicle.split(' ')[1],
-                          model: activity.vehicle.split(' ')[2] || 'XLT',
-                          vin: '1FMSK8DH6MGA12345',
-                          stock_number: `A${activity.id}341`,
-                          price: 32995,
-                          mileage: 34521,
-                          color: 'Oxford White',
-                          status: activity.status === 'Ready for Sale' ? 'ready_for_sale' : 
-                                  activity.status === 'Just Traded In' ? 'acquired' : 'sold',
-                          dealership_id: 1,
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString()
-                        } as Vehicle;
-                        onViewVehicle(mockVehicle);
+                        // Fetch the actual vehicle and view it
+                        const fetchVehicle = async () => {
+                          try {
+                            const { data, error } = await supabase
+                              .from('vehicles')
+                              .select('*')
+                              .eq('id', activity.vehicleId)
+                              .single();
+                              
+                            if (error) throw error;
+                            if (data) onViewVehicle(data as Vehicle);
+                          } catch (err) {
+                            console.error('Error fetching vehicle:', err);
+                          }
+                        };
+                        
+                        fetchVehicle();
+                      }}
+                    >
+                      View
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Recent Social Media Activity</h2>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">
+              Loading social activity...
+            </div>
+          ) : socialActivity.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              No recent social media activity
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {socialActivity.map(activity => (
+                <li key={activity.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-center">
+                    <div className="flex-1">
+                      <p className="font-medium">{activity.vehicle}</p>
+                      <p className="text-sm text-blue-600">{activity.status}</p>
+                      <p className="text-sm text-gray-500">{activity.time}</p>
+                    </div>
+                    <button 
+                      className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
+                      onClick={() => {
+                        // Fetch the actual vehicle and view it
+                        const fetchVehicle = async () => {
+                          try {
+                            const { data, error } = await supabase
+                              .from('vehicles')
+                              .select('*')
+                              .eq('id', activity.vehicleId)
+                              .single();
+                              
+                            if (error) throw error;
+                            if (data) onViewVehicle(data as Vehicle);
+                          } catch (err) {
+                            console.error('Error fetching vehicle:', err);
+                          }
+                        };
+                        
+                        fetchVehicle();
                       }}
                     >
                       View
