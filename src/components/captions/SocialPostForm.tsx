@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Caption, Vehicle, VehicleEvent } from '../../lib/api';
-// Import mock Facebook API instead of real one
-import { 
-  mockInitFacebookSDK as initFacebookSDK, 
-  mockIsFacebookConnected as isFacebookConnected,
-  mockLoginWithFacebook as loginWithFacebook,
-  mockGetUserPages as getUserPages,
-  mockPostToFacebookPage as postToFacebookPage,
-  updateCaptionWithFacebookPost
-} from '../../lib/mockFacebookApi';
+import { mockInitFacebookSDK, mockIsFacebookConnected, mockLoginWithFacebook, mockGetUserPages, mockPostToFacebookPage } from '../../lib/mockFacebookApi';
+import eventBus, { EVENTS } from '../../lib/eventBus';
+import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import './SocialPostForm.css';
-import { createScheduledPost } from '../../lib/scheduledPostsService';
-import PostScheduler from './PostScheduler';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -26,6 +19,8 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   vehicle,
   onPost 
 }) => {
+  const { user } = useAuth();
+  const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [facebookConnected, setFacebookConnected] = useState<boolean>(false);
   const [facebookPages, setFacebookPages] = useState<any[]>([]);
@@ -33,16 +28,40 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
+  // Using isScheduled state for future scheduling feature
   const [isScheduled, setIsScheduled] = useState(false);
   // Using mock image URLs for development
   const [imageUrls] = useState<string[]>(['https://example.com/mock-image.jpg']);
+  
+  // Fetch dealership ID for the current user
+  useEffect(() => {
+    const getDealershipId = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('dealerships')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) throw error;
+        if (data) setDealershipId(data.id);
+      } catch (err) {
+        console.error('Error fetching dealership:', err);
+        setError('Failed to load dealership information');
+      }
+    };
+    
+    getDealershipId();
+  }, [user]);
 
   // Initialize Mock Facebook SDK on component mount
   useEffect(() => {
     const initFacebook = async () => {
       try {
-        await initFacebookSDK();
-        const connected = isFacebookConnected();
+        await mockInitFacebookSDK();
+        const connected = mockIsFacebookConnected();
         setFacebookConnected(connected);
         
         if (connected) {
@@ -50,7 +69,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           const accessToken = localStorage.getItem('mock_fb_access_token'); // Use mock storage key
           if (accessToken) {
             try {
-              const pages = await getUserPages(accessToken);
+              const pages = await mockGetUserPages(accessToken);
               setFacebookPages(pages);
               if (pages.length > 0) {
                 setSelectedFacebookPage(pages[0].id);
@@ -75,9 +94,9 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     try {
       setError(null);
       console.log('Connecting to Facebook using mock implementation...');
-      const accessToken = await loginWithFacebook();
+      const accessToken = await mockLoginWithFacebook();
       console.log('Got mock access token:', accessToken);
-      const pages = await getUserPages(accessToken);
+      const pages = await mockGetUserPages(accessToken);
       console.log('Got mock pages:', pages);
       
       setFacebookPages(pages);
@@ -110,140 +129,93 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     }
   };
 
-  // Scheduling functionality will be implemented in the future
-  
-  const handleSchedulePost = async (scheduledTime: Date, selectedPlatforms: string[]) => {
-    setIsPosting(true);
-    setError(null);
-    
+  const toggleScheduler = () => {
+    setShowScheduler(!showScheduler);
+    // Reset scheduled state when toggling scheduler
+    if (isScheduled) {
+      setIsScheduled(false);
+    }
+  };
+
+  // Function to create a social media post record
+  const createSocialPost = async (platform: string, content: string, postId: string, vehicleId?: number): Promise<boolean> => {
     try {
-      // Get current user's dealership ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!dealershipId) {
+        console.error('No dealership ID available');
+        return false;
+      }
       
-      // Get dealership directly from dealerships table instead of dealership_users
-      const { data: dealerships } = await supabase
-        .from('dealerships')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      console.log(`Creating social post record for platform: ${platform}`);
       
-      if (!dealerships) throw new Error('No dealership found for user');
-      
-      // Create scheduled post
-      const scheduledPost = {
-        user_id: user.id,
-        dealership_id: dealerships.id,
-        content: caption.content,
+      const socialPost: SocialPostInsert = {
+        dealership_id: dealershipId,
+        vehicle_id: vehicleId,
+        content: content,
+        platform: platform,
+        post_id: postId,
         image_urls: imageUrls,
-        platforms: selectedPlatforms,
-        scheduled_time: scheduledTime,
-        metadata: {
-          caption_id: caption.id,
-          facebook_page_id: selectedPlatforms.includes('facebook') ? selectedFacebookPage : null
-        }
+        status: 'posted'
       };
       
-      const result = await createScheduledPost(scheduledPost);
+      const result = await socialPostsApi.create(socialPost);
       
-      if (result) {
-        setIsScheduled(true);
-        setShowScheduler(false);
-        
-        if (onPost) {
-          onPost(selectedPlatforms);
-        }
-      } else {
-        throw new Error('Failed to schedule post');
-      }
-    } catch (err) {
-      console.error('Error scheduling post:', err);
-      setError('Failed to schedule post. Please try again.');
-    } finally {
-      setIsPosting(false);
+      console.log('Social post record created:', result);
+      
+      // Emit event to notify other components that a social post was created
+      console.log('Emitting SOCIAL_POST_CREATED event');
+      eventBus.emit(EVENTS.SOCIAL_POST_CREATED, { vehicleId, platform });
+      
+      return true;
+    } catch (error) {
+      console.error('Error in createSocialPost:', error);
+      return false;
     }
   };
-  
-  // Function to update vehicle_events with social media post information
-  const updateVehicleEventWithSocialPost = async (vehicleId: number, platforms: string[]) => {
-    try {
-      // Check if there's an existing event for this vehicle
-      const { data: existingEvents, error: fetchError } = await supabase
-        .from('vehicle_events')
-        .select('*')
-        .eq('vehicle_id', vehicleId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-        
-      if (fetchError) throw fetchError;
-      
-      // Prepare the update data
-      const updateData: any = {
-        posted_to_facebook: platforms.includes('facebook'),
-        posted_to_instagram: platforms.includes('instagram'),
-        posted_to_google: platforms.includes('google')
-      };
-      
-      if (existingEvents && existingEvents.length > 0) {
-        // Update the most recent event
-        const { error } = await supabase
-          .from('vehicle_events')
-          .update(updateData)
-          .eq('id', existingEvents[0].id);
-          
-        if (error) throw error;
-        console.log('Updated existing vehicle event with social post info');
-      } else {
-        // Create a new event
-        updateData.vehicle_id = vehicleId;
-        updateData.event_type = 'social_post';
-        updateData.notes = 'Posted to social media';
-        
-        const { error } = await supabase
-          .from('vehicle_events')
-          .insert(updateData);
-          
-        if (error) throw error;
-        console.log('Created new vehicle event for social post');
-      }
-    } catch (err) {
-      console.error('Error updating vehicle event with social post:', err);
-    }
-  };
-  
+
   const handleImmediatePost = async () => {
     setIsPosting(true);
     setError(null);
-    
+
     try {
       // Handle Facebook posting
       if (platforms.includes('facebook') && selectedFacebookPage) {
         const page = facebookPages.find(p => p.id === selectedFacebookPage);
+        
         if (!page) {
-          throw new Error('Selected Facebook page not found');
+          setError('Selected Facebook page not found');
+          return;
         }
         
         console.log('Posting to Facebook page:', page.name);
-        console.log('Content:', caption.content);
         
-        const result = await postToFacebookPage(
+        const result = await mockPostToFacebookPage(
           page.id,
           page.access_token,
           caption.content,
           imageUrls
         );
         
-        console.log('Facebook post result:', result);
+        console.log('Post created successfully:', result);
         
-        // Update caption with post ID
-        if (result && caption.id) {
-          await updateCaptionWithFacebookPost(Number(caption.id), result);
-        }
+        // Create a social post record
+        const createSuccess = await createSocialPost(
+          'facebook',
+          caption.content,
+          result, // mockPostToFacebookPage returns a string post ID
+          vehicle?.id
+        );
         
-        // Update vehicle event with social post info if we have a vehicle
-        if (vehicle && vehicle.id) {
-          await updateVehicleEventWithSocialPost(vehicle.id, platforms);
+        if (createSuccess) {
+          console.log('Social post record created successfully');
+          // Notify any listeners that activity has been updated
+          console.log('Emitting ACTIVITY_UPDATED event');
+          eventBus.emit(EVENTS.ACTIVITY_UPDATED);
+        } else {
+          console.error('Failed to create social post record');
+          setError('Post was created on Facebook but failed to update local record');
         }
+      } else {
+        console.log('No Facebook platform selected or no page selected');
       }
       
       // Handle other platforms here...
@@ -274,13 +246,29 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           Post scheduled successfully!
         </div>
       ) : showScheduler ? (
-        <PostScheduler
-          postContent={caption.content}
-          imageUrls={imageUrls}
-          platforms={platforms}
-          onSchedule={handleSchedulePost}
-          onCancel={() => setShowScheduler(false)}
-        />
+        <div className="scheduler-container">
+          <h3>Schedule Your Post</h3>
+          <p className="coming-soon">Coming Soon! Post scheduling will be available in a future update.</p>
+          <div className="scheduler-actions">
+            <button 
+              className="btn btn-secondary"
+              onClick={toggleScheduler}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                // Simulate scheduling success for demo purposes
+                setIsScheduled(true);
+                setShowScheduler(false);
+              }}
+              disabled={true} // Disabled since it's a coming soon feature
+            >
+              Schedule (Coming Soon)
+            </button>
+          </div>
+        </div>
       ) : (
         <>
           <div className="platform-selection">
@@ -344,22 +332,21 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           
           <div className="post-actions">
             <button 
-              className="post-button immediate primary"
+              className="btn btn-primary post-now-btn"
               onClick={handleImmediatePost}
               disabled={isPosting || platforms.length === 0}
             >
               {isPosting ? 'Posting...' : 'Post Now'}
             </button>
-            <div className="schedule-option">
-              <button 
-                className="post-button schedule secondary"
-                disabled={true}
-                title="Scheduling feature coming soon"
-              >
-                Schedule Post
-              </button>
-              <span className="coming-soon-label">Coming Soon</span>
-            </div>
+            
+            <button 
+              className="btn btn-outline-primary schedule-btn"
+              onClick={toggleScheduler}
+              disabled={platforms.length === 0 || isPosting}
+            >
+              <span className="coming-soon-badge">Coming Soon</span>
+              Schedule Post
+            </button>
           </div>
         </>
       )}

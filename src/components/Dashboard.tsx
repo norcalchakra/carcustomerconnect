@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import VehicleList from './vehicles/VehicleList';
 import VehicleForm from './vehicles/VehicleForm';
 import Modal from './ui/Modal';
@@ -6,13 +6,19 @@ import Debug from './Debug';
 import { Vehicle } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { fetchAllActivity, RecentActivity } from '../lib/activityService';
+import eventBus, { EVENTS } from '../lib/eventBus';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
   onViewVehicle: (vehicle: Vehicle) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
+// Define the ref interface
+export interface DashboardRefHandle {
+  refreshActivity: () => Promise<void>;
+}
+
+const Dashboard = forwardRef<DashboardRefHandle, DashboardProps>(({ onViewVehicle }, ref) => {
   const { user } = useAuth();
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -43,28 +49,52 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
     getDealershipId();
   }, [user]);
   
-  // Fetch recent activity
-  useEffect(() => {
-    const getRecentActivity = async () => {
-      if (!dealershipId) return;
-      
-      setIsLoading(true);
-      try {
-        // Get all activity including vehicle events and social posts
-        const allActivity = await fetchAllActivity(dealershipId, 10);
-        setRecentActivity(allActivity);
-      } catch (err) {
-        console.error('Error fetching activity:', err);
-        setError('Failed to load recent activity');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (dealershipId) {
-      getRecentActivity();
+  // Function to refresh activity data
+  const refreshActivity = useCallback(async () => {
+    if (!dealershipId) return;
+    
+    setIsLoading(true);
+    try {
+      // Get all activity including vehicle events and social posts
+      console.log('Refreshing activity for dealership:', dealershipId);
+      const allActivity = await fetchAllActivity(dealershipId, 10);
+      console.log('Activity refreshed:', allActivity);
+      setRecentActivity(allActivity);
+    } catch (err) {
+      console.error('Error fetching activity:', err);
+      setError('Failed to load recent activity');
+    } finally {
+      setIsLoading(false);
     }
   }, [dealershipId]);
+  
+  // Expose the refresh function via ref
+  useImperativeHandle(ref, () => ({
+    refreshActivity
+  }));
+
+  // Fetch recent activity on component mount
+  useEffect(() => {
+    if (dealershipId) {
+      refreshActivity();
+    }
+    
+    // Listen for social post created events
+    const handleSocialPostCreated = () => {
+      console.log('Dashboard received social post created event, refreshing activity...');
+      refreshActivity();
+    };
+    
+    // Subscribe to events
+    eventBus.on(EVENTS.SOCIAL_POST_CREATED, handleSocialPostCreated);
+    eventBus.on(EVENTS.ACTIVITY_UPDATED, handleSocialPostCreated);
+    
+    // Cleanup event listeners
+    return () => {
+      eventBus.off(EVENTS.SOCIAL_POST_CREATED, handleSocialPostCreated);
+      eventBus.off(EVENTS.ACTIVITY_UPDATED, handleSocialPostCreated);
+    };
+  }, [dealershipId, refreshActivity]);
 
   const handleAddVehicle = () => {
     setIsAddVehicleModalOpen(true);
@@ -217,6 +247,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
       </Modal>
     </div>
   );
-};
+});
 
 export default Dashboard;
