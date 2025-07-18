@@ -22,6 +22,8 @@ export interface RecentActivity {
   status: string;
   time: string;
   notes?: string;
+  isSocialPost?: boolean;
+  platforms?: string[];
 }
 
 /**
@@ -150,21 +152,77 @@ export const fetchSocialMediaActivity = async (dealershipId: number, limit: numb
     // Transform the data for display
     return events.map((event: any) => {
       let platforms = [];
-      if (event.posted_to_facebook) platforms.push('Facebook');
-      if (event.posted_to_instagram) platforms.push('Instagram');
-      if (event.posted_to_google) platforms.push('Google');
+      if (event.posted_to_facebook) platforms.push('facebook');
+      if (event.posted_to_instagram) platforms.push('instagram');
+      if (event.posted_to_google) platforms.push('google');
       
       return {
         id: event.id,
         vehicleId: event.vehicle_id,
         vehicle: `${event.vehicles?.year} ${event.vehicles?.make} ${event.vehicles?.model}`,
-        status: `Posted to ${platforms.join(', ')}`,
+        status: 'Social Media Post',
         time: formatRelativeTime(event.created_at),
-        notes: event.notes
+        notes: event.notes,
+        isSocialPost: true,
+        platforms: platforms
       };
     });
   } catch (error) {
     console.error('Error in fetchSocialMediaActivity:', error);
+    return [];
+  }
+};
+
+/**
+ * Fetch all activity (vehicle events and social posts) for a dealership
+ */
+export const fetchAllActivity = async (dealershipId: number, limit: number = 10): Promise<RecentActivity[]> => {
+  try {
+    // Query all vehicle events
+    const { data: events, error } = await supabase
+      .from('vehicle_events')
+      .select(`
+        id,
+        created_at,
+        event_type,
+        notes,
+        vehicle_id,
+        posted_to_facebook,
+        posted_to_instagram,
+        posted_to_google,
+        vehicles(year, make, model, vin, stock_number)
+      `)
+      .eq('vehicles.dealership_id', dealershipId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error fetching all activity:', error);
+      return [];
+    }
+    
+    // Transform the data for display
+    return events.map((event: any) => {
+      const platforms = [];
+      if (event.posted_to_facebook) platforms.push('facebook');
+      if (event.posted_to_instagram) platforms.push('instagram');
+      if (event.posted_to_google) platforms.push('google');
+      
+      const isSocialPost = platforms.length > 0;
+      
+      return {
+        id: event.id,
+        vehicleId: event.vehicle_id,
+        vehicle: `${event.vehicles?.year} ${event.vehicles?.make} ${event.vehicles?.model}`,
+        status: isSocialPost ? 'Social Media Post' : getStatusDisplayText(event.event_type),
+        time: formatRelativeTime(event.created_at),
+        notes: event.notes,
+        isSocialPost,
+        platforms: platforms.length > 0 ? platforms : undefined
+      };
+    });
+  } catch (error) {
+    console.error('Error in fetchAllActivity:', error);
     return [];
   }
 };

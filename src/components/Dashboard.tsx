@@ -5,7 +5,7 @@ import Modal from './ui/Modal';
 import Debug from './Debug';
 import { Vehicle } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { fetchRecentActivity, fetchSocialMediaActivity, RecentActivity } from '../lib/activityService';
+import { fetchAllActivity, RecentActivity } from '../lib/activityService';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -16,7 +16,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
   const { user } = useAuth();
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [socialActivity, setSocialActivity] = useState<RecentActivity[]>([]);
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +50,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
       
       setIsLoading(true);
       try {
-        const activity = await fetchRecentActivity(dealershipId, 5);
-        setRecentActivity(activity);
-        
-        const socialPosts = await fetchSocialMediaActivity(dealershipId, 3);
-        setSocialActivity(socialPosts);
+        // Get all activity including vehicle events and social posts
+        const allActivity = await fetchAllActivity(dealershipId, 10);
+        setRecentActivity(allActivity);
       } catch (err) {
         console.error('Error fetching activity:', err);
         setError('Failed to load recent activity');
@@ -91,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
       />
       
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Vehicle Activity</h2>
+        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {isLoading ? (
             <div className="p-4 text-center text-gray-500">
@@ -111,64 +108,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewVehicle }) => {
                 <li key={activity.id} className="p-4 hover:bg-gray-50">
                   <div className="flex items-center">
                     <div className="flex-1">
-                      <p className="font-medium">{activity.vehicle} - {activity.status}</p>
-                      {activity.notes && (
-                        <p className="text-sm text-gray-700">{activity.notes}</p>
-                      )}
-                      <p className="text-sm text-gray-500">{activity.time}</p>
-                    </div>
-                    <button 
-                      className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
-                      onClick={() => {
-                        // Fetch the actual vehicle and view it
-                        const fetchVehicle = async () => {
-                          try {
-                            const { data, error } = await supabase
-                              .from('vehicles')
-                              .select('*')
-                              .eq('id', activity.vehicleId)
-                              .single();
-                              
-                            if (error) throw error;
-                            if (data) onViewVehicle(data as Vehicle);
-                          } catch (err) {
-                            console.error('Error fetching vehicle:', err);
-                          }
-                        };
-                        
-                        fetchVehicle();
-                      }}
-                    >
-                      View
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-      
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Social Media Activity</h2>
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
-              Loading social activity...
-            </div>
-          ) : socialActivity.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              No recent social media activity
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-200">
-              {socialActivity.map(activity => (
-                <li key={activity.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-center">
-                    <div className="flex-1">
                       <p className="font-medium">{activity.vehicle}</p>
-                      <p className="text-sm text-blue-600">{activity.status}</p>
-                      <p className="text-sm text-gray-500">{activity.time}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${activity.isSocialPost ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {activity.status}
+                        </span>
+                        {activity.platforms && activity.platforms.length > 0 && (
+                          <div className="flex space-x-1">
+                            {activity.platforms.includes('facebook') && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                Facebook
+                              </span>
+                            )}
+                            {activity.platforms.includes('instagram') && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800">
+                                Instagram
+                              </span>
+                            )}
+                            {activity.platforms.includes('google') && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Google
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {activity.notes && (
+                        <p className="text-sm text-gray-700 mt-1">{activity.notes}</p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-1">{activity.time}</p>
                     </div>
                     <button 
                       className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"

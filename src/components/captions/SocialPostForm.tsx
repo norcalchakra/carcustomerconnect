@@ -3,17 +3,16 @@ import { Caption, Vehicle, VehicleEvent } from '../../lib/api';
 // Import mock Facebook API instead of real one
 import { 
   mockInitFacebookSDK as initFacebookSDK, 
-  mockIsFacebookConnected as isFacebookConnected, 
-  mockLoginWithFacebook as loginWithFacebook, 
-  mockGetUserPages as getUserPages, 
-  mockPostToFacebookPage as postToFacebookPage, 
-  // Still use real function for database updates
-  updateCaptionWithFacebookPost 
+  mockIsFacebookConnected as isFacebookConnected,
+  mockLoginWithFacebook as loginWithFacebook,
+  mockGetUserPages as getUserPages,
+  mockPostToFacebookPage as postToFacebookPage,
+  updateCaptionWithFacebookPost
 } from '../../lib/mockFacebookApi';
-import PostScheduler from './PostScheduler';
+import { supabase } from '../../lib/supabase';
 import './SocialPostForm.css';
 import { createScheduledPost } from '../../lib/scheduledPostsService';
-import { supabase } from '../../lib/supabase';
+import PostScheduler from './PostScheduler';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -24,6 +23,7 @@ interface SocialPostFormProps {
 
 export const SocialPostForm: React.FC<SocialPostFormProps> = ({ 
   caption, 
+  vehicle,
   onPost 
 }) => {
   const [platforms, setPlatforms] = useState<string[]>([]);
@@ -164,6 +164,53 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     }
   };
   
+  // Function to update vehicle_events with social media post information
+  const updateVehicleEventWithSocialPost = async (vehicleId: number, platforms: string[]) => {
+    try {
+      // Check if there's an existing event for this vehicle
+      const { data: existingEvents, error: fetchError } = await supabase
+        .from('vehicle_events')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (fetchError) throw fetchError;
+      
+      // Prepare the update data
+      const updateData: any = {
+        posted_to_facebook: platforms.includes('facebook'),
+        posted_to_instagram: platforms.includes('instagram'),
+        posted_to_google: platforms.includes('google')
+      };
+      
+      if (existingEvents && existingEvents.length > 0) {
+        // Update the most recent event
+        const { error } = await supabase
+          .from('vehicle_events')
+          .update(updateData)
+          .eq('id', existingEvents[0].id);
+          
+        if (error) throw error;
+        console.log('Updated existing vehicle event with social post info');
+      } else {
+        // Create a new event
+        updateData.vehicle_id = vehicleId;
+        updateData.event_type = 'social_post';
+        updateData.notes = 'Posted to social media';
+        
+        const { error } = await supabase
+          .from('vehicle_events')
+          .insert(updateData);
+          
+        if (error) throw error;
+        console.log('Created new vehicle event for social post');
+      }
+    } catch (err) {
+      console.error('Error updating vehicle event with social post:', err);
+    }
+  };
+  
   const handleImmediatePost = async () => {
     setIsPosting(true);
     setError(null);
@@ -191,6 +238,11 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
         // Update caption with post ID
         if (result && caption.id) {
           await updateCaptionWithFacebookPost(Number(caption.id), result);
+        }
+        
+        // Update vehicle event with social post info if we have a vehicle
+        if (vehicle && vehicle.id) {
+          await updateVehicleEventWithSocialPost(vehicle.id, platforms);
         }
       }
       
