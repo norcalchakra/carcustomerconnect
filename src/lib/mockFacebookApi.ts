@@ -62,18 +62,32 @@ export const mockGetUserPages = (accessToken: string): Promise<any[]> => {
 // Mock posting to a Facebook page
 export const mockPostToFacebookPage = (
   pageId: string, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   pageAccessToken: string, 
   message: string, 
   imageUrls?: string[]
 ): Promise<string> => {
   console.log('Mock posting to Facebook page:', pageId);
   console.log('Message:', message);
+  
+  // Handle real image URLs from Supabase storage
   if (imageUrls && imageUrls.length > 0) {
-    console.log('Images:', imageUrls);
+    console.log(`Posting ${imageUrls.length} images to Facebook:`);
+    imageUrls.forEach((url, index) => {
+      console.log(`Image ${index + 1}:`, url);
+      // In a real implementation, we would upload these images to Facebook
+      // or use the URL directly if Facebook supports external URLs
+    });
   }
   
-  return simulateApiCall('mock_post_id_' + Date.now());
+  // In a real implementation, we would use the pageAccessToken to authenticate
+  // Log that we're using the token (to avoid unused parameter warning)
+  console.log(`Using page access token: ${pageAccessToken.substring(0, 5)}...`); 
+  
+  // Generate a mock post ID that includes the page ID for traceability
+  const mockPostId = `mock_fb_${pageId}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  console.log('Created mock post with ID:', mockPostId);
+  
+  return simulateApiCall(mockPostId);
 };
 
 // Mock updating caption with Facebook post

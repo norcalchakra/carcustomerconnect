@@ -5,6 +5,7 @@ import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
+import ImageCapture from './ImageCapture';
 import './SocialPostForm.improved.css';
 
 interface SocialPostFormProps {
@@ -30,7 +31,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>(['https://example.com/mock-image.jpg']);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [postContent, setPostContent] = useState<string>(caption.content);
   const [characterCount, setCharacterCount] = useState<number>(caption.content.length);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -274,12 +275,10 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     }
   };
 
-  // Function to handle image upload (mock implementation)
-  const handleImageUpload = () => {
-    // In a real implementation, this would open a file picker
-    // For now, we'll just add a mock image URL
-    const newImageUrl = `https://example.com/mock-image-${Date.now()}.jpg`;
-    setImageUrls([...imageUrls, newImageUrl]);
+  // Function to handle image capture from camera or file upload
+  const handleImageCaptured = (imageUrl: string) => {
+    console.log('Image captured/uploaded:', imageUrl);
+    setImageUrls([...imageUrls, imageUrl]);
   };
 
   // Function to remove an image
@@ -430,13 +429,12 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
             <div className="image-section">
               <div className="image-header">
                 <h4>Images</h4>
-                <button 
-                  className="btn btn-sm btn-outline-primary"
-                  onClick={handleImageUpload}
-                >
-                  Add Image
-                </button>
               </div>
+              
+              <ImageCapture 
+                onImageCaptured={handleImageCaptured}
+                dealershipId={dealershipId}
+              />
               
               {imageUrls.length > 0 ? (
                 <div className="image-preview">
@@ -453,9 +451,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="no-images">
-                  No images added. Posts with images typically get more engagement.
-                </div>
+                <div className="no-images">No images added yet. Use the camera or upload from your device.</div>
               )}
             </div>
           </div>
