@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import VehicleList from './vehicles/VehicleList';
 import VehicleForm from './vehicles/VehicleForm';
 import Modal from './ui/Modal';
@@ -8,36 +9,39 @@ import { useAuth } from '../context/AuthContext';
 import { fetchAllActivity, RecentActivity } from '../lib/activityService';
 import eventBus, { EVENTS } from '../lib/eventBus';
 import { supabase } from '../lib/supabase';
+import './Dashboard.improved.css';
 
-interface DashboardProps {
-  onViewVehicle: (vehicle: Vehicle) => void;
-}
+interface DashboardProps {}
 
-// Define the ref interface
+// Define the ref interface for external components that need to refresh the dashboard
 export interface DashboardRefHandle {
   refreshActivity: () => Promise<void>;
 }
 
-const Dashboard = forwardRef<DashboardRefHandle, DashboardProps>(({ onViewVehicle }, ref) => {
+const Dashboard: React.FC<DashboardProps> = () => {
   const { user } = useAuth();
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [recentActivity, setRecentActivity] = useState<(RecentActivity & { imageUrl?: string })[]>([]);
   const [dealershipId, setDealershipId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Fetch dealership ID for the current user
   useEffect(() => {
     const getDealershipId = async () => {
-      if (!user) return;
-      
+      if (!user) {
+        setError('User not authenticated');
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('dealerships')
           .select('id')
           .eq('user_id', user.id)
           .single();
-        
+
         if (error) throw error;
         if (data) setDealershipId(data.id);
       } catch (err) {
@@ -45,50 +49,110 @@ const Dashboard = forwardRef<DashboardRefHandle, DashboardProps>(({ onViewVehicl
         setError('Failed to load dealership information');
       }
     };
-    
+
     getDealershipId();
   }, [user]);
-  
+
+  // Fetch vehicles for the dealership
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      if (!dealershipId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('dealership_id', dealershipId);
+          
+        if (error) throw error;
+        if (data) setVehicles(data as Vehicle[]);
+      } catch (err) {
+        console.error('Error fetching vehicles:', err);
+      }
+    };
+    
+    fetchVehicles();
+  }, [dealershipId]);
+
   // Function to refresh activity data
   const refreshActivity = useCallback(async () => {
-    if (!dealershipId) return;
-    
-    setIsLoading(true);
     try {
-      // Get all activity including vehicle events and social posts
-      console.log('Refreshing activity for dealership:', dealershipId);
-      const allActivity = await fetchAllActivity(dealershipId, 10);
-      console.log('Activity refreshed:', allActivity);
-      setRecentActivity(allActivity);
+      setLoading(true);
+      setError(null);
+
+      if (!dealershipId) {
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching activity for dealership:', dealershipId);
+      const activity = await fetchAllActivity(dealershipId);
+      console.log('Activity fetched:', activity);
+      setRecentActivity(activity);
     } catch (err) {
       console.error('Error fetching activity:', err);
       setError('Failed to load recent activity');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, [dealershipId]);
+
+  // Handle viewing post details
+  const navigate = useNavigate();
   
-  // Expose the refresh function via ref
-  useImperativeHandle(ref, () => ({
-    refreshActivity
-  }));
+  const handleViewPostDetails = (postId: number) => {
+    navigate(`/social/posts/${postId}`);
+  };
+
+  // No longer needed with React Router
+  // const handleClosePostDetail = () => {
+  //   setShowPostDetail(false);
+  //   setSelectedPost(null);
+  // };
+
+  // Render platform badges for social posts
+  const renderPlatformBadges = (platforms?: string[]) => {
+    if (!platforms || platforms.length === 0) return null;
+
+    return (
+      <div className="platform-badges">
+        {platforms.includes('facebook') && (
+          <span className="platform-badge facebook">Facebook</span>
+        )}
+        {platforms.includes('instagram') && (
+          <span className="platform-badge instagram">Instagram</span>
+        )}
+        {platforms.includes('google') && (
+          <span className="platform-badge google">Google</span>
+        )}
+      </div>
+    );
+  };
+
+  // Create a ref for refreshActivity that can be used by parent components
+  const refreshActivityRef = useRef<() => Promise<void>>(refreshActivity);
+  
+  // Keep the ref updated with the latest refreshActivity function
+  useEffect(() => {
+    refreshActivityRef.current = refreshActivity;
+  }, [refreshActivity]);
 
   // Fetch recent activity on component mount
   useEffect(() => {
     if (dealershipId) {
       refreshActivity();
     }
-    
+
     // Listen for social post created events
     const handleSocialPostCreated = () => {
       console.log('Dashboard received social post created event, refreshing activity...');
       refreshActivity();
     };
-    
+
     // Subscribe to events
     eventBus.on(EVENTS.SOCIAL_POST_CREATED, handleSocialPostCreated);
     eventBus.on(EVENTS.ACTIVITY_UPDATED, handleSocialPostCreated);
-    
+
     // Cleanup event listeners
     return () => {
       eventBus.off(EVENTS.SOCIAL_POST_CREATED, handleSocialPostCreated);
@@ -100,136 +164,118 @@ const Dashboard = forwardRef<DashboardRefHandle, DashboardProps>(({ onViewVehicl
     setIsAddVehicleModalOpen(true);
   };
 
-  const handleVehicleSaved = () => {
+  const handleVehicleSaved = (vehicle: Vehicle) => {
     setIsAddVehicleModalOpen(false);
-    // In a real app, we'd refresh the vehicle list here
-    // For now, just close the modal
+    navigate(`/vehicles/${vehicle.id}`);
   };
 
   return (
     <div className="p-4">
       {/* Debug Component - Shows dealership information */}
       <Debug />
-      
+
       {/* Vehicle List with Status Filters */}
-      <VehicleList 
-        onSelectVehicle={onViewVehicle} 
-        onAddVehicle={handleAddVehicle} 
+      <VehicleList
+        onSelectVehicle={(vehicle) => navigate(`/vehicles/${vehicle.id}`)}
+        onAddVehicle={handleAddVehicle}
       />
-      
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
-              Loading activity...
-            </div>
+
+      <div className="dashboard-card recent-activity">
+        <h2>Recent Activity</h2>
+        <div className="activity-container">
+          {loading ? (
+            <div className="loading-indicator">Loading recent activity...</div>
           ) : error ? (
-            <div className="p-4 text-center text-red-500">
-              {error}
-            </div>
+            <div className="error-message">{error}</div>
           ) : recentActivity.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              No recent activity
+            <div className="empty-state">
+              <p>No recent activity found.</p>
+              <p>Start by adding vehicles or creating social media posts.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {recentActivity.map(activity => (
-                <li key={activity.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-center">
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.vehicle}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${activity.isSocialPost ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {activity.status}
-                        </span>
-                        {activity.platforms && activity.platforms.length > 0 && (
-                          <div className="flex space-x-1">
-                            {activity.platforms.includes('facebook') && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                Facebook
-                              </span>
-                            )}
-                            {activity.platforms.includes('instagram') && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800">
-                                Instagram
-                              </span>
-                            )}
-                            {activity.platforms.includes('google') && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                Google
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {activity.notes && (
-                        <p className="text-sm text-gray-700 mt-1">{activity.notes}</p>
-                      )}
-                      <p className="text-sm text-gray-500 mt-1">{activity.time}</p>
-                    </div>
-                    <button 
-                      className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
-                      onClick={() => {
-                        // Fetch the actual vehicle and view it
-                        const fetchVehicle = async () => {
-                          try {
-                            const { data, error } = await supabase
-                              .from('vehicles')
-                              .select('*')
-                              .eq('id', activity.vehicleId)
-                              .single();
-                              
-                            if (error) throw error;
-                            if (data) onViewVehicle(data as Vehicle);
-                          } catch (err) {
-                            console.error('Error fetching vehicle:', err);
-                          }
-                        };
-                        
-                        fetchVehicle();
-                      }}
-                    >
-                      View
-                    </button>
+            <ul className="activity-list">
+              {recentActivity.map((activity) => (
+                <li key={activity.id} className="activity-item">
+                  <div className="activity-header">
+                    <span className="activity-status">{activity.status}</span>
+                    <span className="activity-time">{activity.time}</span>
                   </div>
+
+                  <div className="activity-vehicle">
+                    <Link to={`/vehicles/${activity.vehicleId}`}>
+                      {activity.vehicle}
+                    </Link>
+                  </div>
+
+                  <div className="activity-content">
+                    {activity.notes}
+
+                    {activity.isSocialPost && (
+                      <button
+                        className="view-details-btn"
+                        onClick={() => handleViewPostDetails(activity.id)}
+                      >
+                        View Post
+                      </button>
+                    )}
+                  </div>
+
+                  {activity.isSocialPost && renderPlatformBadges(activity.platforms)}
+
+                  {activity.isSocialPost && activity.imageUrl && (
+                    <div className="activity-image">
+                      <img src={activity.imageUrl} alt="Post preview" />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           )}
         </div>
       </div>
-      
-      <div className="mt-8 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-            </svg>
-            <span className="block mt-2">Scan VIN</span>
+
+      <div className="dashboard-card quick-actions">
+        <h2>Quick Actions</h2>
+        <div className="action-buttons">
+          <button className="action-button" onClick={() => setIsAddVehicleModalOpen(true)}>
+            <span className="action-icon">+</span>
+            <span className="action-label">Add Vehicle</span>
           </button>
-          
-          <button className="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
-            </svg>
-            <span className="block mt-2">Bulk Import</span>
-          </button>
-          
-          <button className="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
-            <span className="block mt-2">View Posts</span>
-          </button>
-          
-          <button className="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-            </svg>
-            <span className="block mt-2">Analytics</span>
-          </button>
+
+          <Link to="/captions" className="action-button">
+            <span className="action-icon">📝</span>
+            <span className="action-label">Create Post</span>
+          </Link>
+
+          <Link to="/vehicles" className="action-button">
+            <span className="action-icon">🚗</span>
+            <span className="action-label">View Inventory</span>
+          </Link>
+        </div>
+      </div>
+
+      <div className="dashboard-card performance-metrics">
+        <h2>Performance Metrics</h2>
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <div className="metric-value">{vehicles.length}</div>
+            <div className="metric-label">Vehicles in Stock</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-value">{recentActivity.filter((a) => a.isSocialPost).length}</div>
+            <div className="metric-label">Social Posts</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-value">142</div>
+            <div className="metric-label">Total Engagements</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-value">5</div>
+            <div className="metric-label">Vehicles Sold This Month</div>
+          </div>
         </div>
       </div>
 
@@ -247,6 +293,6 @@ const Dashboard = forwardRef<DashboardRefHandle, DashboardProps>(({ onViewVehicl
       </Modal>
     </div>
   );
-});
+};
 
 export default Dashboard;

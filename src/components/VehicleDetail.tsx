@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Vehicle, VehicleEvent, eventsApi } from '../lib/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Vehicle, VehicleEvent, eventsApi, vehiclesApi } from '../lib/api';
 import Modal from './ui/Modal';
 import VehicleForm from './vehicles/VehicleForm';
 import EventForm from './events/EventForm';
@@ -7,16 +8,15 @@ import EventTimeline from './events/EventTimeline';
 import { CaptionManager } from './captions/CaptionManager';
 import { useAuth } from '../context/AuthContext';
 
-interface VehicleDetailProps {
-  vehicle: Vehicle;
-  onBack: () => void;
-}
+interface VehicleDetailProps {}
 
-const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
-  const { /* user not used currently */ } = useAuth();
-  const [currentVehicle, setCurrentVehicle] = useState<Vehicle>(vehicle);
+const VehicleDetail: React.FC<VehicleDetailProps> = () => {
+  const { /* user not needed here */ } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null);
   const [events, setEvents] = useState<VehicleEvent[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
@@ -39,29 +39,34 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
     return new Intl.NumberFormat('en-US').format(mileage);
   };
 
-  // Fetch vehicle events
   useEffect(() => {
-    const fetchEvents = async () => {
-      if (!currentVehicle?.id) return;
+    const fetchVehicleData = async () => {
+      if (!id) return;
       
       setLoading(true);
-      setError(null);
-      
       try {
-        const eventData = await eventsApi.getForVehicle(currentVehicle.id);
-        setEvents(eventData);
+        const vehicleData = await vehiclesApi.getById(parseInt(id));
+        setCurrentVehicle(vehicleData);
+        
+        // Fetch events for this vehicle
+        const vehicleEvents = await eventsApi.getForVehicle(parseInt(id));
+        setEvents(vehicleEvents);
       } catch (err) {
-        console.error('Error fetching vehicle events:', err);
-        setError('Failed to load vehicle events. Please try again.');
+        console.error('Error fetching vehicle data:', err);
+        setError('Failed to load vehicle data');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchEvents();
-  }, [currentVehicle?.id]);
+
+    fetchVehicleData();
+  }, [id]);
 
   // Event handlers
+  const handleBackClick = () => {
+    navigate('/');
+  };
+
   const handleEditVehicle = () => {
     setIsEditModalOpen(true);
   };
@@ -70,9 +75,52 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
     setIsAddEventModalOpen(true);
   };
 
-  const handleVehicleSaved = (updatedVehicle: Vehicle) => {
+  const handleVehicleUpdated = (updatedVehicle: Vehicle) => {
     setCurrentVehicle(updatedVehicle);
     setIsEditModalOpen(false);
+  };
+
+  const handleUpdateStatus = async (newStatus: Vehicle['status']) => {
+    if (!currentVehicle) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Update the vehicle status in the database
+      await vehiclesApi.update(currentVehicle.id, { status: newStatus });
+      
+      // Update local state with proper type handling
+      setCurrentVehicle(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          status: newStatus
+        };
+      });
+      
+      // Create an event for this status change
+      // Make sure event_type is compatible with the API
+      const eventType = newStatus === 'in_service' ? 'service_complete' : newStatus;
+      await eventsApi.create({
+        vehicle_id: currentVehicle.id,
+        event_type: eventType,
+        notes: `Vehicle status updated to ${newStatus}`,
+        posted_to_facebook: false,
+        posted_to_instagram: false,
+        posted_to_google: false,
+        post_id: null
+      });
+      
+      // Refresh events
+      const updatedEvents = await eventsApi.getForVehicle(currentVehicle.id);
+      setEvents(updatedEvents);
+    } catch (err) {
+      console.error('Error updating vehicle status:', err);
+      setError('Failed to update vehicle status');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEventSaved = (newEvent: VehicleEvent) => {
@@ -91,16 +139,70 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <button 
-          onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800"
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error || !currentVehicle) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong className="font-bold">Error:</strong>
+          <span className="block sm:inline"> {error || 'Vehicle not found'}</span>
+        </div>
+        <button
+          onClick={() => navigate('/')}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          <span className="mr-2">←</span> Back
+          Return to Dashboard
         </button>
-        <h1 className="text-2xl font-bold mt-2">
+        <div className="flex space-x-2 mt-4">
+          <button
+            onClick={() => handleUpdateStatus('acquired')}
+            className={`px-3 py-1 rounded ${currentVehicle?.status === 'acquired' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            Acquired
+          </button>
+          <button
+            onClick={() => handleUpdateStatus('in_service')}
+            className={`px-3 py-1 rounded ${currentVehicle?.status === 'in_service' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            In Service
+          </button>
+          <button
+            onClick={() => handleUpdateStatus('ready_for_sale')}
+            className={`px-3 py-1 rounded ${currentVehicle?.status === 'ready_for_sale' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            Ready for Sale
+          </button>
+          <button
+            onClick={() => handleUpdateStatus('sold')}
+            className={`px-3 py-1 rounded ${currentVehicle?.status === 'sold' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            Sold
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={handleBackClick}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded inline-flex items-center"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Dashboard
+        </button>
+        <h1 className="text-2xl font-bold">
           {currentVehicle?.year} {currentVehicle?.make} {currentVehicle?.model}
         </h1>
       </div>
@@ -219,7 +321,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle, onBack }) => {
       >
         <VehicleForm
           initialVehicle={currentVehicle}
-          onSave={handleVehicleSaved}
+          onSave={handleVehicleUpdated}
           onCancel={() => setIsEditModalOpen(false)}
         />
       </Modal>

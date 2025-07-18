@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import VehicleDetail from './components/VehicleDetail';
 import Header from './components/Header';
@@ -8,22 +9,26 @@ import FacebookTest from './pages/FacebookTest';
 import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import VinScannerPage from './pages/VinScannerPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocialPostForm } from './components/captions/SocialPostForm';
+import { SocialPostDetail } from './components/social/SocialPostDetail';
 import './App.css';
+
+const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  return user ? <>{element}</> : <Navigate to="/login" />;
+};
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'vehicle' | 'settings' | 'facebook-test' | 'simple-facebook-test' | 'vin-scanner'>('dashboard');
-  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
-
-  const handleViewVehicle = (vehicle: any) => {
-    setSelectedVehicle(vehicle);
-    setCurrentView('vehicle');
-  };
-
-  const handleBackToDashboard = () => {
-    setCurrentView('dashboard');
-    setSelectedVehicle(null);
-  };
 
   // Show loading state while checking authentication
   if (loading) {
@@ -34,47 +39,25 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // If no user is logged in, show the authentication screen
-  if (!user) {
-    return <Auth />;
-  }
-
-  // User is logged in, show the main application
   return (
-    <div className="app-container">
-      <Header onNavigate={(view) => {
-        setCurrentView(view);
-        if (view !== 'vehicle') setSelectedVehicle(null);
-      }} />
-      <main className="main-content">
-        {currentView === 'dashboard' && (
-          <Dashboard onViewVehicle={handleViewVehicle} />
-        )}
-        
-        {currentView === 'vehicle' && selectedVehicle && (
-          <VehicleDetail 
-            vehicle={selectedVehicle} 
-            onBack={handleBackToDashboard} 
-          />
-        )}
-        
-        {currentView === 'settings' && (
-          <Settings />
-        )}
-        
-        {currentView === 'facebook-test' && (
-          <FacebookTest />
-        )}
-        
-        {currentView === 'simple-facebook-test' && (
-          <SimpleFacebookTest />
-        )}
-        
-        {currentView === 'vin-scanner' && (
-          <VinScannerPage />
-        )}
-      </main>
-    </div>
+    <Router>
+      <div className="app-container">
+        {user && <Header />}
+        <main className="main-content">
+          <Routes>
+            <Route path="/login" element={!user ? <Auth /> : <Navigate to="/" />} />
+            <Route path="/" element={<ProtectedRoute element={<Dashboard />} />} />
+            <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
+            <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
+            <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />
+            <Route path="/simple-facebook-test" element={<ProtectedRoute element={<SimpleFacebookTest />} />} />
+            <Route path="/vin-scanner" element={<ProtectedRoute element={<VinScannerPage />} />} />
+            <Route path="/captions" element={<ProtectedRoute element={<SocialPostForm caption={{ id: 0, content: '', vehicle_id: 0, event_id: 0, hashtags: [] }} />} />} />
+            <Route path="/social/posts/:id" element={<ProtectedRoute element={<SocialPostDetail />} />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 };
 

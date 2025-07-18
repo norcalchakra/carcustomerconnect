@@ -1,0 +1,288 @@
+.social-post-detail {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.social-post-detail.loading,
+.social-post-detail.error {
+  padding: 40px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4299e1;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.post-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2d3748;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #718096;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-btn:hover {
+  background-color: #edf2f7;
+  color: #4a5568;
+}
+
+.post-info {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.platform-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #edf2f7;
+  border-radius: 20px;
+}
+
+.platform-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+}
+
+.platform-icon.facebook {
+  background-color: #1877f2;
+}
+
+.platform-icon.instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.platform-icon.google {
+  background-color: #4285f4;
+}
+
+.platform-name {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: #718096;
+  margin-bottom: 4px;
+}
+
+.meta-value {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.posted {
+  background-color: #c6f6d5;
+  color: #2f855a;
+}
+
+.status-badge.scheduled {
+  background-color: #bee3f8;
+  color: #2b6cb0;
+}
+
+.status-badge.failed {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+.post-content {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.post-content h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+.content-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+.post-images {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.post-images h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.gallery-image {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gallery-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-image:hover img {
+  transform: scale(1.05);
+}
+
+.post-engagement {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.post-engagement h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+.engagement-metrics {
+  display: flex;
+  gap: 24px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: #718096;
+  margin-top: 4px;
+}
+
+.post-actions {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3182ce;
+}
+
+@media (max-width: 640px) {
+  .post-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .post-meta {
+    width: 100%;
+  }
+  
+  .engagement-metrics {
+    justify-content: space-around;
+    width: 100%;
+  }
+}

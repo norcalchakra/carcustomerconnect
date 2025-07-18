@@ -5,12 +5,12 @@ import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import './SocialPostForm.improved.css';
+import './SocialPostForm.css';
 
 interface SocialPostFormProps {
   caption: Caption;
-  vehicle?: Vehicle; // Made optional since we're not using it currently
-  event?: VehicleEvent; // Made optional since we're not using it currently
+  vehicle?: Vehicle;
+  event?: VehicleEvent;
   onPost?: (platforms: string[]) => void;
 }
 
@@ -48,7 +48,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     if (platforms.length === 0) return CHAR_LIMITS.facebook;
     return Math.min(...platforms.map(p => CHAR_LIMITS[p as keyof typeof CHAR_LIMITS]));
   };
-
+  
   // Fetch dealership ID for the current user
   useEffect(() => {
     const getDealershipId = async () => {
@@ -71,13 +71,13 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     
     getDealershipId();
   }, [user]);
-
+  
   // Initialize content from caption
   useEffect(() => {
     setPostContent(caption.content);
     setCharacterCount(caption.content.length);
   }, [caption]);
-
+  
   // Initialize Mock Facebook SDK on component mount
   useEffect(() => {
     const initFacebook = async () => {
@@ -88,7 +88,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
         
         if (connected) {
           // Try to get saved pages using the stored token
-          const accessToken = localStorage.getItem('mock_fb_access_token'); // Use mock storage key
+          const accessToken = localStorage.getItem('mock_fb_access_token');
           if (accessToken) {
             try {
               const pages = await mockGetUserPages(accessToken);
@@ -98,8 +98,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
               }
             } catch (err) {
               console.error('Error fetching Facebook pages:', err);
-              // Token might be expired, clear it
-              localStorage.removeItem('mock_fb_access_token'); // Use mock storage key
+              localStorage.removeItem('mock_fb_access_token');
               setFacebookConnected(false);
             }
           }
@@ -111,7 +110,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     
     initFacebook();
   }, []);
-
+  
   const handleConnectFacebook = async () => {
     try {
       setError(null);
@@ -136,7 +135,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       setError('Failed to connect to Facebook. Please try again.');
     }
   };
-
+  
   const handleTogglePlatform = (platform: string) => {
     if (platform === 'facebook' && !facebookConnected) {
       // If Facebook is not connected, initiate the connection process
@@ -150,15 +149,30 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       setPlatforms([...platforms, platform]);
     }
   };
-
+  
   const toggleScheduler = () => {
     setShowScheduler(!showScheduler);
-    // Reset scheduled state when toggling scheduler
     if (isScheduled) {
       setIsScheduled(false);
     }
   };
-
+  
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setPostContent(newContent);
+    setCharacterCount(newContent.length);
+  };
+  
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+    // Focus the textarea when entering edit mode
+    if (!isEditing && contentRef.current) {
+      setTimeout(() => {
+        contentRef.current?.focus();
+      }, 0);
+    }
+  };
+  
   // Function to create a social media post record
   const createSocialPost = async (platform: string, content: string, postId: string, vehicleId?: number): Promise<boolean> => {
     try {
@@ -206,7 +220,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       return false;
     }
   };
-
+  
   const handleImmediatePost = async () => {
     if (platforms.length === 0) {
       setError('Please select at least one platform to post to');
@@ -273,7 +287,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
       setIsPosting(false);
     }
   };
-
+  
   // Function to handle image upload (mock implementation)
   const handleImageUpload = () => {
     // In a real implementation, this would open a file picker
@@ -281,30 +295,14 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     const newImageUrl = `https://example.com/mock-image-${Date.now()}.jpg`;
     setImageUrls([...imageUrls, newImageUrl]);
   };
-
+  
   // Function to remove an image
   const handleRemoveImage = (index: number) => {
     const newImageUrls = [...imageUrls];
     newImageUrls.splice(index, 1);
     setImageUrls(newImageUrls);
   };
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-    // Focus the textarea when entering edit mode
-    if (!isEditing && contentRef.current) {
-      setTimeout(() => {
-        contentRef.current?.focus();
-      }, 0);
-    }
-  };
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setPostContent(newContent);
-    setCharacterCount(newContent.length);
-  };
-
+  
   return (
     <div className="social-post-form">
       <h2>Post to Social Media</h2>
