@@ -47,6 +47,7 @@ const AppContent: React.FC = () => {
           <Routes>
             <Route path="/login" element={!user ? <Auth /> : <Navigate to="/" />} />
             <Route path="/" element={<ProtectedRoute element={<Dashboard />} />} />
+            <Route path="/dashboard" element={<Navigate to="/" />} />
             <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
             <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
             <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />
