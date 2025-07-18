@@ -440,7 +440,17 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                 <div className="image-preview">
                   {imageUrls.map((url, index) => (
                     <div key={index} className="preview-image-container">
-                      <img src={url} alt="Preview" className="preview-image" />
+                      <img 
+                        src={url} 
+                        alt="Preview" 
+                        className="preview-image" 
+                        onError={(e) => {
+                          // Handle broken images by showing a placeholder
+                          console.error(`Failed to load image: ${url}`);
+                          e.currentTarget.src = 'https://via.placeholder.com/120?text=Image+Error';
+                          e.currentTarget.classList.add('image-error');
+                        }}
+                      />
                       <button 
                         className="remove-image-btn"
                         onClick={() => handleRemoveImage(index)}

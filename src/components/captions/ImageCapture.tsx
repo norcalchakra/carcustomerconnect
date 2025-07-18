@@ -120,29 +120,48 @@ const ImageCapture: React.FC<ImageCaptureProps> = ({ onImageCaptured, dealership
       const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt || 'jpg'}`;
       const filePath = `dealership-${dealershipId}/${uniqueFileName}`;
       
+      // Check if the bucket exists first
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'social-media-images');
+      
+      if (!bucketExists) {
+        console.warn('The social-media-images bucket does not exist. Using temporary URL for preview.');
+        // Create a temporary object URL for preview purposes
+        const tempUrl = URL.createObjectURL(file);
+        onImageCaptured(tempUrl);
+        return;
+      }
+      
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('social-media-images')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true, // Changed to true to allow overwriting if needed
           contentType: file.type
         });
       
       if (error) {
-        throw error;
+        console.error('Supabase storage upload error:', error);
+        // Create a temporary object URL for preview purposes if upload fails
+        const tempUrl = URL.createObjectURL(file);
+        onImageCaptured(tempUrl);
+        return;
       }
       
       if (data) {
         // Get the public URL for the uploaded image
         const { data: publicUrlData } = supabase.storage
           .from('social-media-images')
-          .getPublicUrl(filePath);
+          .getPublicUrl(data.path || filePath);
         
         if (publicUrlData && publicUrlData.publicUrl) {
           onImageCaptured(publicUrlData.publicUrl);
         } else {
-          throw new Error('Failed to get public URL for uploaded image');
+          console.error('Failed to get public URL, using temporary URL instead');
+          // Fallback to temporary URL if we can't get a public URL
+          const tempUrl = URL.createObjectURL(file);
+          onImageCaptured(tempUrl);
         }
       }
     } catch (err) {

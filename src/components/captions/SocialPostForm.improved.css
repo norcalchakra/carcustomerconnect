@@ -265,6 +265,13 @@
   object-fit: cover;
 }
 
+.image-error {
+  border: 2px solid #e53e3e;
+  background-color: #fff5f5;
+  object-fit: contain;
+  padding: 5px;
+}
+
 .remove-image-btn {
   position: absolute;
   top: 4px;
