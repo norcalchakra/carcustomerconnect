@@ -1,0 +1,49 @@
+.image-proxy-container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #666;
+  font-size: 14px;
+}
+
+.image-proxy {
+  max-width: 100%;
+  height: auto;
+  transition: opacity 0.3s ease;
+}
+
+.image-proxy.data-url {
+  border-radius: 4px;
+  transition: opacity 0.3s ease;
+}
+
+.image-proxy.loading {
+  opacity: 0.5;
+}
+
+.image-proxy.loaded {
+  opacity: 1;
+}
+
+.image-proxy.image-error {
+  border: 1px dashed #dc3545;
+  padding: 4px;
+}
