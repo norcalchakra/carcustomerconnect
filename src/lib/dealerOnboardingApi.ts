@@ -129,16 +129,33 @@ export const dealerOnboardingApi = {
    * Save a lifecycle template
    */
   async saveLifecycleTemplate(template: LifecycleTemplate): Promise<LifecycleTemplate | null> {
-    console.log('Saving lifecycle template:', template);
+    console.log('Saving lifecycle template:', JSON.stringify(template, null, 2));
+    console.log('Template dealership_id:', template.dealership_id);
+    console.log('Template lifecycle_stage:', template.lifecycle_stage);
+    
+    // Ensure dealership_id is a number
+    if (typeof template.dealership_id !== 'number') {
+      template.dealership_id = Number(template.dealership_id);
+      console.log('Converted dealership_id to number:', template.dealership_id);
+    }
     
     // First, check if we can fetch from the database
-    const { error: fetchError } = await supabase
+    const { data: checkData, error: fetchError } = await supabase
       .from('lifecycle_templates')
       .select('count')
       .eq('dealership_id', template.dealership_id);
     
+    console.log('Database check result:', checkData);
+    
     if (fetchError) {
       console.error('Error accessing templates table:', fetchError);
+      console.error('Error details:', fetchError.details, fetchError.hint, fetchError.message);
+      return null;
+    }
+    
+    // Validate required fields
+    if (!template.template_name || !template.template_content || !template.lifecycle_stage) {
+      console.error('Missing required fields for template:', template);
       return null;
     }
     
@@ -147,20 +164,36 @@ export const dealerOnboardingApi = {
     // We're NOT using the lifecycle_stage to determine if a template exists anymore
     let operation;
     
+    // Make sure we have a clean object for database operations
+    const templateToSave = {
+      id: template.id,
+      dealership_id: template.dealership_id,
+      lifecycle_stage: template.lifecycle_stage,
+      template_name: template.template_name,
+      template_content: template.template_content,
+      is_active: template.is_active !== undefined ? template.is_active : true
+    };
+    
+    console.log('Clean template object for database:', templateToSave);
+    
     if (template.id === 0) {
       // This is a new template, so insert it
-      console.log(`Creating new template for ${template.lifecycle_stage} stage`);
+      console.log(`Creating new template for ${template.lifecycle_stage} stage:`, JSON.stringify(templateToSave, null, 2));
+      
+      // Remove the id field for new templates
+      const { id, ...newTemplate } = templateToSave;
+      
       operation = supabase
         .from('lifecycle_templates')
-        .insert(template)
+        .insert(newTemplate)
         .select()
         .single();
     } else {
       // This is an existing template, so update it
-      console.log(`Updating existing template ID ${template.id} for ${template.lifecycle_stage} stage`);
+      console.log(`Updating existing template ID ${template.id} for ${template.lifecycle_stage} stage:`, JSON.stringify(templateToSave, null, 2));
       operation = supabase
         .from('lifecycle_templates')
-        .update(template)
+        .update(templateToSave)
         .eq('id', template.id)
         .select()
         .single();
@@ -170,6 +203,9 @@ export const dealerOnboardingApi = {
     
     if (error) {
       console.error('Error saving lifecycle template:', error);
+      console.error('Error details:', error.details, error.hint, error.message);
+      console.error('Error code:', error.code);
+      console.error('Failed template data:', JSON.stringify(templateToSave, null, 2));
       return null;
     }
     

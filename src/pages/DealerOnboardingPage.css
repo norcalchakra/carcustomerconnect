@@ -49,6 +49,24 @@
   font-style: italic;
 }
 
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #c62828;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #2e7d32;
+}
+
 .onboarding-progress {
   display: flex;
   justify-content: space-between;

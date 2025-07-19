@@ -4,11 +4,12 @@ import './OnboardingSteps.css';
 
 interface BrandVoiceStepProps {
   onSave: (formData: BrandVoiceSettings) => void;
-  brandVoiceSettings?: BrandVoiceSettings;
-  dealershipId?: number;
+  brandVoice: BrandVoiceSettings | null;
+  aiAssistEnabled: boolean;
+  dealershipId: number | null;
 }
 
-const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoiceSettings, dealershipId }) => {
+const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiAssistEnabled, dealershipId }) => {
   const [formData, setFormData] = useState<BrandVoiceSettings>({
     id: dealershipId || 0,
     formality_level: 3, 
@@ -27,23 +28,23 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoiceSetti
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (brandVoiceSettings) {
+    if (brandVoice) {
       setFormData({
-        id: brandVoiceSettings.id,
-        formality_level: brandVoiceSettings.formality_level ?? 3,
-        energy_level: brandVoiceSettings.energy_level ?? 3,
-        technical_detail_preference: brandVoiceSettings.technical_detail_preference ?? 'benefit-focused',
-        community_connection: brandVoiceSettings.community_connection ?? 'regional',
-        emoji_usage_level: brandVoiceSettings.emoji_usage_level ?? 2,
-        primary_emotions: brandVoiceSettings.primary_emotions ?? [],
-        value_propositions: brandVoiceSettings.value_propositions ?? [],
-        tone_keywords: brandVoiceSettings.tone_keywords ?? [],
-        avoid_tone_keywords: brandVoiceSettings.avoid_tone_keywords ?? [],
-        example_phrases: brandVoiceSettings.example_phrases ?? [],
+        id: brandVoice.id,
+        formality_level: brandVoice.formality_level ?? 3,
+        energy_level: brandVoice.energy_level ?? 3,
+        technical_detail_preference: brandVoice.technical_detail_preference ?? 'benefit-focused',
+        community_connection: brandVoice.community_connection ?? 'regional',
+        emoji_usage_level: brandVoice.emoji_usage_level ?? 2,
+        primary_emotions: brandVoice.primary_emotions ?? [],
+        value_propositions: brandVoice.value_propositions ?? [],
+        tone_keywords: brandVoice.tone_keywords ?? [],
+        avoid_tone_keywords: brandVoice.avoid_tone_keywords ?? [],
+        example_phrases: brandVoice.example_phrases ?? [],
         updated_at: new Date().toISOString()
       });
     }
-  }, [brandVoiceSettings]);
+  }, [brandVoice]);
 
   // Generate preview based on current settings
   useEffect(() => {
