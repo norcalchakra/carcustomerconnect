@@ -291,34 +291,57 @@ const DealerOnboardingPage: React.FC = () => {
   // Customization step removed
   
   const handleSaveDifferentiators = async (differentiators: CompetitiveDifferentiator[]) => {
-    if (!dealershipId) return;
+    if (!dealershipId) {
+      console.error('Cannot save differentiators: dealershipId is null');
+      setError('Failed to save differentiators: Missing dealership ID');
+      return;
+    }
     
     try {
-      const updatedDifferentiators = differentiators.map(d => ({
-        ...d,
-        dealership_id: dealershipId
-      }));
+      console.log('Differentiators received from component:', JSON.stringify(differentiators, null, 2));
+      console.log('Number of differentiators:', differentiators.length);
       
-      // Save each differentiator individually
-      const savedDifferentiators: CompetitiveDifferentiator[] = [];
+      // Since differentiators are now saved individually in the DifferentiatorsStep component,
+      // we just need to update our state with the current differentiators and move to the next step
       
-      for (const differentiator of updatedDifferentiators) {
-        const savedDifferentiator = await dealerOnboardingApi.saveCompetitiveDifferentiator(differentiator);
-        if (savedDifferentiator) {
-          savedDifferentiators.push(savedDifferentiator);
+      // Fetch all differentiators from the database to ensure we have the latest state
+      const allDifferentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(Number(dealershipId));
+      console.log('All differentiators in database:', JSON.stringify(allDifferentiators, null, 2));
+      
+      // Group differentiators by category for better organization
+      const differentiatorsByCategory: Record<string, CompetitiveDifferentiator[]> = {};
+      
+      // Initialize with empty arrays for each category
+      ['service', 'customer_experience', 'financial', 'inventory', 'warranty', 'community', 'other'].forEach(category => {
+        differentiatorsByCategory[category] = [];
+      });
+      
+      // Populate with actual differentiators
+      allDifferentiators.forEach(differentiator => {
+        const category = differentiator.category;
+        if (!differentiatorsByCategory[category]) {
+          differentiatorsByCategory[category] = [];
         }
-      }
+        differentiatorsByCategory[category].push(differentiator);
+      });
       
+      console.log('Differentiators by category:', differentiatorsByCategory);
+      
+      // Update the state with all differentiators from the database
       setOnboardingState(prev => ({
         ...prev,
-        differentiators: savedDifferentiators
+        differentiators: allDifferentiators
       }));
+      
+      // Show success message
+      setSuccess('Successfully saved all differentiators');
+      setTimeout(() => setSuccess(null), 3000);
       
       completeCurrentStep();
       nextStep();
     } catch (err) {
-      console.error('Error saving differentiators:', err);
-      setError('Failed to save differentiators');
+      console.error('Error updating differentiators state:', err);
+      setError('Failed to update differentiators');
     }
   };
   

@@ -253,17 +253,66 @@ export const dealerOnboardingApi = {
    * Save a competitive differentiator
    */
   async saveCompetitiveDifferentiator(differentiator: CompetitiveDifferentiator): Promise<CompetitiveDifferentiator | null> {
-    const { data, error } = await supabase
-      .from('competitive_differentiators')
-      .upsert(differentiator, { onConflict: 'id' })
-      .select()
-      .single();
+    console.log('Saving differentiator:', JSON.stringify(differentiator, null, 2));
     
-    if (error) {
-      console.error('Error saving competitive differentiator:', error);
+    // Ensure dealership_id is a number
+    if (typeof differentiator.dealership_id !== 'number') {
+      differentiator.dealership_id = Number(differentiator.dealership_id);
+      console.log('Converted dealership_id to number:', differentiator.dealership_id);
+    }
+    
+    // Validate required fields
+    if (!differentiator.title || !differentiator.description || !differentiator.category) {
+      console.error('Missing required fields for differentiator:', differentiator);
       return null;
     }
     
+    // Make sure we have a clean object for database operations
+    const differentiatorToSave = {
+      id: differentiator.id,
+      dealership_id: differentiator.dealership_id,
+      category: differentiator.category,
+      title: differentiator.title,
+      description: differentiator.description,
+      priority: differentiator.priority || 1
+    };
+    
+    let operation;
+    
+    if (differentiator.id === 0) {
+      // This is a new differentiator, so insert it
+      console.log(`Creating new differentiator for ${differentiator.category} category:`, JSON.stringify(differentiatorToSave, null, 2));
+      
+      // Remove the id field for new differentiators
+      const { id, ...newDifferentiator } = differentiatorToSave;
+      
+      operation = supabase
+        .from('competitive_differentiators')
+        .insert(newDifferentiator)
+        .select()
+        .single();
+    } else {
+      // This is an existing differentiator, so update it
+      console.log(`Updating existing differentiator ID ${differentiator.id}:`, JSON.stringify(differentiatorToSave, null, 2));
+      operation = supabase
+        .from('competitive_differentiators')
+        .update(differentiatorToSave)
+        .eq('id', differentiator.id)
+        .select()
+        .single();
+    }
+    
+    const { data, error } = await operation;
+    
+    if (error) {
+      console.error('Error saving competitive differentiator:', error);
+      console.error('Error details:', error.details, error.hint, error.message);
+      console.error('Error code:', error.code);
+      console.error('Failed differentiator data:', JSON.stringify(differentiatorToSave, null, 2));
+      return null;
+    }
+    
+    console.log(`Successfully saved differentiator:`, data);
     return data;
   },
   

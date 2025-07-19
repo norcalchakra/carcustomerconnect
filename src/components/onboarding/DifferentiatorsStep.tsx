@@ -43,12 +43,13 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
 
   // Get AI suggestions if enabled
   useEffect(() => {
-    const getAiSuggestions = async () => {
+    const getAISuggestionsData = async () => {
       if (aiAssistEnabled && dealershipId) {
         setIsLoading(true);
         try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('differentiators', {
-            dealershipId
+          const suggestions = await dealerOnboardingApi.getAISuggestions({
+            dealership_id: dealershipId,
+            section: 'differentiators'
           });
           setAiSuggestions(suggestions);
         } catch (err) {
@@ -60,7 +61,7 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
       }
     };
 
-    getAiSuggestions();
+    getAISuggestionsData();
   }, [aiAssistEnabled, dealershipId]);
 
   const handleAddDifferentiator = () => {
@@ -84,8 +85,30 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
     setIsEditing(true);
   };
 
-  const handleDeleteDifferentiator = (differentiatorId: number) => {
-    setFormData(prev => prev.filter(d => d.id !== differentiatorId));
+  const handleDeleteDifferentiator = async (differentiatorId: number) => {
+    try {
+      setIsLoading(true);
+      
+      // Only attempt to delete from database if it's a real ID (not a temporary one)
+      if (differentiatorId > 0) {
+        console.log('Deleting differentiator from database:', differentiatorId);
+        const success = await dealerOnboardingApi.deleteCompetitiveDifferentiator(differentiatorId);
+        
+        if (!success) {
+          throw new Error('Failed to delete differentiator');
+        }
+        
+        console.log('Differentiator deleted successfully from database');
+      }
+      
+      // Update local state
+      setFormData(prev => prev.filter(d => d.id !== differentiatorId));
+    } catch (err) {
+      console.error('Error deleting differentiator:', err);
+      setError('Failed to delete differentiator. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDifferentiatorChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -99,32 +122,51 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
     }
   };
 
-  const handleSaveDifferentiator = () => {
+  const handleSaveDifferentiator = async () => {
     if (!currentDifferentiator || !currentDifferentiator.title || !currentDifferentiator.description) {
       setError('Title and description are required');
       return;
     }
     
-    // Update or add the differentiator to the list
-    const updatedDifferentiators = [...formData];
-    const existingIndex = updatedDifferentiators.findIndex(d => d.id === currentDifferentiator.id);
-    
-    if (existingIndex >= 0) {
-      updatedDifferentiators[existingIndex] = {
+    try {
+      setIsLoading(true);
+      
+      // Save the differentiator to the database immediately
+      const differentiatorToSave = {
         ...currentDifferentiator,
+        dealership_id: dealershipId || 0,
         updated_at: new Date().toISOString()
       };
-    } else {
-      updatedDifferentiators.push({
-        ...currentDifferentiator,
-        updated_at: new Date().toISOString()
-      });
+      
+      console.log('Saving differentiator to database:', differentiatorToSave);
+      const savedDifferentiator = await dealerOnboardingApi.saveCompetitiveDifferentiator(differentiatorToSave);
+      
+      if (!savedDifferentiator) {
+        throw new Error('Failed to save differentiator');
+      }
+      
+      console.log('Differentiator saved successfully:', savedDifferentiator);
+      
+      // Update the local state with the saved differentiator
+      const updatedDifferentiators = [...formData];
+      const existingIndex = updatedDifferentiators.findIndex(d => d.id === savedDifferentiator.id);
+      
+      if (existingIndex >= 0) {
+        updatedDifferentiators[existingIndex] = savedDifferentiator;
+      } else {
+        updatedDifferentiators.push(savedDifferentiator);
+      }
+      
+      setFormData(updatedDifferentiators);
+      setCurrentDifferentiator(null);
+      setIsEditing(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error saving differentiator:', err);
+      setError('Failed to save differentiator. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setFormData(updatedDifferentiators);
-    setCurrentDifferentiator(null);
-    setIsEditing(false);
-    setError(null);
   };
 
   const handleCancelEdit = () => {
@@ -244,15 +286,21 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
         </div>
         
         <div className="form-group">
-          <label htmlFor="priority">Priority</label>
-          <input
-            type="number"
-            id="priority"
-            name="priority"
-            value={currentDifferentiator.priority}
-            onChange={handleDifferentiatorChange}
-            min="1"
-          />
+          <label htmlFor="priority">Priority (1-10)</label>
+          <div className="slider-container">
+            <input
+              type="range"
+              id="priority"
+              name="priority"
+              value={currentDifferentiator.priority}
+              onChange={handleDifferentiatorChange}
+              min="1"
+              max="10"
+              step="1"
+              className="priority-slider"
+            />
+            <div className="slider-value">{currentDifferentiator.priority}</div>
+          </div>
           <p className="field-hint">
             Lower numbers will be featured more prominently in content.
           </p>

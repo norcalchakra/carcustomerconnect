@@ -47,12 +47,12 @@ export interface LifecycleTemplate {
 }
 
 export interface CompetitiveDifferentiator {
-  id?: number;
+  id: number;
   dealership_id: number;
-  category: 'service' | 'customer_experience' | 'financial';
-  differentiator: string;
-  description?: string;
-  is_active: boolean;
+  category: 'service' | 'customer_experience' | 'financial' | 'inventory' | 'warranty' | 'community' | 'other';
+  title: string;
+  description: string;
+  priority: number;
   created_at?: string;
   updated_at?: string;
 }
