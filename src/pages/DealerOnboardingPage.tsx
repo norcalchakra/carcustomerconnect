@@ -344,29 +344,58 @@ const DealerOnboardingPage: React.FC = () => {
     if (!dealershipId) return;
     
     try {
-      // Save each template individually
-      const savedTemplates: LifecycleTemplate[] = [];
+      // First, get ALL existing templates from the database to ensure we have the latest state
+      const allExistingTemplates = await dealerOnboardingApi.getAllLifecycleTemplates(dealershipId);
+      console.log('All existing templates in database:', allExistingTemplates);
       
-      for (const template of templates) {
-        const templateWithDealershipId = {
-          ...template,
-          dealership_id: dealershipId
-        };
-        
-        const savedTemplate = await dealerOnboardingApi.saveLifecycleTemplate(templateWithDealershipId);
-        if (savedTemplate) {
-          savedTemplates.push(savedTemplate);
+      // Track which templates are being saved by ID and lifecycle stage
+      const newTemplatesByStage: Record<string, LifecycleTemplate[]> = {};
+      templates.forEach(t => {
+        if (!newTemplatesByStage[t.lifecycle_stage]) {
+          newTemplatesByStage[t.lifecycle_stage] = [];
+        }
+        newTemplatesByStage[t.lifecycle_stage].push(t);
+      });
+      
+      console.log('New templates grouped by stage:', newTemplatesByStage);
+      
+      // Keep track of all templates that should be in the final state
+      const finalTemplates: LifecycleTemplate[] = [];
+      
+      // For each lifecycle stage
+      for (const stage of ['acquisition', 'service', 'ready_for_sale', 'delivery']) {
+        if (newTemplatesByStage[stage]) {
+          // We have new templates for this stage, save them
+          for (const template of newTemplatesByStage[stage]) {
+            const templateWithDealershipId = {
+              ...template,
+              dealership_id: dealershipId
+            };
+            
+            console.log(`Saving template for ${stage} stage:`, templateWithDealershipId);
+            const savedTemplate = await dealerOnboardingApi.saveLifecycleTemplate(templateWithDealershipId);
+            if (savedTemplate) {
+              finalTemplates.push(savedTemplate);
+            }
+          }
+        } else {
+          // No new templates for this stage, preserve existing ones
+          const existingForStage = allExistingTemplates.filter(t => t.lifecycle_stage === stage);
+          console.log(`Preserving ${existingForStage.length} existing templates for ${stage} stage`);
+          finalTemplates.push(...existingForStage);
         }
       }
       
-      if (savedTemplates.length > 0) {
-        setOnboardingState(prev => ({
-          ...prev,
-          lifecycleTemplates: savedTemplates
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      console.log('Final templates state after save:', finalTemplates);
+      
+      // Update the state with all templates
+      setOnboardingState(prev => ({
+        ...prev,
+        lifecycleTemplates: finalTemplates
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving lifecycle templates:', err);
       setError('Failed to save lifecycle templates');

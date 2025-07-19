@@ -109,20 +109,71 @@ export const dealerOnboardingApi = {
   },
   
   /**
+   * Get all lifecycle templates for a dealership
+   */
+  async getAllLifecycleTemplates(dealershipId: number): Promise<LifecycleTemplate[]> {
+    const { data, error } = await supabase
+      .from('lifecycle_templates')
+      .select('*')
+      .eq('dealership_id', dealershipId);
+    
+    if (error) {
+      console.error('Error fetching all lifecycle templates:', error);
+      return [];
+    }
+    
+    return data || [];
+  },
+
+  /**
    * Save a lifecycle template
    */
   async saveLifecycleTemplate(template: LifecycleTemplate): Promise<LifecycleTemplate | null> {
-    const { data, error } = await supabase
+    console.log('Saving lifecycle template:', template);
+    
+    // First, check if we can fetch from the database
+    const { error: fetchError } = await supabase
       .from('lifecycle_templates')
-      .upsert(template, { onConflict: 'id' })
-      .select()
-      .single();
+      .select('count')
+      .eq('dealership_id', template.dealership_id);
+    
+    if (fetchError) {
+      console.error('Error accessing templates table:', fetchError);
+      return null;
+    }
+    
+    // If this is a new template (id = 0), we'll insert it
+    // If it's an existing template (id > 0), we'll update it
+    // We're NOT using the lifecycle_stage to determine if a template exists anymore
+    let operation;
+    
+    if (template.id === 0) {
+      // This is a new template, so insert it
+      console.log(`Creating new template for ${template.lifecycle_stage} stage`);
+      operation = supabase
+        .from('lifecycle_templates')
+        .insert(template)
+        .select()
+        .single();
+    } else {
+      // This is an existing template, so update it
+      console.log(`Updating existing template ID ${template.id} for ${template.lifecycle_stage} stage`);
+      operation = supabase
+        .from('lifecycle_templates')
+        .update(template)
+        .eq('id', template.id)
+        .select()
+        .single();
+    }
+    
+    const { data, error } = await operation;
     
     if (error) {
       console.error('Error saving lifecycle template:', error);
       return null;
     }
     
+    console.log(`Successfully saved template for ${template.lifecycle_stage} stage:`, data);
     return data;
   },
   
@@ -445,58 +496,150 @@ export const dealerOnboardingApi = {
    */
   async getAISuggestions(request: AISuggestionRequest): Promise<AISuggestionResponse> {
     // In a real implementation, this would call an AI service
-    // For now, return mock suggestions based on the section
+    // For now, generate mock  async getAISuggestions(request: any): Promise<any> {
+    // Log what we received for debugging
+    console.log('AI API received request:', request);
     
-    switch (request.section) {
-      case 'brand_voice':
-        return {
-          suggestions: {
-            formality_level: 3,
-            energy_level: 4,
-            technical_detail_preference: 'benefit-focused',
-            community_connection: 'regional',
-            emoji_usage_level: 2
-          },
-          explanation: "Based on your dealership profile, a moderately formal, high-energy tone with benefit-focused messaging and regional community connections would appeal to your target market.",
-          alternative_options: [
-            {
-              formality_level: 2,
-              energy_level: 5,
-              technical_detail_preference: 'lifestyle-oriented',
-              community_connection: 'hyper-local',
-              emoji_usage_level: 3,
-              description: "More casual, extremely high-energy with lifestyle focus and hyper-local connections"
-            },
-            {
-              formality_level: 4,
-              energy_level: 3,
-              technical_detail_preference: 'feature-heavy',
-              community_connection: 'universal',
-              emoji_usage_level: 1,
-              description: "More formal, moderate energy with technical focus and universal appeal"
-            }
-          ]
-        };
-        
-      case 'lifecycle_templates':
-        return {
-          suggestions: {
-            acquisition: "Just in! This [Year] [Make] [Model] has arrived at our dealership and is ready for its next adventure. With only [Mileage] miles, it's in excellent condition and priced to move quickly!",
-            service: "Our expert technicians are giving this [Year] [Make] [Model] the royal treatment! New [Service Item] being installed and a comprehensive inspection to ensure it's in top condition for its next owner.",
-            ready_for_sale: "READY NOW! This [Year] [Make] [Model] has passed our rigorous inspection and is looking for its new home. Features include [Top Features]. Schedule your test drive today!",
-            delivery: "Another happy customer! Congratulations to [First Name] on their new [Year] [Make] [Model]. We're honored you chose us for your automotive needs!"
-          },
-          explanation: "These templates maintain a positive, enthusiastic tone while highlighting key vehicle information and encouraging action.",
-          alternative_options: []
-        };
-        
-      default:
-        return {
-          suggestions: {},
-          explanation: "AI suggestions not available for this section yet.",
-          alternative_options: []
-        };
+    if (request.section === 'brand_voice') {
+      return {
+        suggestions: {
+          formality_level: 3,
+          energy_level: 4,
+          technical_detail_preference: 'benefit-focused',
+          community_connection: 'regional',
+          emoji_usage_level: 2
+        },
+        explanation: "Based on your dealership profile, a moderately formal, high-energy tone with benefit-focused messaging and regional community connections would appeal to your target market.",
+        alternative_options: []
+      };
     }
+    
+    if (request.section === 'lifecycle_templates') {
+      try {
+        // Extract data from the request
+        const { lifecycle_stage, business_profile, brand_voice } = request.current_data;
+        const dealershipName = business_profile?.dba_name || business_profile?.legal_name || 'our dealership';
+        const yearsInBusiness = business_profile?.years_in_business || 0;
+        const dealershipType = business_profile?.dealership_type || 'used';
+        const location = business_profile?.physical_address?.split(',')[1]?.trim() || 'local';
+        
+        // Extract brand voice preferences
+        const formality = brand_voice?.formality_level || 3; // 1-5 scale
+        const energy = brand_voice?.energy_level || 3; // 1-5 scale
+        const technicalDetail = brand_voice?.technical_detail_preference || 'benefit-focused';
+        const communityConnection = brand_voice?.community_connection || 'regional';
+        const emojiUsage = brand_voice?.emoji_usage_level || 0; // 0-5 scale
+        
+        // Prepare the prompt for OpenAI
+        const formalityText = formality <= 2 ? 'casual' : formality >= 4 ? 'formal' : 'moderately formal';
+        const energyText = energy >= 4 ? 'high energy' : energy <= 2 ? 'low energy' : 'moderate energy';
+        const emojiText = emojiUsage >= 3 ? 'use emojis liberally' : emojiUsage > 0 ? 'use emojis sparingly' : 'do not use emojis';
+        
+        // Get lifecycle stage specific context
+        const getLifecycleContext = () => {
+          switch (lifecycle_stage) {
+            case 'acquisition':
+              return 'This is when a vehicle first arrives at the dealership. It is typically not yet ready for sale, might be dirty, needs inspection, and possibly repairs. The focus is on announcing the arrival and building anticipation for when it will be available.';
+            case 'service':
+              return 'This is when the vehicle is being serviced, repaired, detailed, or prepared for sale. The focus is on the quality of work being done, attention to detail, and the dealership\'s commitment to quality.';
+            case 'ready_for_sale':
+              return 'This is when the vehicle is fully prepared, detailed, photographed, and available for customers to view and purchase. The focus is on highlighting features and encouraging customers to come see it.';
+            case 'delivery':
+              return 'This is when the vehicle has been sold and is being delivered to its new owner. The focus is on customer satisfaction, celebrating the purchase, and building community goodwill.';
+            default:
+              return 'This is a general update about a vehicle in the dealership\'s inventory.';
+          }
+        };
+
+        // Create a prompt that includes all the relevant information
+        const prompt = `
+          Create a single, unique social media post for a car dealership about a vehicle at a specific lifecycle stage.
+          
+          DEALERSHIP INFORMATION:
+          - Name: ${dealershipName}
+          - Years in business: ${yearsInBusiness}
+          - Type: ${dealershipType} car dealership
+          - Location: ${location}
+          
+          BRAND VOICE SETTINGS:
+          - Tone: ${formalityText}
+          - Energy level: ${energyText}
+          - Technical detail: ${technicalDetail}
+          - Community connection: ${communityConnection}
+          - Emoji usage: ${emojiText}
+          
+          LIFECYCLE STAGE: ${lifecycle_stage.replace('_', ' ')}
+          LIFECYCLE CONTEXT: ${getLifecycleContext()}
+          
+          Create a unique, creative post that matches the dealership's brand voice and accurately reflects the vehicle's current lifecycle stage. The post should be 1-2 sentences long and directly usable as a social media caption.
+          
+          IMPORTANT INSTRUCTIONS:
+          1. Use generic vehicle references like "this vehicle", "this car", "this truck", or "this SUV" instead of specific makes/models
+          2. Do not mention specific years, makes, models, or mileage numbers
+          3. Focus on the dealership's value proposition and the current lifecycle stage reality
+          4. Each generation should be unique and different from previous ones
+          5. The template should work for any type of vehicle (new, used, old, high-mileage, etc.)
+          6. Be authentic about the current state of the vehicle based on its lifecycle stage
+        `;
+        
+        // Call OpenAI API
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: 'You are an expert automotive marketing assistant that creates engaging social media content for car dealerships.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.9,
+            max_tokens: 150
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const generatedTemplate = data.choices[0].message.content.trim();
+        
+        // Create a response with only the current lifecycle stage template
+        const aiResponse: AISuggestionResponse = {
+          suggestions: {
+            [lifecycle_stage]: generatedTemplate
+          },
+          explanation: `Template customized for your ${formalityText} tone, ${energyText} level, ${technicalDetail} technical approach, and ${communityConnection} community focus.`,
+          alternative_options: []
+        };
+        
+        console.log('AI API returning response:', aiResponse);
+        return aiResponse;
+      } catch (error) {
+        console.error('Error calling OpenAI API:', error);
+        
+        // Fallback to mock response if API call fails
+        const { lifecycle_stage, business_profile } = request.current_data;
+        const dealershipName = business_profile?.legal_name || 'our dealership';
+        
+        return {
+          suggestions: {
+            [lifecycle_stage]: `New arrival at ${dealershipName}! We've just added another quality vehicle to our inventory. Contact us to learn more about our latest offerings.`
+          },
+          explanation: 'Generated using fallback template due to API error. Please try again later.',
+          alternative_options: []
+        };
+      }
+    }
+    
+    return {
+      suggestions: {},
+      explanation: 'No suggestions available for this section.',
+      alternative_options: []
+    };
   }
 };
 
