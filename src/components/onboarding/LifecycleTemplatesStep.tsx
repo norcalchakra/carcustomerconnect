@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LifecycleTemplate, DealershipProfile, BrandVoiceSettings } from '../../lib/dealerOnboardingTypes';
-import dealerOnboardingApi from '../../lib/dealerOnboardingApi';
+import { dealerOnboardingApi } from '../../lib/dealerOnboardingApi';
 import './OnboardingSteps.css';
 
 // Define the expected structure for AI suggestions
@@ -223,7 +223,51 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
     setIsEditing(true);
   };
 
-  const handleDeleteTemplate = (templateId: number) => {
+  const handleDeleteTemplate = async (templateId: number) => {
+    // Get the lifecycle stage of the template being deleted
+    const templateToDelete = lifecycleTemplates.find(t => t.id === templateId);
+    const lifecycleStage = templateToDelete?.lifecycle_stage;
+    
+    // Only delete from Supabase if it's a real template (id > 0)
+    if (templateId > 0) {
+      try {
+        console.log('Deleting template from Supabase, ID:', templateId);
+        const success = await dealerOnboardingApi.deleteLifecycleTemplate(templateId);
+        
+        if (success) {
+          console.log('Template deleted successfully from Supabase');
+          setSuccess('Template deleted successfully');
+          setTimeout(() => setSuccess(null), 3000);
+          
+          // Refresh templates for this lifecycle stage from the database
+          if (lifecycleStage) {
+            try {
+              const freshTemplates = await dealerOnboardingApi.getLifecycleTemplates(Number(dealershipId));
+              const stageTemplates = freshTemplates.filter(t => t.lifecycle_stage === lifecycleStage);
+              console.log(`Refreshed templates for ${lifecycleStage} stage after deletion:`, stageTemplates);
+              
+              // Update only the templates for this stage
+              const otherStageTemplates = lifecycleTemplates.filter(t => t.lifecycle_stage !== lifecycleStage);
+              setLifecycleTemplates([...otherStageTemplates, ...stageTemplates]);
+              return; // We've already updated the state, so return early
+            } catch (refreshErr) {
+              console.error('Error refreshing templates after deletion:', refreshErr);
+              // Fall through to the default state update below
+            }
+          }
+        } else {
+          console.error('Failed to delete template from Supabase');
+          setError('Failed to delete template from database');
+          return; // Don't update UI if database delete failed
+        }
+      } catch (err) {
+        console.error('Error deleting template:', err);
+        setError('Error deleting template from database');
+        return; // Don't update UI if database delete failed
+      }
+    }
+    
+    // Update local state if we didn't refresh from database
     setLifecycleTemplates(prev => prev.filter(t => t.id !== templateId));
   };
 
@@ -241,35 +285,73 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
   // Variables state kept for API compatibility but no longer displayed in UI
   const [templateVariables, setTemplateVariables] = useState<string[]>([]);
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!currentTemplate || !currentTemplate.template_name || !currentTemplate.template_content) {
       setError('Template name and content are required');
       return;
     }
     
-    // Update or add the template to the list
-    const updatedTemplates = [...lifecycleTemplates];
-    const existingIndex = updatedTemplates.findIndex(t => 
-      t.id === currentTemplate.id || 
-      (t.id === 0 && t.lifecycle_stage === currentTemplate.lifecycle_stage && t.template_name === '')
-    );
+    // Ensure dealership_id is set and is a number
+    const templateToSave = {
+      ...currentTemplate,
+      dealership_id: Number(dealershipId) || 0,
+      updated_at: new Date().toISOString()
+    };
     
-    if (existingIndex >= 0) {
-      updatedTemplates[existingIndex] = {
-        ...currentTemplate,
-        updated_at: new Date().toISOString()
-      };
-    } else {
-      updatedTemplates.push({
-        ...currentTemplate,
-        updated_at: new Date().toISOString()
-      });
+    // Show loading state
+    setIsLoading(true);
+    
+    try {
+      // Save directly to Supabase
+      console.log('Saving template directly to Supabase:', templateToSave);
+      console.log('Template lifecycle stage:', templateToSave.lifecycle_stage);
+      
+      const savedTemplate = await dealerOnboardingApi.saveLifecycleTemplate(templateToSave);
+      
+      if (savedTemplate) {
+        console.log('Template saved successfully to Supabase:', savedTemplate);
+        
+        // Update the local state with the saved template
+        const updatedTemplates = [...lifecycleTemplates];
+        const existingIndex = updatedTemplates.findIndex(t => 
+          (t.id === templateToSave.id && t.id !== 0) || 
+          (t.id === 0 && t.lifecycle_stage === templateToSave.lifecycle_stage && t.template_name === '')
+        );
+        
+        if (existingIndex >= 0) {
+          updatedTemplates[existingIndex] = savedTemplate;
+        } else {
+          updatedTemplates.push(savedTemplate);
+        }
+        
+        setLifecycleTemplates(updatedTemplates);
+        setSuccess('Template saved successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+        
+        // Refresh templates for this lifecycle stage from the database
+        try {
+          const freshTemplates = await dealerOnboardingApi.getLifecycleTemplates(Number(dealershipId));
+          const stageTemplates = freshTemplates.filter(t => t.lifecycle_stage === templateToSave.lifecycle_stage);
+          console.log(`Refreshed templates for ${templateToSave.lifecycle_stage} stage:`, stageTemplates);
+          
+          // Update only the templates for this stage
+          const otherStageTemplates = lifecycleTemplates.filter(t => t.lifecycle_stage !== templateToSave.lifecycle_stage);
+          setLifecycleTemplates([...otherStageTemplates, ...stageTemplates]);
+        } catch (refreshErr) {
+          console.error('Error refreshing templates:', refreshErr);
+          // Continue with the local state update even if refresh fails
+        }
+      } else {
+        setError('Failed to save template to database');
+      }
+    } catch (err) {
+      console.error('Error saving template:', err);
+      setError('Error saving template to database');
+    } finally {
+      setIsLoading(false);
+      setCurrentTemplate(null);
+      setIsEditing(false);
     }
-    
-    setLifecycleTemplates(updatedTemplates);
-    setCurrentTemplate(null);
-    setIsEditing(false);
-    setError(null);
   };
 
   const handleCancelEdit = () => {
@@ -300,16 +382,20 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
       return;
     }
     
-    // Log what templates are being saved
-    console.log('Saving templates:', validTemplates);
+    // Since we're already saving templates individually when they're created or edited,
+    // we just need to pass the current state of templates to the parent component
+    // to update its state and move to the next step
+    console.log('Moving to next step with templates:', validTemplates);
     
-    // Group templates by lifecycle stage for better visibility
-    const templatesByStageForSaving: Record<string, LifecycleTemplate[]> = {};
+    // Group templates by lifecycle stage for better visibility in logs
+    const templatesByStage: Record<string, LifecycleTemplate[]> = {};
     LIFECYCLE_STAGES.forEach(stage => {
-      templatesByStageForSaving[stage] = validTemplates.filter(t => t.lifecycle_stage === stage);
+      templatesByStage[stage] = validTemplates.filter(t => t.lifecycle_stage === stage);
     });
-    console.log('Templates by stage being saved:', templatesByStageForSaving);
+    console.log('Templates by stage when moving to next step:', templatesByStage);
     
+    // Call the parent's onSave function to update state and move to next step
+    // This won't re-save templates to Supabase since we're already doing that individually
     onSave(validTemplates);
   };
 

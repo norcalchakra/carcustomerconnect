@@ -48,6 +48,7 @@ const DealerOnboardingPage: React.FC = () => {
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [aiAssistEnabled, setAiAssistEnabled] = useState<boolean>(true);
   
   // Toggle AI assistance on/off
@@ -101,203 +102,104 @@ const DealerOnboardingPage: React.FC = () => {
     const loadOnboardingData = async () => {
       if (!dealershipId) return;
       
-      setLoading(true);
       try {
-        // Fetch all onboarding data
+        // Load profile
         const profile = await dealerOnboardingApi.getDealershipProfile(dealershipId);
+        
+        // Load brand voice settings
         const brandVoice = await dealerOnboardingApi.getBrandVoiceSettings(dealershipId);
-        const lifecycleTemplates = await dealerOnboardingApi.getLifecycleTemplates(dealershipId) || [];
-        const customizationParams = await dealerOnboardingApi.getCustomizationParameters(dealershipId);
-        const differentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(dealershipId) || [];
-        const contentGovernance = await dealerOnboardingApi.getContentGovernance(dealershipId);
-        const exampleCaptions = await dealerOnboardingApi.getExampleCaptions(dealershipId) || [];
-        const technicalIntegrations = await dealerOnboardingApi.getTechnicalIntegrations(dealershipId);
         
-        // Initialize default values for missing data
-        const defaultProfile = profile || {
-          id: dealershipId,
-          legal_name: '',
-          dba_name: '',
-          primary_phone: '',
-          service_phone: '',
-          website_url: '',
-          physical_address: '',
-          google_maps_plus_code: '',
-          years_in_business: 0,
-          dealership_type: 'independent',
-          primary_market_radius: 0
-        };
+        // Load lifecycle templates
+        const templates = await dealerOnboardingApi.getAllLifecycleTemplates(dealershipId);
         
-        const defaultBrandVoice = brandVoice || {
-          id: dealershipId,
-          formality_level: 3,
-          energy_level: 3,
-          technical_detail_preference: 'benefit-focused' as const,
-          community_connection: 'regional' as const,
-          emoji_usage_level: 2
-        };
+        // Load customization parameters
+        const customization = await dealerOnboardingApi.getCustomizationParameters(dealershipId);
         
-        const defaultCustomizationParams = customizationParams || {
-          id: dealershipId,
-          seasonal_adaptations: {
-            summer: '',
-            winter: '',
-            spring: '',
-            fall: ''
-          },
-          vehicle_type_preferences: {
-            trucks: {
-              emphasis: 'both' as const,
-              key_features: []
-            },
-            suvs: {
-              emphasis: 'both' as const,
-              key_features: []
-            }
-          },
-          price_range_messaging: {
-            budget: 'Great value options',
-            mid_range: 'Premium features at competitive prices',
-            premium: 'Luxury and performance'
-          }
-        };
+        // Load differentiators
+        const differentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(dealershipId);
         
-        const defaultContentGovernance = contentGovernance || {
-          id: dealershipId,
-          never_mention: [],
-          always_include: [],
-          hashtag_strategy: {
-            branded: [],
-            location: [],
-            vehicle: [],
-            lifestyle: [],
-            limit_per_post: 5
-          }
-        };
+        // Load content governance
+        const governance = await dealerOnboardingApi.getContentGovernance(dealershipId);
         
-        const defaultTechnicalIntegrations = technicalIntegrations || {
-          id: dealershipId,
-          dms_integration: {
-            system: 'None',
-            integration_type: 'Manual'
-          },
-          website_platform: '',
-          social_media_tools: {
-            facebook: true,
-            instagram: false,
-            twitter: false
-          },
-          photo_management_system: '',
-          crm_preferences: {
-            system: 'None',
-            sync_frequency: 'Daily'
-          },
-          workflow_preferences: {
-            approval_required: true,
-            posting_times: [],
-            departments_involved: []
-          }
-        };
+        // Load example captions
+        const captions = await dealerOnboardingApi.getExampleCaptions(dealershipId);
+        
+        // Load technical integrations
+        const integrations = await dealerOnboardingApi.getTechnicalIntegrations(dealershipId);
         
         // Calculate completed steps
-        const completedSteps = [];
-        let currentStep = 0;
+        const completedSteps: number[] = [];
+        if (profile) completedSteps.push(0);
+        if (brandVoice) completedSteps.push(1);
+        if (templates.length > 0) completedSteps.push(2);
+        if (customization) completedSteps.push(3);
+        if (differentiators.length > 0) completedSteps.push(4);
+        if (governance) completedSteps.push(5);
+        if (captions.length > 0) completedSteps.push(6);
+        if (integrations) completedSteps.push(7);
         
-        if (profile) {
-          completedSteps.push(0);
-          currentStep = 1;
-        }
-        
-        if (brandVoice) {
-          completedSteps.push(1);
-          currentStep = 2;
-        }
-        
-        if (lifecycleTemplates.length > 0) {
-          completedSteps.push(2);
-          currentStep = 3;
-        }
-        
-        if (customizationParams) {
-          completedSteps.push(3);
-          currentStep = 4;
-        }
-        
-        if (differentiators.length > 0) {
-          completedSteps.push(4);
-          currentStep = 5;
-        }
-        
-        if (contentGovernance) {
-          completedSteps.push(5);
-          currentStep = 6;
-        }
-        
-        if (exampleCaptions.length > 0) {
-          completedSteps.push(6);
-          currentStep = 7;
-        }
-        
-        if (technicalIntegrations) {
-          completedSteps.push(7);
-          currentStep = 8;
-        }
-        
-        // Update onboarding state with data or defaults
+        // Update state with loaded data
         setOnboardingState({
-          profile: defaultProfile,
-          brandVoice: defaultBrandVoice,
-          lifecycleTemplates,
-          customizationParams: defaultCustomizationParams,
+          profile,
+          brandVoice,
+          lifecycleTemplates: templates,
+          customizationParams: customization,
           differentiators,
-          contentGovernance: defaultContentGovernance,
-          exampleCaptions,
-          technicalIntegrations: defaultTechnicalIntegrations,
-          currentStep,
+          contentGovernance: governance,
+          exampleCaptions: captions,
+          technicalIntegrations: integrations,
+          currentStep: completedSteps.length > 0 ? Math.max(...completedSteps) + 1 : 0,
           completedSteps
         });
       } catch (err) {
         console.error('Error loading onboarding data:', err);
         setError('Failed to load onboarding data');
-      } finally {
-        setLoading(false);
       }
     };
     
     loadOnboardingData();
   }, [dealershipId]);
   
-  // Handle navigation between steps
-  const goToStep = (stepIndex: number) => {
-    if (stepIndex >= 0 && stepIndex <= steps.length - 1) {
-      setOnboardingState(prev => ({
-        ...prev,
-        currentStep: stepIndex
-      }));
-    }
+  // Navigation functions
+  const goToStep = (step: number) => {
+    setOnboardingState(prev => ({
+      ...prev,
+      currentStep: step
+    }));
   };
   
   const nextStep = () => {
     if (onboardingState.currentStep < steps.length - 1) {
-      goToStep(onboardingState.currentStep + 1);
+      setOnboardingState(prev => ({
+        ...prev,
+        currentStep: prev.currentStep + 1
+      }));
     }
   };
   
   const prevStep = () => {
     if (onboardingState.currentStep > 0) {
-      goToStep(onboardingState.currentStep - 1);
+      setOnboardingState(prev => ({
+        ...prev,
+        currentStep: prev.currentStep - 1
+      }));
     }
   };
   
-  // Mark current step as completed
   const completeCurrentStep = () => {
-    setOnboardingState(prev => ({
-      ...prev,
-      completedSteps: [...new Set([...prev.completedSteps, prev.currentStep])]
-    }));
+    setOnboardingState(prev => {
+      if (prev.completedSteps.includes(prev.currentStep)) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        completedSteps: [...prev.completedSteps, prev.currentStep]
+      };
+    });
   };
   
-  // Handle saving data for each step
+  // Save handlers for each step
   const handleSaveProfile = async (profile: DealershipProfile) => {
     if (!dealershipId) return;
     
@@ -305,14 +207,13 @@ const DealerOnboardingPage: React.FC = () => {
       const updatedProfile = { ...profile, id: dealershipId };
       const savedProfile = await dealerOnboardingApi.saveDealershipProfile(updatedProfile);
       
-      if (savedProfile) {
-        setOnboardingState(prev => ({
-          ...prev,
-          profile: savedProfile
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        profile: savedProfile
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving profile:', err);
       setError('Failed to save profile');
@@ -323,82 +224,74 @@ const DealerOnboardingPage: React.FC = () => {
     if (!dealershipId) return;
     
     try {
-      const updatedBrandVoice = { ...brandVoice, id: dealershipId };
+      const updatedBrandVoice = { ...brandVoice, dealership_id: dealershipId };
       const savedBrandVoice = await dealerOnboardingApi.saveBrandVoiceSettings(updatedBrandVoice);
       
-      if (savedBrandVoice) {
-        setOnboardingState(prev => ({
-          ...prev,
-          brandVoice: savedBrandVoice
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
-    } catch (err) {
-      console.error('Error saving brand voice:', err);
-      setError('Failed to save brand voice settings');
-    }
-  };
-  
-  const handleSaveLifecycleTemplates = async (templates: LifecycleTemplate[]) => {
-    if (!dealershipId) return;
-    
-    try {
-      // First, get ALL existing templates from the database to ensure we have the latest state
-      const allExistingTemplates = await dealerOnboardingApi.getAllLifecycleTemplates(dealershipId);
-      console.log('All existing templates in database:', allExistingTemplates);
-      
-      // Track which templates are being saved by ID and lifecycle stage
-      const newTemplatesByStage: Record<string, LifecycleTemplate[]> = {};
-      templates.forEach(t => {
-        if (!newTemplatesByStage[t.lifecycle_stage]) {
-          newTemplatesByStage[t.lifecycle_stage] = [];
-        }
-        newTemplatesByStage[t.lifecycle_stage].push(t);
-      });
-      
-      console.log('New templates grouped by stage:', newTemplatesByStage);
-      
-      // Keep track of all templates that should be in the final state
-      const finalTemplates: LifecycleTemplate[] = [];
-      
-      // For each lifecycle stage
-      for (const stage of ['acquisition', 'service', 'ready_for_sale', 'delivery']) {
-        if (newTemplatesByStage[stage]) {
-          // We have new templates for this stage, save them
-          for (const template of newTemplatesByStage[stage]) {
-            const templateWithDealershipId = {
-              ...template,
-              dealership_id: dealershipId
-            };
-            
-            console.log(`Saving template for ${stage} stage:`, templateWithDealershipId);
-            const savedTemplate = await dealerOnboardingApi.saveLifecycleTemplate(templateWithDealershipId);
-            if (savedTemplate) {
-              finalTemplates.push(savedTemplate);
-            }
-          }
-        } else {
-          // No new templates for this stage, preserve existing ones
-          const existingForStage = allExistingTemplates.filter(t => t.lifecycle_stage === stage);
-          console.log(`Preserving ${existingForStage.length} existing templates for ${stage} stage`);
-          finalTemplates.push(...existingForStage);
-        }
-      }
-      
-      console.log('Final templates state after save:', finalTemplates);
-      
-      // Update the state with all templates
       setOnboardingState(prev => ({
         ...prev,
-        lifecycleTemplates: finalTemplates
+        brandVoice: savedBrandVoice
       }));
       
       completeCurrentStep();
       nextStep();
     } catch (err) {
-      console.error('Error saving lifecycle templates:', err);
-      setError('Failed to save lifecycle templates');
+      console.error('Error saving brand voice settings:', err);
+      setError('Failed to save brand voice settings');
+    }
+  };
+  
+  const handleSaveLifecycleTemplates = async (templates: LifecycleTemplate[]) => {
+    if (!dealershipId) {
+      console.error('Cannot save templates: dealershipId is null');
+      setError('Failed to save lifecycle templates: Missing dealership ID');
+      return;
+    }
+    
+    try {
+      console.log('Templates received from component:', JSON.stringify(templates, null, 2));
+      console.log('Number of templates:', templates.length);
+      
+      // Since templates are now saved individually in the LifecycleTemplatesStep component,
+      // we just need to update our state with the current templates and move to the next step
+      
+      // Fetch all templates from the database to ensure we have the latest state
+      const allTemplates = await dealerOnboardingApi.getLifecycleTemplates(Number(dealershipId));
+      console.log('All templates in database:', JSON.stringify(allTemplates, null, 2));
+      
+      // Group templates by lifecycle stage for better organization
+      const templatesByStage: Record<string, LifecycleTemplate[]> = {};
+      
+      // Initialize with empty arrays for each stage
+      ['acquisition', 'service', 'ready_for_sale', 'delivery'].forEach(stage => {
+        templatesByStage[stage] = [];
+      });
+      
+      // Populate with actual templates
+      allTemplates.forEach(template => {
+        const stage = template.lifecycle_stage;
+        if (!templatesByStage[stage]) {
+          templatesByStage[stage] = [];
+        }
+        templatesByStage[stage].push(template);
+      });
+      
+      console.log('Templates by stage:', templatesByStage);
+      
+      // Update the state with all templates from the database
+      setOnboardingState(prev => ({
+        ...prev,
+        lifecycleTemplates: allTemplates
+      }));
+      
+      // Show success message
+      setSuccess('Successfully saved all lifecycle templates');
+      setTimeout(() => setSuccess(null), 3000);
+      
+      completeCurrentStep();
+      nextStep();
+    } catch (err) {
+      console.error('Error updating lifecycle templates state:', err);
+      setError('Failed to update lifecycle templates');
     }
   };
   
@@ -409,14 +302,13 @@ const DealerOnboardingPage: React.FC = () => {
       const updatedParams = { ...params, dealership_id: dealershipId };
       const savedParams = await dealerOnboardingApi.saveCustomizationParameters(updatedParams);
       
-      if (savedParams) {
-        setOnboardingState(prev => ({
-          ...prev,
-          customizationParams: savedParams
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        customizationParams: savedParams
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving customization parameters:', err);
       setError('Failed to save customization parameters');
@@ -427,32 +319,31 @@ const DealerOnboardingPage: React.FC = () => {
     if (!dealershipId) return;
     
     try {
+      const updatedDifferentiators = differentiators.map(d => ({
+        ...d,
+        dealership_id: dealershipId
+      }));
+      
       // Save each differentiator individually
       const savedDifferentiators: CompetitiveDifferentiator[] = [];
       
-      for (const differentiator of differentiators) {
-        const differentiatorWithDealershipId = {
-          ...differentiator,
-          dealership_id: dealershipId
-        };
-        
-        const savedDifferentiator = await dealerOnboardingApi.saveCompetitiveDifferentiator(differentiatorWithDealershipId);
+      for (const differentiator of updatedDifferentiators) {
+        const savedDifferentiator = await dealerOnboardingApi.saveCompetitiveDifferentiator(differentiator);
         if (savedDifferentiator) {
           savedDifferentiators.push(savedDifferentiator);
         }
       }
       
-      if (savedDifferentiators.length > 0) {
-        setOnboardingState(prev => ({
-          ...prev,
-          differentiators: savedDifferentiators
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        differentiators: savedDifferentiators
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving differentiators:', err);
-      setError('Failed to save competitive differentiators');
+      setError('Failed to save differentiators');
     }
   };
   
@@ -463,14 +354,13 @@ const DealerOnboardingPage: React.FC = () => {
       const updatedGovernance = { ...governance, dealership_id: dealershipId };
       const savedGovernance = await dealerOnboardingApi.saveContentGovernance(updatedGovernance);
       
-      if (savedGovernance) {
-        setOnboardingState(prev => ({
-          ...prev,
-          contentGovernance: savedGovernance
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        contentGovernance: savedGovernance
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving content governance:', err);
       setError('Failed to save content governance');
@@ -481,29 +371,28 @@ const DealerOnboardingPage: React.FC = () => {
     if (!dealershipId) return;
     
     try {
+      const updatedCaptions = captions.map(c => ({
+        ...c,
+        dealership_id: dealershipId
+      }));
+      
       // Save each caption individually
       const savedCaptions: ExampleCaption[] = [];
       
-      for (const caption of captions) {
-        const captionWithDealershipId = {
-          ...caption,
-          dealership_id: dealershipId
-        };
-        
-        const savedCaption = await dealerOnboardingApi.saveExampleCaption(captionWithDealershipId);
+      for (const caption of updatedCaptions) {
+        const savedCaption = await dealerOnboardingApi.saveExampleCaption(caption);
         if (savedCaption) {
           savedCaptions.push(savedCaption);
         }
       }
       
-      if (savedCaptions.length > 0) {
-        setOnboardingState(prev => ({
-          ...prev,
-          exampleCaptions: savedCaptions
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        exampleCaptions: savedCaptions
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving example captions:', err);
       setError('Failed to save example captions');
@@ -517,38 +406,27 @@ const DealerOnboardingPage: React.FC = () => {
       const updatedIntegrations = { ...integrations, dealership_id: dealershipId };
       const savedIntegrations = await dealerOnboardingApi.saveTechnicalIntegrations(updatedIntegrations);
       
-      if (savedIntegrations) {
-        setOnboardingState(prev => ({
-          ...prev,
-          technicalIntegrations: savedIntegrations
-        }));
-        completeCurrentStep();
-        nextStep();
-      }
+      setOnboardingState(prev => ({
+        ...prev,
+        technicalIntegrations: savedIntegrations
+      }));
+      
+      completeCurrentStep();
+      nextStep();
     } catch (err) {
       console.error('Error saving technical integrations:', err);
       setError('Failed to save technical integrations');
     }
   };
   
-  if (loading) {
-    return <div className="loading">Loading onboarding data...</div>;
-  }
-  
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
-  
-  // Render the current step component with appropriate props
+  // Render the current step
   const renderCurrentStep = () => {
-    
     switch (onboardingState.currentStep) {
       case 0: // Business Profile
         return (
           <BusinessProfileStep
             profile={onboardingState.profile}
             onSave={handleSaveProfile}
-            aiAssistEnabled={aiAssistEnabled}
             dealershipId={dealershipId}
           />
         );
@@ -628,6 +506,10 @@ const DealerOnboardingPage: React.FC = () => {
     }
   };
   
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+  
   if (!dealershipId) {
     return <div className="error">No dealership found. Please create a dealership first.</div>;
   }
@@ -636,6 +518,9 @@ const DealerOnboardingPage: React.FC = () => {
     <div className="dealer-onboarding-container">
       <div className="onboarding-header">
         <h1>Dealer Onboarding</h1>
+        
+        {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
         <p>Complete the following steps to set up your dealership's AI-powered content generation system.</p>
         
         <div className="ai-assist-toggle">
