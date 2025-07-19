@@ -8,7 +8,6 @@ import {
   DealershipProfile,
   BrandVoiceSettings,
   LifecycleTemplate,
-  CustomizationParameters,
   CompetitiveDifferentiator,
   ContentGovernance,
   ExampleCaption,
@@ -20,7 +19,6 @@ import './DealerOnboardingPage.css';
 import BusinessProfileStep from '../components/onboarding/BusinessProfileStep';
 import BrandVoiceStep from '../components/onboarding/BrandVoiceStep';
 import LifecycleTemplatesStep from '../components/onboarding/LifecycleTemplatesStep';
-import CustomizationStep from '../components/onboarding/CustomizationStep';
 import DifferentiatorsStep from '../components/onboarding/DifferentiatorsStep';
 import ContentGovernanceStep from '../components/onboarding/ContentGovernanceStep';
 import ExampleCaptionsStep from '../components/onboarding/ExampleCaptionsStep';
@@ -36,7 +34,6 @@ const DealerOnboardingPage: React.FC = () => {
     profile: null,
     brandVoice: null,
     lifecycleTemplates: [],
-    customizationParams: null,
     differentiators: [],
     contentGovernance: null,
     exampleCaptions: [],
@@ -61,12 +58,11 @@ const DealerOnboardingPage: React.FC = () => {
     { id: 0, name: 'Business Profile', component: BusinessProfileStep },
     { id: 1, name: 'Brand Voice', component: BrandVoiceStep },
     { id: 2, name: 'Lifecycle Templates', component: LifecycleTemplatesStep },
-    { id: 3, name: 'Customization', component: CustomizationStep },
-    { id: 4, name: 'Differentiators', component: DifferentiatorsStep },
-    { id: 5, name: 'Content Governance', component: ContentGovernanceStep },
-    { id: 6, name: 'Example Captions', component: ExampleCaptionsStep },
-    { id: 7, name: 'Technical Integrations', component: TechnicalIntegrationsStep },
-    { id: 8, name: 'Complete', component: OnboardingComplete }
+    { id: 3, name: 'Differentiators', component: DifferentiatorsStep },
+    { id: 4, name: 'Content Governance', component: ContentGovernanceStep },
+    { id: 5, name: 'Example Captions', component: ExampleCaptionsStep },
+    { id: 6, name: 'Technical Integrations', component: TechnicalIntegrationsStep },
+    { id: 7, name: 'Complete', component: OnboardingComplete }
   ];
   
   // Fetch dealership ID for the current user
@@ -112,8 +108,7 @@ const DealerOnboardingPage: React.FC = () => {
         // Load lifecycle templates
         const templates = await dealerOnboardingApi.getAllLifecycleTemplates(dealershipId);
         
-        // Load customization parameters
-        const customization = await dealerOnboardingApi.getCustomizationParameters(dealershipId);
+        // Customization step removed
         
         // Load differentiators
         const differentiators = await dealerOnboardingApi.getCompetitiveDifferentiators(dealershipId);
@@ -132,18 +127,16 @@ const DealerOnboardingPage: React.FC = () => {
         if (profile) completedSteps.push(0);
         if (brandVoice) completedSteps.push(1);
         if (templates.length > 0) completedSteps.push(2);
-        if (customization) completedSteps.push(3);
-        if (differentiators.length > 0) completedSteps.push(4);
-        if (governance) completedSteps.push(5);
-        if (captions.length > 0) completedSteps.push(6);
-        if (integrations) completedSteps.push(7);
+        if (differentiators.length > 0) completedSteps.push(3);
+        if (governance) completedSteps.push(4);
+        if (captions.length > 0) completedSteps.push(5);
+        if (integrations) completedSteps.push(6);
         
         // Update state with loaded data
         setOnboardingState({
           profile,
           brandVoice,
           lifecycleTemplates: templates,
-          customizationParams: customization,
           differentiators,
           contentGovernance: governance,
           exampleCaptions: captions,
@@ -295,25 +288,7 @@ const DealerOnboardingPage: React.FC = () => {
     }
   };
   
-  const handleSaveCustomization = async (params: CustomizationParameters) => {
-    if (!dealershipId) return;
-    
-    try {
-      const updatedParams = { ...params, dealership_id: dealershipId };
-      const savedParams = await dealerOnboardingApi.saveCustomizationParameters(updatedParams);
-      
-      setOnboardingState(prev => ({
-        ...prev,
-        customizationParams: savedParams
-      }));
-      
-      completeCurrentStep();
-      nextStep();
-    } catch (err) {
-      console.error('Error saving customization parameters:', err);
-      setError('Failed to save customization parameters');
-    }
-  };
+  // Customization step removed
   
   const handleSaveDifferentiators = async (differentiators: CompetitiveDifferentiator[]) => {
     if (!dealershipId) return;
@@ -448,16 +423,7 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 3: // Customization
-        return (
-          <CustomizationStep
-            customizationParams={onboardingState.customizationParams}
-            onSave={handleSaveCustomization}
-            aiAssistEnabled={aiAssistEnabled}
-            dealershipId={dealershipId}
-          />
-        );
-      case 4: // Differentiators
+      case 3: // Differentiators
         return (
           <DifferentiatorsStep
             differentiators={onboardingState.differentiators}
@@ -466,7 +432,7 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 5: // Content Governance
+      case 4: // Content Governance
         return (
           <ContentGovernanceStep
             contentGovernance={onboardingState.contentGovernance}
@@ -475,7 +441,7 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 6: // Example Captions
+      case 5: // Example Captions
         return (
           <ExampleCaptionsStep
             captions={onboardingState.exampleCaptions}
@@ -484,7 +450,7 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 7: // Technical Integrations
+      case 6: // Technical Integrations
         return (
           <TechnicalIntegrationsStep
             integrations={onboardingState.technicalIntegrations ? [onboardingState.technicalIntegrations] : []}
@@ -493,7 +459,7 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 8: // Complete
+      case 7: // Complete
         return (
           <OnboardingComplete
             onboardingProgress={onboardingState.completedSteps}

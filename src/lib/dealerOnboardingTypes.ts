@@ -46,43 +46,6 @@ export interface LifecycleTemplate {
   updated_at?: string;
 }
 
-export interface CustomizationParameters {
-  id: number;
-  seasonal_adaptations?: {
-    summer?: string;
-    winter?: string;
-    spring?: string;
-    fall?: string;
-    backToSchool?: string;
-    holiday?: string;
-  };
-  vehicle_type_preferences?: {
-    trucks?: {
-      emphasis: 'work' | 'lifestyle' | 'both';
-      key_features: string[];
-    };
-    suvs?: {
-      emphasis: 'family' | 'adventure' | 'both';
-      key_features: string[];
-    };
-    sedans?: {
-      emphasis: 'efficiency' | 'comfort' | 'technology' | 'all';
-      key_features: string[];
-    };
-    sports_cars?: {
-      emphasis: 'performance' | 'prestige' | 'fun' | 'all';
-      key_features: string[];
-    };
-  };
-  price_range_messaging?: {
-    budget: string;
-    mid_range: string;
-    premium: string;
-  };
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface CompetitiveDifferentiator {
   id?: number;
   dealership_id: number;
@@ -153,7 +116,6 @@ export interface DealerOnboardingState {
   profile: DealershipProfile | null;
   brandVoice: BrandVoiceSettings | null;
   lifecycleTemplates: LifecycleTemplate[];
-  customizationParams: CustomizationParameters | null;
   differentiators: CompetitiveDifferentiator[];
   contentGovernance: ContentGovernance | null;
   exampleCaptions: ExampleCaption[];

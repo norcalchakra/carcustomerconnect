@@ -3,7 +3,6 @@ import {
   DealershipProfile,
   BrandVoiceSettings,
   LifecycleTemplate,
-  CustomizationParameters,
   CompetitiveDifferentiator,
   ContentGovernance,
   ExampleCaption,
@@ -230,41 +229,7 @@ export const dealerOnboardingApi = {
     return true;
   },
   
-  /**
-   * Get customization parameters for a dealership
-   */
-  async getCustomizationParameters(dealershipId: number): Promise<CustomizationParameters | null> {
-    const { data, error } = await supabase
-      .from('customization_parameters')
-      .select('*')
-      .eq('id', dealershipId)
-      .maybeSingle();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching customization parameters:', error);
-      return null;
-    }
-    
-    return data || null;
-  },
-  
-  /**
-   * Save customization parameters
-   */
-  async saveCustomizationParameters(params: CustomizationParameters): Promise<CustomizationParameters | null> {
-    const { data, error } = await supabase
-      .from('customization_parameters')
-      .upsert(params, { onConflict: 'id' })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error saving customization parameters:', error);
-      return null;
-    }
-    
-    return data;
-  },
+  // Customization step removed
   
   /**
    * Get competitive differentiators for a dealership
@@ -458,7 +423,7 @@ export const dealerOnboardingApi = {
     if (profile) {
       completedSections.push('profile');
       currentSection = 'brand_voice';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3; // Updated from 12.5% for 7 steps instead of 8
     }
     
     // Check brand voice
@@ -466,23 +431,15 @@ export const dealerOnboardingApi = {
     if (brandVoice) {
       completedSections.push('brand_voice');
       currentSection = 'lifecycle_templates';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3; // Updated from 12.5% for 7 steps instead of 8
     }
     
     // Check lifecycle templates
     const templates = await this.getLifecycleTemplates(dealershipId);
     if (templates.length > 0) {
       completedSections.push('lifecycle_templates');
-      currentSection = 'customization';
-      completionPercentage += 12.5;
-    }
-    
-    // Check customization parameters
-    const customization = await this.getCustomizationParameters(dealershipId);
-    if (customization) {
-      completedSections.push('customization');
       currentSection = 'differentiators';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3;
     }
     
     // Check differentiators
@@ -490,7 +447,7 @@ export const dealerOnboardingApi = {
     if (differentiators.length > 0) {
       completedSections.push('differentiators');
       currentSection = 'content_governance';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3;
     }
     
     // Check content governance
@@ -498,7 +455,7 @@ export const dealerOnboardingApi = {
     if (governance) {
       completedSections.push('content_governance');
       currentSection = 'example_captions';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3;
     }
     
     // Check example captions
@@ -506,7 +463,7 @@ export const dealerOnboardingApi = {
     if (captions.length > 0) {
       completedSections.push('example_captions');
       currentSection = 'technical_integrations';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3;
     }
     
     // Check technical integrations
@@ -514,7 +471,7 @@ export const dealerOnboardingApi = {
     if (integrations) {
       completedSections.push('technical_integrations');
       currentSection = 'complete';
-      completionPercentage += 12.5;
+      completionPercentage += 14.3;
     }
     
     return {
