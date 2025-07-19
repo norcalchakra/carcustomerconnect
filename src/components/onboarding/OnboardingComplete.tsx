@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dealerOnboardingApi from '../../lib/dealerOnboardingApi';
-import './OnboardingSteps.css';
+import '../../styles/modern-onboarding.css';
 
 interface OnboardingCompleteProps {
   dealershipId: number | null;
@@ -106,9 +106,9 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
           <div className="summary-section">
             <h4>Business Profile</h4>
             <div className="summary-content">
-              <p><strong>Name:</strong> {dealershipSummary.businessProfile?.dealership_name}</p>
-              <p><strong>Location:</strong> {dealershipSummary.businessProfile?.city}, {dealershipSummary.businessProfile?.state}</p>
-              <p><strong>Brands:</strong> {dealershipSummary.businessProfile?.brands_carried?.join(', ')}</p>
+              <p><strong>Name:</strong> {dealershipSummary.profile?.legal_name || dealershipSummary.profile?.dealership_name || 'Not specified'}</p>
+              <p><strong>Location:</strong> {dealershipSummary.profile?.city || 'Not specified'}{dealershipSummary.profile?.state ? `, ${dealershipSummary.profile.state}` : ''}</p>
+              <p><strong>Brands:</strong> {dealershipSummary.profile?.brands_carried?.join(', ') || 'Not specified'}</p>
             </div>
           </div>
           
@@ -122,7 +122,7 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                     <div className="attribute-bar">
                       <div 
                         className="attribute-fill" 
-                        style={{ width: `${dealershipSummary.brandVoice.formality_level * 10}%` }}
+                        style={{ width: `${(dealershipSummary.brandVoice.formality_level / 5) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -134,15 +134,31 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                     <div className="attribute-bar">
                       <div 
                         className="attribute-fill" 
-                        style={{ width: `${dealershipSummary.brandVoice.energy_level * 10}%` }}
+                        style={{ width: `${(dealershipSummary.brandVoice.energy_level / 5) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {dealershipSummary.brandVoice?.emoji_usage_level !== undefined && (
+                  <div className="voice-attribute">
+                    <span>Emoji Usage</span>
+                    <div className="attribute-bar">
+                      <div 
+                        className="attribute-fill" 
+                        style={{ width: `${(dealershipSummary.brandVoice.emoji_usage_level / 5) * 100}%` }}
                       />
                     </div>
                   </div>
                 )}
               </div>
               
-              {dealershipSummary.brandVoice?.key_emotions && (
-                <p><strong>Key Emotions:</strong> {dealershipSummary.brandVoice.key_emotions}</p>
+              {dealershipSummary.brandVoice?.technical_detail_preference && (
+                <p><strong>Technical Detail:</strong> {dealershipSummary.brandVoice.technical_detail_preference}</p>
+              )}
+              
+              {dealershipSummary.brandVoice?.community_connection && (
+                <p><strong>Community Connection:</strong> {dealershipSummary.brandVoice.community_connection}</p>
               )}
             </div>
           </div>
@@ -151,19 +167,19 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
             <h4>Content Stats</h4>
             <div className="summary-content stats-grid">
               <div className="stat-item">
-                <div className="stat-value">{dealershipSummary.stats?.lifecycleTemplates || 0}</div>
+                <div className="stat-value">{dealershipSummary.templates?.count || 0}</div>
                 <div className="stat-label">Lifecycle Templates</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{dealershipSummary.stats?.differentiators || 0}</div>
+                <div className="stat-value">{dealershipSummary.differentiators?.count || 0}</div>
                 <div className="stat-label">Differentiators</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{dealershipSummary.stats?.exampleCaptions || 0}</div>
-                <div className="stat-label">Example Captions</div>
+                <div className="stat-value">{dealershipSummary.templates?.stages || 0}</div>
+                <div className="stat-label">Lifecycle Stages</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{dealershipSummary.stats?.integrations || 0}</div>
+                <div className="stat-value">{dealershipSummary.integrations ? 'Yes' : 'No'}</div>
                 <div className="stat-label">Integrations</div>
               </div>
             </div>

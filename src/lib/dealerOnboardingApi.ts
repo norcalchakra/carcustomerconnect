@@ -682,6 +682,39 @@ export const dealerOnboardingApi = {
       explanation: 'No suggestions available for this section.',
       alternative_options: []
     };
+  },
+
+  /**
+   * Get a summary of the dealership's onboarding data
+   */
+  async getDealershipSummary(dealershipId: number): Promise<any> {
+    try {
+      // Fetch all the necessary data for the summary
+      const profile = await this.getDealershipProfile(dealershipId);
+      const brandVoice = await this.getBrandVoiceSettings(dealershipId);
+      const templates = await this.getLifecycleTemplates(dealershipId);
+      const differentiators = await this.getCompetitiveDifferentiators(dealershipId);
+      const governance = await this.getContentGovernance(dealershipId);
+      const integrations = await this.getTechnicalIntegrations(dealershipId);
+      
+      // Return a consolidated summary
+      return {
+        profile,
+        brandVoice,
+        templates: {
+          count: templates.length,
+          stages: [...new Set(templates.map(t => t.lifecycle_stage))].length
+        },
+        differentiators: {
+          count: differentiators.length
+        },
+        governance,
+        integrations
+      };
+    } catch (error) {
+      console.error('Error generating dealership summary:', error);
+      throw error;
+    }
   }
 };
 
