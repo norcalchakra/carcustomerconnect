@@ -9,11 +9,12 @@ import {
   BrandVoiceSettings,
   LifecycleTemplate,
   CompetitiveDifferentiator,
-  // Still used in state interface and for "Coming Soon" features
-  ContentGovernance,
-  TechnicalIntegrations
+  // These types are kept for future implementation of "Coming Soon" features
+  ContentGovernance, // eslint-disable-line @typescript-eslint/no-unused-vars
+  TechnicalIntegrations // eslint-disable-line @typescript-eslint/no-unused-vars
 } from '../lib/dealerOnboardingTypes';
 import './DealerOnboardingPage.css';
+import '../styles/modern-onboarding.css';
 
 // Import onboarding step components
 import BusinessProfileStep from '../components/onboarding/BusinessProfileStep';
@@ -419,7 +420,7 @@ const DealerOnboardingPage: React.FC = () => {
   }
   
   return (
-    <div className="dealer-onboarding-container">
+    <div className="dealer-onboarding-page dealer-onboarding-container">
       <div className="onboarding-header">
         <h1>Dealer Onboarding</h1>
         

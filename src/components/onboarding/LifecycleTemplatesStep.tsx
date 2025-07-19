@@ -36,8 +36,9 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
+  // Success message state is used in the UI
+  const [success, setSuccess] = useState<string>('');
   const [businessProfile, setBusinessProfile] = useState<DealershipProfile | null>(null);
   const [brandVoice, setBrandVoice] = useState<BrandVoiceSettings | null>(null);
 
@@ -407,99 +408,127 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
 
   if (isEditing && currentTemplate) {
     return (
-      <div className="template-editor">
-        <h3>{getStageDisplayName(currentTemplate.lifecycle_stage)} Template</h3>
-        
-        <div className="form-group">
-          <label htmlFor="template_name">Template Name*</label>
-          <input
-            type="text"
-            id="template_name"
-            name="template_name"
-            value={currentTemplate.template_name}
-            onChange={handleTemplateChange}
-            placeholder="e.g. Standard Acquisition, Luxury Vehicle, etc."
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="template_content">Template Content*</label>
-          <div className="template-content-header">
-            {aiAssistEnabled && (
-              <button 
-                type="button" 
-                className="generate-ai-button" 
-                onClick={generateTemplateWithAI}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Generating...' : 'Generate with AI'}
-              </button>
-            )}
+      <div className="modal-overlay">
+        <div className="modal-content modal-md">
+          <div className="modal-header">
+            <h3>{getStageDisplayName(currentTemplate.lifecycle_stage)} Template</h3>
+            <button
+              onClick={handleCancelEdit}
+              className="modal-close"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <textarea
-            id="template_content"
-            name="template_content"
-            value={currentTemplate.template_content}
-            onChange={handleTemplateChange}
-            placeholder="Write your template content here or click 'Generate with AI' to create content based on your business profile and brand voice."
-            rows={8}
-            required
-          />
-        </div>
-        
-        {/* Variables section removed as requested */}
-        
-        {aiAssistEnabled && aiSuggestions && (
-          <div className="ai-suggestions">
-            <h3>AI Suggestions</h3>
-            {isLoading ? (
-              <p>Loading suggestions...</p>
-            ) : (
-              <>
-                {aiSuggestions.template_content && !currentTemplate.template_content && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Template Content:</strong>
-                    </p>
-                    <div className="suggestion-content">
-                      {aiSuggestions.template_content}
-                    </div>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('template_content', aiSuggestions.template_content)}
-                    >
-                      Apply
-                    </button>
-                  </div>
+          
+          <div className="modal-body">
+            <div className="form-group">
+              <label htmlFor="template_name">Template Name*</label>
+              <input
+                type="text"
+                id="template_name"
+                name="template_name"
+                value={currentTemplate.template_name}
+                onChange={handleTemplateChange}
+                placeholder="e.g. Standard Acquisition, Luxury Vehicle, etc."
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="template_content">Template Content*</label>
+              <div className="template-content-header">
+                {aiAssistEnabled && (
+                  <button 
+                    type="button" 
+                    className="ai-button" 
+                    onClick={generateTemplateWithAI}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span>Generating...</span>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M12 8v8"></path>
+                          <path d="M8 12h8"></path>
+                        </svg>
+                        Generate with AI
+                      </>
+                    )}
+                  </button>
                 )}
+              </div>
+              <textarea
+                id="template-content"
+                name="template_content"
+                value={currentTemplate.template_content}
+                onChange={handleTemplateChange}
+                placeholder="Write your template content here or click 'Generate with AI' to create content based on your business profile and brand voice."
+                rows={8}
+                required
+              />
+            </div>
+            
+            {/* Variables section removed as requested */}
+            
+            {aiAssistEnabled && aiSuggestions && (
+              <div className="ai-suggestion-container">
+                <div className="ai-suggestion-header">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                  </svg>
+                  <h4>AI Suggestions</h4>
+                </div>
                 
-                {aiSuggestions.variables && templateVariables.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Variables:</strong> {aiSuggestions.variables.join(', ')}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => aiSuggestions.variables && setTemplateVariables(aiSuggestions.variables)}
-                    >
-                      Apply
-                    </button>
-                  </div>
+                {isLoading ? (
+                  <p className="ai-loading">Loading suggestions...</p>
+                ) : (
+                  <>
+                    {aiSuggestions?.template_content && !currentTemplate.template_content && (
+                      <div className="ai-suggestion-item">
+                        <p>
+                          <strong>Suggested Template Content:</strong>
+                        </p>
+                        <div className="ai-suggestion-content">
+                          {aiSuggestions.template_content}
+                        </div>
+                        <button
+                          type="button"
+                          className="apply-button"
+                          onClick={() => applySuggestion('template_content', aiSuggestions.template_content)}
+                        >
+                          Apply Suggestion
+                        </button>
+                      </div>
+                    )}
+                    
+                    {aiSuggestions?.variables && templateVariables.length === 0 && (
+                      <div className="ai-suggestion-item">
+                        <p>
+                          <strong>Suggested Variables:</strong> {aiSuggestions.variables.join(', ')}
+                        </p>
+                        <button
+                          type="button"
+                          className="apply-button"
+                          onClick={() => aiSuggestions.variables && setTemplateVariables(aiSuggestions.variables)}
+                        >
+                          Apply Suggestion
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
             )}
           </div>
-        )}
-        
-        <div className="step-content">
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
         </div>
         
-        <div className="form-actions">
+        <div className="modal-footer">
           <button type="button" className="cancel-button" onClick={handleCancelEdit}>
             Cancel
           </button>
@@ -517,40 +546,53 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
       <p className="step-description">
         Create templates for different stages of the vehicle lifecycle. These templates will be used to generate content for social media posts and other communications.
       </p>
-
+      
       <form onSubmit={handleSubmit}>
         {LIFECYCLE_STAGES.map(stage => (
-          <div key={stage} className="form-section">
+          <div key={stage} className="template-stage-section">
             <h3>{getStageDisplayName(stage)}</h3>
             
             {templatesByStage[stage] && templatesByStage[stage].length > 0 ? (
-              templatesByStage[stage].map(template => (
-                <div key={`${template.lifecycle_stage}-${template.template_name}`} className="template-card">
-                  <h4>{template.template_name}</h4>
-                  <p>{template.template_content}</p>
-                  
-                  {/* Variables would be displayed here if they were part of the template */}
-                  
-                  <div className="template-actions">
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={() => handleEditTemplate(template)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() => handleDeleteTemplate(template.id || 0)}
-                    >
-                      Delete
-                    </button>
+              <div className="template-grid">
+                {templatesByStage[stage].map(template => (
+                  <div key={template.id} className="template-card">
+                    <div className="template-card-header">
+                      <h4>{template.template_name}</h4>
+                      <div className="template-actions">
+                        <button
+                          type="button"
+                          className="edit-button"
+                          onClick={() => handleEditTemplate(template)}
+                          aria-label="Edit template"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="delete-button"
+                          onClick={() => handleDeleteTemplate(template.id || 0)}
+                          aria-label="Delete template"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="template-content-preview">
+                      {template.template_content.length > 100
+                        ? `${template.template_content.substring(0, 100)}...`
+                        : template.template_content}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <p className="no-templates">No templates created for this stage yet.</p>
+              <p className="no-templates">No templates for this stage yet.</p>
             )}
             
             <button
@@ -558,19 +600,21 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
               className="add-button"
               onClick={() => handleAddTemplate(stage)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
               </svg>
               Add {getStageDisplayName(stage)} Template
             </button>
           </div>
         ))}
-
+        
         {error && <div className="error-message">{error}</div>}
-
+        {success && <div className="success-message">{success}</div>}
+        
         <div className="form-actions">
-          <button type="submit" className="save-button">
+          <button type="submit" className="primary-button">
             Save & Continue
           </button>
         </div>
