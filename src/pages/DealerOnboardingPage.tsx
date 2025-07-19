@@ -9,8 +9,8 @@ import {
   BrandVoiceSettings,
   LifecycleTemplate,
   CompetitiveDifferentiator,
+  // Still used in state interface and for "Coming Soon" features
   ContentGovernance,
-  ExampleCaption,
   TechnicalIntegrations
 } from '../lib/dealerOnboardingTypes';
 import './DealerOnboardingPage.css';
@@ -21,7 +21,6 @@ import BrandVoiceStep from '../components/onboarding/BrandVoiceStep';
 import LifecycleTemplatesStep from '../components/onboarding/LifecycleTemplatesStep';
 import DifferentiatorsStep from '../components/onboarding/DifferentiatorsStep';
 import ContentGovernanceStep from '../components/onboarding/ContentGovernanceStep';
-import ExampleCaptionsStep from '../components/onboarding/ExampleCaptionsStep';
 import TechnicalIntegrationsStep from '../components/onboarding/TechnicalIntegrationsStep';
 import OnboardingComplete from '../components/onboarding/OnboardingComplete';
 
@@ -36,7 +35,6 @@ const DealerOnboardingPage: React.FC = () => {
     lifecycleTemplates: [],
     differentiators: [],
     contentGovernance: null,
-    exampleCaptions: [],
     technicalIntegrations: null,
     currentStep: 0,
     completedSteps: []
@@ -59,10 +57,9 @@ const DealerOnboardingPage: React.FC = () => {
     { id: 1, name: 'Brand Voice', component: BrandVoiceStep },
     { id: 2, name: 'Lifecycle Templates', component: LifecycleTemplatesStep },
     { id: 3, name: 'Differentiators', component: DifferentiatorsStep },
-    { id: 4, name: 'Content Governance', component: ContentGovernanceStep },
-    { id: 5, name: 'Example Captions', component: ExampleCaptionsStep },
-    { id: 6, name: 'Technical Integrations', component: TechnicalIntegrationsStep },
-    { id: 7, name: 'Complete', component: OnboardingComplete }
+    { id: 4, name: 'Complete', component: OnboardingComplete },
+    { id: 5, name: 'Content Governance (Coming Soon)', component: ContentGovernanceStep },
+    { id: 6, name: 'Technical Integrations (Coming Soon)', component: TechnicalIntegrationsStep }
   ];
   
   // Fetch dealership ID for the current user
@@ -116,8 +113,7 @@ const DealerOnboardingPage: React.FC = () => {
         // Load content governance
         const governance = await dealerOnboardingApi.getContentGovernance(dealershipId);
         
-        // Load example captions
-        const captions = await dealerOnboardingApi.getExampleCaptions(dealershipId);
+        // Example captions removed
         
         // Load technical integrations
         const integrations = await dealerOnboardingApi.getTechnicalIntegrations(dealershipId);
@@ -128,9 +124,7 @@ const DealerOnboardingPage: React.FC = () => {
         if (brandVoice) completedSteps.push(1);
         if (templates.length > 0) completedSteps.push(2);
         if (differentiators.length > 0) completedSteps.push(3);
-        if (governance) completedSteps.push(4);
-        if (captions.length > 0) completedSteps.push(5);
-        if (integrations) completedSteps.push(6);
+        // Steps 4 (Complete), 5 (Content Governance), and 6 (Technical Integrations) are not tracked for completion
         
         // Update state with loaded data
         setOnboardingState({
@@ -139,9 +133,8 @@ const DealerOnboardingPage: React.FC = () => {
           lifecycleTemplates: templates,
           differentiators,
           contentGovernance: governance,
-          exampleCaptions: captions,
           technicalIntegrations: integrations,
-          currentStep: completedSteps.length > 0 ? Math.max(...completedSteps) + 1 : 0,
+          currentStep: completedSteps.length > 0 ? Math.min(Math.max(...completedSteps) + 1, 4) : 0, // Cap at step 4 (Complete)
           completedSteps
         });
       } catch (err) {
@@ -345,77 +338,8 @@ const DealerOnboardingPage: React.FC = () => {
     }
   };
   
-  const handleSaveContentGovernance = async (governance: ContentGovernance) => {
-    if (!dealershipId) return;
-    
-    try {
-      const updatedGovernance = { ...governance, dealership_id: dealershipId };
-      const savedGovernance = await dealerOnboardingApi.saveContentGovernance(updatedGovernance);
-      
-      setOnboardingState(prev => ({
-        ...prev,
-        contentGovernance: savedGovernance
-      }));
-      
-      completeCurrentStep();
-      nextStep();
-    } catch (err) {
-      console.error('Error saving content governance:', err);
-      setError('Failed to save content governance');
-    }
-  };
-  
-  const handleSaveExampleCaptions = async (captions: ExampleCaption[]) => {
-    if (!dealershipId) return;
-    
-    try {
-      const updatedCaptions = captions.map(c => ({
-        ...c,
-        dealership_id: dealershipId
-      }));
-      
-      // Save each caption individually
-      const savedCaptions: ExampleCaption[] = [];
-      
-      for (const caption of updatedCaptions) {
-        const savedCaption = await dealerOnboardingApi.saveExampleCaption(caption);
-        if (savedCaption) {
-          savedCaptions.push(savedCaption);
-        }
-      }
-      
-      setOnboardingState(prev => ({
-        ...prev,
-        exampleCaptions: savedCaptions
-      }));
-      
-      completeCurrentStep();
-      nextStep();
-    } catch (err) {
-      console.error('Error saving example captions:', err);
-      setError('Failed to save example captions');
-    }
-  };
-  
-  const handleSaveTechnicalIntegrations = async (integrations: TechnicalIntegrations) => {
-    if (!dealershipId) return;
-    
-    try {
-      const updatedIntegrations = { ...integrations, dealership_id: dealershipId };
-      const savedIntegrations = await dealerOnboardingApi.saveTechnicalIntegrations(updatedIntegrations);
-      
-      setOnboardingState(prev => ({
-        ...prev,
-        technicalIntegrations: savedIntegrations
-      }));
-      
-      completeCurrentStep();
-      nextStep();
-    } catch (err) {
-      console.error('Error saving technical integrations:', err);
-      setError('Failed to save technical integrations');
-    }
-  };
+  // Content Governance and Technical Integrations steps are marked as "Coming Soon"
+  // Handler functions removed as they are not currently used
   
   // Render the current step
   const renderCurrentStep = () => {
@@ -455,40 +379,31 @@ const DealerOnboardingPage: React.FC = () => {
             dealershipId={dealershipId}
           />
         );
-      case 4: // Content Governance
-        return (
-          <ContentGovernanceStep
-            contentGovernance={onboardingState.contentGovernance}
-            onSave={handleSaveContentGovernance}
-            aiAssistEnabled={aiAssistEnabled}
-            dealershipId={dealershipId}
-          />
-        );
-      case 5: // Example Captions
-        return (
-          <ExampleCaptionsStep
-            captions={onboardingState.exampleCaptions}
-            onSave={handleSaveExampleCaptions}
-            aiAssistEnabled={aiAssistEnabled}
-            dealershipId={dealershipId}
-          />
-        );
-      case 6: // Technical Integrations
-        return (
-          <TechnicalIntegrationsStep
-            integrations={onboardingState.technicalIntegrations ? [onboardingState.technicalIntegrations] : []}
-            onSave={(integrations) => handleSaveTechnicalIntegrations(integrations[0])}
-            aiAssistEnabled={aiAssistEnabled}
-            dealershipId={dealershipId}
-          />
-        );
-      case 7: // Complete
+      case 4: // Complete
         return (
           <OnboardingComplete
             onboardingProgress={onboardingState.completedSteps}
-            totalSteps={steps.length - 1}
+            totalSteps={4} // Only count the active steps
             dealershipId={dealershipId}
           />
+        );
+      case 5: // Content Governance (Coming Soon)
+        return (
+          <div className="coming-soon-feature">
+            <h2>Content Governance</h2>
+            <div className="coming-soon-badge">Coming Soon</div>
+            <p>This feature is currently under development. Please check back later.</p>
+            <button className="skip-button" onClick={nextStep}>Continue</button>
+          </div>
+        );
+      case 6: // Technical Integrations (Coming Soon)
+        return (
+          <div className="coming-soon-feature">
+            <h2>Technical Integrations</h2>
+            <div className="coming-soon-badge">Coming Soon</div>
+            <p>This feature is currently under development. Please check back later.</p>
+            <button className="skip-button" onClick={() => navigate('/dashboard')}>Return to Dashboard</button>
+          </div>
         );
       default:
         return <div>Step not found</div>;
@@ -528,27 +443,33 @@ const DealerOnboardingPage: React.FC = () => {
       </div>
       
       <div className="onboarding-progress">
-        {steps.map((step, index) => (
-          <div
-            key={step.id}
-            className={`progress-step ${index === onboardingState.currentStep ? 'active' : ''} ${
-              onboardingState.completedSteps.includes(index) ? 'completed' : ''
-            }`}
-            onClick={() => {
-              // Allow navigation to completed steps or the current step + 1
-              if (
-                onboardingState.completedSteps.includes(index) ||
-                index === onboardingState.currentStep ||
-                index === onboardingState.completedSteps.length
-              ) {
-                goToStep(index);
-              }
-            }}
-          >
-            <div className="step-number">{index + 1}</div>
-            <div className="step-name">{step.name}</div>
-          </div>
-        ))}
+        {steps.map((step, index) => {
+          // Determine if this step should be marked as a "coming soon" feature
+          const isComingSoon = index > 4;
+          
+          return (
+            <div
+              key={step.id}
+              className={`progress-step ${index === onboardingState.currentStep ? 'active' : ''} ${
+                onboardingState.completedSteps.includes(index) ? 'completed' : ''
+              } ${isComingSoon ? 'coming-soon' : ''}`}
+              onClick={() => {
+                // Allow navigation to completed steps, current step + 1, or any step up to 4
+                if (
+                  onboardingState.completedSteps.includes(index) ||
+                  index === onboardingState.currentStep ||
+                  (index === onboardingState.completedSteps.length && index <= 4) ||
+                  index <= 4 // Allow navigation to any step up to Complete
+                ) {
+                  goToStep(index);
+                }
+              }}
+            >
+              <div className="step-number">{index + 1}</div>
+              <div className="step-name">{step.name}</div>
+            </div>
+          );
+        })}
       </div>
       
       <div className="onboarding-content">
@@ -562,7 +483,7 @@ const DealerOnboardingPage: React.FC = () => {
           </button>
         )}
         
-        {onboardingState.currentStep < steps.length - 1 && (
+        {onboardingState.currentStep < 4 && (
           <button
             className="skip-button"
             onClick={() => {
@@ -574,7 +495,7 @@ const DealerOnboardingPage: React.FC = () => {
           </button>
         )}
         
-        {onboardingState.currentStep === steps.length - 1 && (
+        {onboardingState.currentStep === 4 && (
           <button
             className="finish-button"
             onClick={() => navigate('/dashboard')}

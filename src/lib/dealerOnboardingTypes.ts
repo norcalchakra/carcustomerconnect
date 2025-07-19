@@ -118,7 +118,6 @@ export interface DealerOnboardingState {
   lifecycleTemplates: LifecycleTemplate[];
   differentiators: CompetitiveDifferentiator[];
   contentGovernance: ContentGovernance | null;
-  exampleCaptions: ExampleCaption[];
   technicalIntegrations: TechnicalIntegrations | null;
   currentStep: number;
   completedSteps: number[];
