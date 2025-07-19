@@ -1,21 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { DealershipProfile } from '../../lib/dealerOnboardingTypes';
-import dealerOnboardingApi from '../../lib/dealerOnboardingApi';
 import './OnboardingSteps.css';
 
 interface BusinessProfileStepProps {
-  profile: DealershipProfile | null;
   onSave: (profile: DealershipProfile) => void;
-  aiAssistEnabled: boolean;
+  profile: DealershipProfile | null;
   dealershipId: number | null;
 }
 
-const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
-  profile,
-  onSave,
-  aiAssistEnabled,
-  dealershipId
-}) => {
+const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({ onSave, profile, dealershipId }) => {
   const [formData, setFormData] = useState<DealershipProfile>({
     id: dealershipId || 0,
     legal_name: '',
@@ -28,52 +21,23 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
     years_in_business: 0,
     dealership_type: 'independent',
     primary_market_radius: 0,
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   });
-  
-  // Additional state for brands carried (not in DealershipProfile interface)
-  const [brandsCarried, setBrandsCarried] = useState<string[]>([]);
-
-  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [brandsCarried, setBrandsCarried] = useState<string[]>([]);
 
   // Load existing profile data if available
   useEffect(() => {
     if (profile) {
       setFormData(profile);
       
-      // If there are brands stored in metadata or elsewhere, load them
-      // For now, we'll just initialize with an empty array
-      // In a real implementation, you would fetch this from a separate table or metadata
-      setBrandsCarried([]);
+      // Handle brands carried separately since it's not in the interface
+      // but we track it for UI purposes
+      if (profile.brands_carried && Array.isArray(profile.brands_carried)) {
+        setBrandsCarried(profile.brands_carried as string[]);
+      }
     }
   }, [profile]);
-
-  // Get AI suggestions if enabled
-  useEffect(() => {
-    const getAiSuggestions = async () => {
-      if (aiAssistEnabled && dealershipId && formData.legal_name) {
-        setIsLoading(true);
-        try {
-          const suggestions = await dealerOnboardingApi.getAISuggestions({
-            dealership_id: dealershipId,
-            section: 'business_profile',
-            current_data: formData
-          });
-          setAiSuggestions(suggestions);
-        } catch (err) {
-          console.error('Error getting AI suggestions:', err);
-          setError('Failed to get AI suggestions');
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    getAiSuggestions();
-  }, [aiAssistEnabled, dealershipId, formData.legal_name]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -107,17 +71,6 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
     
     // You might want to store brandsCarried in a separate table or as metadata
     console.log('Brands carried:', brandsCarried);
-  };
-
-  const applySuggestion = (field: string, value: any) => {
-    if (field === 'brands_carried') {
-      setBrandsCarried(value);
-    } else {
-      setFormData({
-        ...formData,
-        [field]: value
-      });
-    }
   };
 
   return (
@@ -266,61 +219,7 @@ const BusinessProfileStep: React.FC<BusinessProfileStepProps> = ({
           </div>
         </div>
 
-        {aiAssistEnabled && aiSuggestions && (
-          <div className="ai-suggestions">
-            <h3>AI Suggestions</h3>
-            {isLoading ? (
-              <p>Loading suggestions...</p>
-            ) : (
-              <>
-                {aiSuggestions.dba_name && formData.dba_name === '' && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Marketing Name:</strong> {aiSuggestions.dba_name}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('dba_name', aiSuggestions.dba_name)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                
-                {aiSuggestions.primary_market_radius && formData.primary_market_radius === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Market Radius:</strong> {aiSuggestions.primary_market_radius} miles
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('primary_market_radius', aiSuggestions.primary_market_radius)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                
-                {aiSuggestions.brands_carried && brandsCarried.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Brands:</strong> {aiSuggestions.brands_carried.join(', ')}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('brands_carried', aiSuggestions.brands_carried)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+        {/* AI suggestions removed as per request */}
 
         {error && <div className="error-message">{error}</div>}
 

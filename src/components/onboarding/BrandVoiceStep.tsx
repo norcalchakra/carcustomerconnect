@@ -1,77 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { BrandVoiceSettings } from '../../lib/dealerOnboardingTypes';
-import dealerOnboardingApi from '../../lib/dealerOnboardingApi';
 import './OnboardingSteps.css';
 
 interface BrandVoiceStepProps {
-  brandVoice: BrandVoiceSettings | null;
-  onSave: (brandVoice: BrandVoiceSettings) => void;
-  aiAssistEnabled: boolean;
-  dealershipId: number | null;
+  onSave: (formData: BrandVoiceSettings) => void;
+  brandVoiceSettings?: BrandVoiceSettings;
+  dealershipId?: number;
 }
 
-const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
-  brandVoice,
-  onSave,
-  aiAssistEnabled,
-  dealershipId
-}) => {
+const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoiceSettings, dealershipId }) => {
   const [formData, setFormData] = useState<BrandVoiceSettings>({
     id: dealershipId || 0,
-    formality_level: 5, // 1-10 scale (casual to formal)
-    energy_level: 5, // 1-10 scale (understated to high energy)
-    technical_detail: 5, // 1-10 scale (benefit-focused to feature-heavy)
-    community_connection: 5, // 1-10 scale (universal to hyper-local)
+    formality_level: 3, 
+    energy_level: 3, 
+    technical_detail_preference: 'benefit-focused', 
+    community_connection: 'regional', 
+    emoji_usage_level: 2, 
     primary_emotions: [],
     value_propositions: [],
     tone_keywords: [],
     avoid_tone_keywords: [],
     example_phrases: [],
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   });
-
-  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load existing brand voice data if available
   useEffect(() => {
-    if (brandVoice) {
-      setFormData(brandVoice);
+    if (brandVoiceSettings) {
+      setFormData({
+        id: brandVoiceSettings.id,
+        formality_level: brandVoiceSettings.formality_level ?? 3,
+        energy_level: brandVoiceSettings.energy_level ?? 3,
+        technical_detail_preference: brandVoiceSettings.technical_detail_preference ?? 'benefit-focused',
+        community_connection: brandVoiceSettings.community_connection ?? 'regional',
+        emoji_usage_level: brandVoiceSettings.emoji_usage_level ?? 2,
+        primary_emotions: brandVoiceSettings.primary_emotions ?? [],
+        value_propositions: brandVoiceSettings.value_propositions ?? [],
+        tone_keywords: brandVoiceSettings.tone_keywords ?? [],
+        avoid_tone_keywords: brandVoiceSettings.avoid_tone_keywords ?? [],
+        example_phrases: brandVoiceSettings.example_phrases ?? [],
+        updated_at: new Date().toISOString()
+      });
     }
-  }, [brandVoice]);
-
-  // Get AI suggestions if enabled
-  useEffect(() => {
-    const getAiSuggestions = async () => {
-      if (aiAssistEnabled && dealershipId) {
-        setIsLoading(true);
-        try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('brand_voice', {
-            dealershipId,
-            partialData: formData
-          });
-          setAiSuggestions(suggestions);
-        } catch (err) {
-          console.error('Error getting AI suggestions:', err);
-          setError('Failed to get AI suggestions');
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    getAiSuggestions();
-  }, [aiAssistEnabled, dealershipId]);
+  }, [brandVoiceSettings]);
 
   // Generate preview based on current settings
   useEffect(() => {
     const generatePreview = async () => {
       if (dealershipId) {
         try {
-          const previewText = await dealerOnboardingApi.generateBrandVoicePreview(dealershipId, formData);
+          // Since the API doesn't have a generateBrandVoicePreview function,
+          // we'll generate a simple preview based on the current settings
+          const emotionsText = formData.primary_emotions?.join(', ') || '';
+          const toneText = formData.tone_keywords?.join(', ') || '';
+          const formalityText = formData.formality_level > 4 ? 'formal' : 
+                              formData.formality_level > 2 ? 'conversational' : 'casual';
+          const energyText = formData.energy_level > 4 ? 'high-energy' : 
+                           formData.energy_level > 2 ? 'balanced' : 'understated';
+          
+          const previewText = `Your brand voice is ${formalityText} and ${energyText}. ` +
+                             `It aims to evoke emotions like ${emotionsText || 'trust and confidence'}. ` +
+                             `The tone can be described as ${toneText || 'professional and approachable'}.`;
+          
           setPreview(previewText);
         } catch (err) {
           console.error('Error generating preview:', err);
@@ -80,7 +71,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
     };
 
     // Only generate preview if we have some data to work with
-    if (formData.tone_keywords.length > 0 || formData.primary_emotions.length > 0) {
+    if ((formData.tone_keywords?.length > 0) || (formData.primary_emotions?.length > 0)) {
       generatePreview();
     }
   }, [dealershipId, formData]);
@@ -103,17 +94,25 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
+    
+    // Include all fields for saving
+    const dbFormData: BrandVoiceSettings = {
+      id: formData.id,
+      formality_level: formData.formality_level,
+      energy_level: formData.energy_level,
+      technical_detail_preference: formData.technical_detail_preference,
+      community_connection: formData.community_connection,
+      emoji_usage_level: formData.emoji_usage_level,
+      primary_emotions: formData.primary_emotions || [],
+      value_propositions: formData.value_propositions || [],
+      tone_keywords: formData.tone_keywords || [],
+      avoid_tone_keywords: formData.avoid_tone_keywords || [],
+      example_phrases: formData.example_phrases || [],
       updated_at: new Date().toISOString()
-    });
-  };
-
-  const applySuggestion = (field: string, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
+    };
+    
+    // Save to database
+    onSave(dbFormData);
   };
 
   return (
@@ -139,8 +138,8 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
                 id="formality_level"
                 name="formality_level"
                 min="1"
-                max="10"
-                value={formData.formality_level}
+                max="5"
+                value={formData.formality_level || 3}
                 onChange={handleSliderChange}
               />
               <span className="slider-label">Formal</span>
@@ -157,8 +156,8 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
                 id="energy_level"
                 name="energy_level"
                 min="1"
-                max="10"
-                value={formData.energy_level}
+                max="5"
+                value={formData.energy_level || 3}
                 onChange={handleSliderChange}
               />
               <span className="slider-label">High Energy</span>
@@ -166,39 +165,49 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             </div>
           </div>
 
-          <div className="slider-group">
-            <label htmlFor="technical_detail">Technical Detail</label>
-            <div className="slider-container">
-              <span className="slider-label">Benefit-Focused</span>
-              <input
-                type="range"
-                id="technical_detail"
-                name="technical_detail"
-                min="1"
-                max="10"
-                value={formData.technical_detail}
-                onChange={handleSliderChange}
-              />
-              <span className="slider-label">Feature-Heavy</span>
-              <span className="slider-value">{formData.technical_detail}</span>
-            </div>
+          <div className="form-group">
+            <label htmlFor="technical_detail_preference">Technical Detail Preference</label>
+            <select
+              id="technical_detail_preference"
+              name="technical_detail_preference"
+              value={formData.technical_detail_preference || 'benefit-focused'}
+              onChange={(e) => setFormData({ ...formData, technical_detail_preference: e.target.value as 'feature-heavy' | 'benefit-focused' | 'lifestyle-oriented' })}
+            >
+              <option value="feature-heavy">Feature-Heavy</option>
+              <option value="benefit-focused">Benefit-Focused</option>
+              <option value="lifestyle-oriented">Lifestyle-Oriented</option>
+            </select>
           </div>
 
-          <div className="slider-group">
+          <div className="form-group">
             <label htmlFor="community_connection">Community Connection</label>
+            <select
+              id="community_connection"
+              name="community_connection"
+              value={formData.community_connection || 'regional'}
+              onChange={(e) => setFormData({ ...formData, community_connection: e.target.value as 'hyper-local' | 'regional' | 'universal' })}
+            >
+              <option value="hyper-local">Hyper-Local</option>
+              <option value="regional">Regional</option>
+              <option value="universal">Universal</option>
+            </select>
+          </div>
+          
+          <div className="slider-group">
+            <label htmlFor="emoji_usage_level">Emoji Usage</label>
             <div className="slider-container">
-              <span className="slider-label">Universal</span>
+              <span className="slider-label">None</span>
               <input
                 type="range"
-                id="community_connection"
-                name="community_connection"
+                id="emoji_usage_level"
+                name="emoji_usage_level"
                 min="1"
-                max="10"
-                value={formData.community_connection}
+                max="5"
+                value={formData.emoji_usage_level || 2}
                 onChange={handleSliderChange}
               />
-              <span className="slider-label">Hyper-Local</span>
-              <span className="slider-value">{formData.community_connection}</span>
+              <span className="slider-label">Abundant</span>
+              <span className="slider-value">{formData.emoji_usage_level}</span>
             </div>
           </div>
         </div>
@@ -214,7 +223,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             <textarea
               id="primary_emotions"
               name="primary_emotions"
-              value={formData.primary_emotions.join('\n')}
+              value={formData.primary_emotions?.join('\n') || ''}
               onChange={handleArrayChange}
               placeholder="e.g. Trust&#10;Excitement&#10;Confidence"
               rows={4}
@@ -226,7 +235,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             <textarea
               id="value_propositions"
               name="value_propositions"
-              value={formData.value_propositions.join('\n')}
+              value={formData.value_propositions?.join('\n') || ''}
               onChange={handleArrayChange}
               placeholder="e.g. Family-owned for 30 years&#10;Award-winning service&#10;Largest selection in the region"
               rows={4}
@@ -238,7 +247,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             <textarea
               id="tone_keywords"
               name="tone_keywords"
-              value={formData.tone_keywords.join('\n')}
+              value={formData.tone_keywords?.join('\n') || ''}
               onChange={handleArrayChange}
               placeholder="e.g. Friendly&#10;Professional&#10;Knowledgeable"
               rows={4}
@@ -250,7 +259,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             <textarea
               id="avoid_tone_keywords"
               name="avoid_tone_keywords"
-              value={formData.avoid_tone_keywords.join('\n')}
+              value={formData.avoid_tone_keywords?.join('\n') || ''}
               onChange={handleArrayChange}
               placeholder="e.g. Pushy&#10;Overly technical&#10;Impersonal"
               rows={4}
@@ -262,7 +271,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
             <textarea
               id="example_phrases"
               name="example_phrases"
-              value={formData.example_phrases.join('\n')}
+              value={formData.example_phrases?.join('\n') || ''}
               onChange={handleArrayChange}
               placeholder="e.g. We're not just selling cars, we're building relationships.&#10;Your journey matters to us.&#10;Drive with confidence, service with a smile."
               rows={4}
@@ -270,81 +279,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({
           </div>
         </div>
 
-        {aiAssistEnabled && aiSuggestions && (
-          <div className="ai-suggestions">
-            <h3>AI Suggestions</h3>
-            {isLoading ? (
-              <p>Loading suggestions...</p>
-            ) : (
-              <>
-                {aiSuggestions.primary_emotions && formData.primary_emotions.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Emotions:</strong> {aiSuggestions.primary_emotions.join(', ')}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('primary_emotions', aiSuggestions.primary_emotions)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                
-                {aiSuggestions.tone_keywords && formData.tone_keywords.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Tone Keywords:</strong> {aiSuggestions.tone_keywords.join(', ')}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('tone_keywords', aiSuggestions.tone_keywords)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                
-                {aiSuggestions.avoid_tone_keywords && formData.avoid_tone_keywords.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Tones to Avoid:</strong> {aiSuggestions.avoid_tone_keywords.join(', ')}
-                    </p>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('avoid_tone_keywords', aiSuggestions.avoid_tone_keywords)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                
-                {aiSuggestions.example_phrases && formData.example_phrases.length === 0 && (
-                  <div className="suggestion-item">
-                    <p>
-                      <strong>Suggested Example Phrases:</strong>
-                    </p>
-                    <ul>
-                      {aiSuggestions.example_phrases.map((phrase: string, index: number) => (
-                        <li key={index}>{phrase}</li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      className="apply-suggestion"
-                      onClick={() => applySuggestion('example_phrases', aiSuggestions.example_phrases)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+        {/* AI suggestions removed as per request */}
 
         {preview && (
           <div className="voice-preview">

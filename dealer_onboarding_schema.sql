@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS brand_voice_settings (
     technical_detail_preference TEXT NOT NULL, -- feature-heavy, benefit-focused, lifestyle-oriented
     community_connection TEXT NOT NULL, -- hyper-local, regional, universal
     emoji_usage_level INTEGER NOT NULL, -- 1-5 scale (none to abundant)
+    primary_emotions TEXT[] DEFAULT '{}', -- Array of emotions to evoke
+    value_propositions TEXT[] DEFAULT '{}', -- Array of key value propositions
+    tone_keywords TEXT[] DEFAULT '{}', -- Array of tone keywords to use
+    avoid_tone_keywords TEXT[] DEFAULT '{}', -- Array of tone keywords to avoid
+    example_phrases TEXT[] DEFAULT '{}', -- Array of example phrases
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -111,46 +116,89 @@ ALTER TABLE content_governance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE example_captions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE technical_integrations ENABLE ROW LEVEL SECURITY;
 
--- Create policies for each table
-CREATE POLICY dealership_profiles_policy ON dealership_profiles
-    USING (id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+-- Create policies for each table (safely checking if they exist first)
+DO $$ 
+BEGIN
+    -- Check if dealership_profiles_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'dealership_profiles_policy'
+    ) THEN
+        CREATE POLICY dealership_profiles_policy ON dealership_profiles
+            USING (id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY brand_voice_settings_policy ON brand_voice_settings
-    USING (id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if brand_voice_settings_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'brand_voice_settings_policy'
+    ) THEN
+        CREATE POLICY brand_voice_settings_policy ON brand_voice_settings
+            USING (id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY lifecycle_templates_policy ON lifecycle_templates
-    USING (dealership_id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if lifecycle_templates_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'lifecycle_templates_policy'
+    ) THEN
+        CREATE POLICY lifecycle_templates_policy ON lifecycle_templates
+            USING (dealership_id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY customization_parameters_policy ON customization_parameters
-    USING (id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if customization_parameters_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'customization_parameters_policy'
+    ) THEN
+        CREATE POLICY customization_parameters_policy ON customization_parameters
+            USING (id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY competitive_differentiators_policy ON competitive_differentiators
-    USING (dealership_id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if competitive_differentiators_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'competitive_differentiators_policy'
+    ) THEN
+        CREATE POLICY competitive_differentiators_policy ON competitive_differentiators
+            USING (dealership_id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY content_governance_policy ON content_governance
-    USING (id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if content_governance_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'content_governance_policy'
+    ) THEN
+        CREATE POLICY content_governance_policy ON content_governance
+            USING (id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY example_captions_policy ON example_captions
-    USING (dealership_id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if example_captions_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'example_captions_policy'
+    ) THEN
+        CREATE POLICY example_captions_policy ON example_captions
+            USING (dealership_id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
 
-CREATE POLICY technical_integrations_policy ON technical_integrations
-    USING (id IN (
-        SELECT id FROM dealerships WHERE user_id = auth.uid()
-    ));
+    -- Check if technical_integrations_policy exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'technical_integrations_policy'
+    ) THEN
+        CREATE POLICY technical_integrations_policy ON technical_integrations
+            USING (id IN (
+                SELECT id FROM dealerships WHERE user_id = auth.uid()
+            ));
+    END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS lifecycle_templates_dealership_id_idx ON lifecycle_templates(dealership_id);
