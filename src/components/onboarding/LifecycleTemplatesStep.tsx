@@ -238,7 +238,7 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
         if (success) {
           console.log('Template deleted successfully from Supabase');
           setSuccess('Template deleted successfully');
-          setTimeout(() => setSuccess(null), 3000);
+          setTimeout(() => setSuccess(''), 3000);
           
           // Refresh templates for this lifecycle stage from the database
           if (lifecycleStage) {
@@ -327,7 +327,7 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
         
         setLifecycleTemplates(updatedTemplates);
         setSuccess('Template saved successfully!');
-        setTimeout(() => setSuccess(null), 3000);
+        setTimeout(() => setSuccess(''), 3000);
         
         // Refresh templates for this lifecycle stage from the database
         try {
@@ -358,7 +358,7 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
   const handleCancelEdit = () => {
     setCurrentTemplate(null);
     setIsEditing(false);
-    setError(null);
+    setError('');
   };
 
   const applySuggestion = (field: string, value: any) => {
@@ -408,13 +408,14 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
 
   if (isEditing && currentTemplate) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content modal-md">
-          <div className="modal-header">
-            <h3>{getStageDisplayName(currentTemplate.lifecycle_stage)} Template</h3>
+      <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
+        <div className="modal-content modal-md" style={{ backgroundColor: 'white', borderRadius: '8px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-header" style={{ padding: '1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 500, color: '#334155' }}>{getStageDisplayName(currentTemplate.lifecycle_stage)} Template</h3>
             <button
               onClick={handleCancelEdit}
               className="modal-close"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
             >
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -422,9 +423,9 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
             </button>
           </div>
           
-          <div className="modal-body">
-            <div className="form-group">
-              <label htmlFor="template_name">Template Name*</label>
+          <div className="modal-body" style={{ padding: '1rem', flex: 1, overflowY: 'auto' }}>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label htmlFor="template_name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: '#334155' }}>Template Name*</label>
               <input
                 type="text"
                 id="template_name"
@@ -433,18 +434,32 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
                 onChange={handleTemplateChange}
                 placeholder="e.g. Standard Acquisition, Luxury Vehicle, etc."
                 required
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '0.25rem', fontSize: '0.875rem' }}
               />
             </div>
             
-            <div className="form-group">
-              <label htmlFor="template_content">Template Content*</label>
-              <div className="template-content-header">
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label htmlFor="template_content" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: '#334155' }}>Template Content*</label>
+              <div className="template-content-header" style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                 {aiAssistEnabled && (
                   <button 
                     type="button" 
                     className="ai-button" 
                     onClick={generateTemplateWithAI}
                     disabled={isLoading}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      backgroundColor: '#f8fafc', 
+                      color: '#64748b', 
+                      border: '1px solid #e2e8f0', 
+                      padding: '0.5rem 0.75rem', 
+                      borderRadius: '0.25rem', 
+                      fontSize: '0.875rem', 
+                      fontWeight: 500, 
+                      cursor: 'pointer' 
+                    }}
                   >
                     {isLoading ? (
                       <span>Generating...</span>
@@ -469,12 +484,13 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
                 placeholder="Write your template content here or click 'Generate with AI' to create content based on your business profile and brand voice."
                 rows={8}
                 required
+                style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '0.25rem', fontSize: '0.875rem', minHeight: '150px' }}
               />
             </div>
             
             {/* Variables section removed as requested */}
             
-            {aiAssistEnabled && aiSuggestions && (
+            {aiAssistEnabled && aiSuggestions && currentTemplate.lifecycle_stage !== 'acquisition' && (
               <div className="ai-suggestion-container">
                 <div className="ai-suggestion-header">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -526,15 +542,43 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="modal-footer">
-          <button type="button" className="cancel-button" onClick={handleCancelEdit}>
-            Cancel
-          </button>
-          <button type="button" className="save-button" onClick={handleSaveTemplate}>
-            Save Template
-          </button>
+          
+          <div className="modal-footer" style={{ padding: '1rem', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <button 
+              type="button" 
+              className="cancel-button" 
+              onClick={handleCancelEdit}
+              style={{ 
+                backgroundColor: '#f8fafc', 
+                color: '#64748b', 
+                border: '1px solid #e2e8f0', 
+                padding: '0.625rem 1rem', 
+                borderRadius: '0.25rem', 
+                fontSize: '0.875rem', 
+                fontWeight: 500, 
+                cursor: 'pointer' 
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              className="save-button" 
+              onClick={handleSaveTemplate}
+              style={{ 
+                backgroundColor: '#0ea5e9', 
+                color: 'white', 
+                border: 'none', 
+                padding: '0.625rem 1rem', 
+                borderRadius: '0.25rem', 
+                fontSize: '0.875rem', 
+                fontWeight: 500, 
+                cursor: 'pointer' 
+              }}
+            >
+              Save Template
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -553,41 +597,72 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
             <h3>{getStageDisplayName(stage)}</h3>
             
             {templatesByStage[stage] && templatesByStage[stage].length > 0 ? (
-              <div className="template-grid">
+              <div className="lifecycle-templates-grid">
                 {templatesByStage[stage].map(template => (
-                  <div key={template.id} className="template-card">
-                    <div className="template-card-header">
-                      <h4>{template.template_name}</h4>
-                      <div className="template-actions">
+                  <div key={template.id} className="template-card" style={{ backgroundColor: '#f8fafc', borderRadius: '0.25rem', padding: '1rem', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#334155', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        {template.template_name}
+                      </h4>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                           type="button"
-                          className="edit-button"
                           onClick={() => handleEditTemplate(template)}
-                          aria-label="Edit template"
+                          style={{ 
+                            backgroundColor: '#f8fafc', 
+                            border: '1px solid #e2e8f0', 
+                            color: '#64748b', 
+                            padding: '0.25rem 0.5rem', 
+                            borderRadius: '0.25rem', 
+                            fontSize: '0.75rem', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.25rem',
+                            cursor: 'pointer'
+                          }}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
+                          Edit
                         </button>
                         <button
                           type="button"
-                          className="delete-button"
                           onClick={() => handleDeleteTemplate(template.id || 0)}
-                          aria-label="Delete template"
+                          style={{ 
+                            backgroundColor: '#fef2f2', 
+                            border: '1px solid #fee2e2', 
+                            color: '#ef4444', 
+                            padding: '0.25rem 0.5rem', 
+                            borderRadius: '0.25rem', 
+                            fontSize: '0.75rem', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.25rem',
+                            cursor: 'pointer'
+                          }}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18"></path>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                           </svg>
+                          Delete
                         </button>
                       </div>
                     </div>
-                    <div className="template-content-preview">
-                      {template.template_content.length > 100
-                        ? `${template.template_content.substring(0, 100)}...`
+                    <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                      {template.template_content.length > 120
+                        ? `${template.template_content.substring(0, 120)}...`
                         : template.template_content}
-                    </div>
+                    </p>
                   </div>
                 ))}
               </div>
@@ -599,22 +674,48 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
               type="button"
               className="add-button"
               onClick={() => handleAddTemplate(stage)}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                backgroundColor: '#f8fafc', 
+                color: '#64748b', 
+                border: '1px solid #e2e8f0', 
+                padding: '0.5rem 0.75rem', 
+                borderRadius: '0.25rem', 
+                fontSize: '0.875rem', 
+                fontWeight: 500, 
+                cursor: 'pointer',
+                marginTop: '0.75rem'
+              }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="16"></line>
                 <line x1="8" y1="12" x2="16" y2="12"></line>
               </svg>
-              Add {getStageDisplayName(stage)} Template
+              Add New {getStageDisplayName(stage)} Template
             </button>
           </div>
         ))}
         
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {error && <div style={{ color: '#ef4444', padding: '0.75rem', backgroundColor: '#fef2f2', borderRadius: '0.25rem', marginBottom: '1rem' }}>{error}</div>}
+        {success && <div style={{ color: '#10b981', padding: '0.75rem', backgroundColor: '#f0fdf4', borderRadius: '0.25rem', marginBottom: '1rem' }}>{success}</div>}
         
-        <div className="form-actions">
-          <button type="submit" className="primary-button">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+          <button 
+            type="submit" 
+            style={{ 
+              backgroundColor: '#0ea5e9', 
+              color: 'white', 
+              border: 'none', 
+              padding: '0.625rem 1.25rem', 
+              borderRadius: '0.25rem', 
+              fontSize: '0.875rem', 
+              fontWeight: 500, 
+              cursor: 'pointer' 
+            }}
+          >
             Save & Continue
           </button>
         </div>
