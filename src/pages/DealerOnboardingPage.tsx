@@ -211,7 +211,8 @@ const DealerOnboardingPage: React.FC = () => {
     if (!dealershipId) return;
     
     try {
-      const updatedBrandVoice = { ...brandVoice, dealership_id: dealershipId };
+      // Ensure the id field is set to the dealershipId
+      const updatedBrandVoice = { ...brandVoice, id: dealershipId };
       const savedBrandVoice = await dealerOnboardingApi.saveBrandVoiceSettings(updatedBrandVoice);
       
       setOnboardingState(prev => ({

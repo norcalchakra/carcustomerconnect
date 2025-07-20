@@ -5,13 +5,13 @@ import './OnboardingSteps.css';
 interface BrandVoiceStepProps {
   onSave: (formData: BrandVoiceSettings) => void;
   brandVoice: BrandVoiceSettings | null;
-  aiAssistEnabled: boolean;
   dealershipId: number | null;
+  aiAssistEnabled?: boolean;
 }
 
-const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiAssistEnabled, dealershipId }) => {
+const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, dealershipId, aiAssistEnabled }) => {
   const [formData, setFormData] = useState<BrandVoiceSettings>({
-    id: dealershipId || 0,
+    id: dealershipId || 0, // Use dealershipId as the id (primary key)
     formality_level: 3, 
     energy_level: 3, 
     technical_detail_preference: 'benefit-focused', 
@@ -30,7 +30,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiA
   useEffect(() => {
     if (brandVoice) {
       setFormData({
-        id: brandVoice.id,
+        id: dealershipId || brandVoice.id, // Use dealershipId as the id (primary key)
         formality_level: brandVoice.formality_level ?? 3,
         energy_level: brandVoice.energy_level ?? 3,
         technical_detail_preference: brandVoice.technical_detail_preference ?? 'benefit-focused',
@@ -44,7 +44,7 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiA
         updated_at: new Date().toISOString()
       });
     }
-  }, [brandVoice]);
+  }, [brandVoice, dealershipId]);
 
   // Generate preview based on current settings
   useEffect(() => {
@@ -72,7 +72,8 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiA
     };
 
     // Only generate preview if we have some data to work with
-    if ((formData.tone_keywords?.length > 0) || (formData.primary_emotions?.length > 0)) {
+    if ((formData.tone_keywords && formData.tone_keywords.length > 0) || 
+        (formData.primary_emotions && formData.primary_emotions.length > 0)) {
       generatePreview();
     }
   }, [dealershipId, formData]);
@@ -96,14 +97,20 @@ const BrandVoiceStep: React.FC<BrandVoiceStepProps> = ({ onSave, brandVoice, aiA
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!dealershipId) {
+      setError('Missing dealership ID. Please try again.');
+      return;
+    }
+    
     // Include all fields for saving
     const dbFormData: BrandVoiceSettings = {
-      id: formData.id,
+      id: dealershipId, // Use dealershipId as the id (primary key)
       formality_level: formData.formality_level,
       energy_level: formData.energy_level,
       technical_detail_preference: formData.technical_detail_preference,
       community_connection: formData.community_connection,
       emoji_usage_level: formData.emoji_usage_level,
+      // Optional fields in the database
       primary_emotions: formData.primary_emotions || [],
       value_propositions: formData.value_propositions || [],
       tone_keywords: formData.tone_keywords || [],

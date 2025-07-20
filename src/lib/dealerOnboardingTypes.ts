@@ -20,17 +20,17 @@ export interface DealershipProfile {
 }
 
 export interface BrandVoiceSettings {
-  id: number;
+  id: number; // Primary key AND foreign key to dealerships(id)
   formality_level: number; // 1-5 scale (casual to formal)
   energy_level: number; // 1-5 scale (understated to high energy)
   technical_detail_preference: 'feature-heavy' | 'benefit-focused' | 'lifestyle-oriented';
   community_connection: 'hyper-local' | 'regional' | 'universal';
   emoji_usage_level: number; // 1-5 scale (none to abundant)
-  primary_emotions: string[]; // Array of emotions to evoke
-  value_propositions: string[]; // Array of key value propositions
-  tone_keywords: string[]; // Array of tone keywords to use
-  avoid_tone_keywords: string[]; // Array of tone keywords to avoid
-  example_phrases: string[]; // Array of example phrases
+  primary_emotions?: string[]; // Array of emotions to evoke 
+  value_propositions?: string[]; // Array of key value propositions
+  tone_keywords?: string[]; // Array of tone keywords to use
+  avoid_tone_keywords?: string[]; // Array of tone keywords to avoid
+  example_phrases?: string[]; // Array of example phrases
   created_at?: string;
   updated_at?: string;
 }

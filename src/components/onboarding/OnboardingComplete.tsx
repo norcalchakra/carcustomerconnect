@@ -106,9 +106,11 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
           <div className="summary-section">
             <h4>Business Profile</h4>
             <div className="summary-content">
-              <p><strong>Name:</strong> {dealershipSummary.profile?.legal_name || dealershipSummary.profile?.dealership_name || 'Not specified'}</p>
-              <p><strong>Location:</strong> {dealershipSummary.profile?.city || 'Not specified'}{dealershipSummary.profile?.state ? `, ${dealershipSummary.profile.state}` : ''}</p>
-              <p><strong>Brands:</strong> {dealershipSummary.profile?.brands_carried?.join(', ') || 'Not specified'}</p>
+              <p><strong>Name:</strong> {dealershipSummary.profile?.legal_name || dealershipSummary.profile?.dba_name || 'Not specified'}</p>
+              <p><strong>Address:</strong> {dealershipSummary.profile?.physical_address || 'Not specified'}</p>
+              <p><strong>Years in Business:</strong> {dealershipSummary.profile?.years_in_business || 'Not specified'}</p>
+              <p><strong>Dealership Type:</strong> {dealershipSummary.profile?.dealership_type || 'Not specified'}</p>
+              <p><strong>Market Radius:</strong> {dealershipSummary.profile?.primary_market_radius ? `${dealershipSummary.profile.primary_market_radius} miles` : 'Not specified'}</p>
             </div>
           </div>
           
@@ -125,6 +127,12 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                         style={{ width: `${(dealershipSummary.brandVoice.formality_level / 5) * 100}%` }}
                       />
                     </div>
+                    <span className="attribute-value">
+                      {dealershipSummary.brandVoice.formality_level === 1 ? 'Very Casual' : 
+                       dealershipSummary.brandVoice.formality_level === 2 ? 'Casual' :
+                       dealershipSummary.brandVoice.formality_level === 3 ? 'Balanced' :
+                       dealershipSummary.brandVoice.formality_level === 4 ? 'Professional' : 'Formal'}
+                    </span>
                   </div>
                 )}
                 
@@ -137,6 +145,12 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                         style={{ width: `${(dealershipSummary.brandVoice.energy_level / 5) * 100}%` }}
                       />
                     </div>
+                    <span className="attribute-value">
+                      {dealershipSummary.brandVoice.energy_level === 1 ? 'Very Understated' : 
+                       dealershipSummary.brandVoice.energy_level === 2 ? 'Understated' :
+                       dealershipSummary.brandVoice.energy_level === 3 ? 'Balanced' :
+                       dealershipSummary.brandVoice.energy_level === 4 ? 'Energetic' : 'High Energy'}
+                    </span>
                   </div>
                 )}
                 
@@ -149,16 +163,32 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                         style={{ width: `${(dealershipSummary.brandVoice.emoji_usage_level / 5) * 100}%` }}
                       />
                     </div>
+                    <span className="attribute-value">
+                      {dealershipSummary.brandVoice.emoji_usage_level === 1 ? 'None' : 
+                       dealershipSummary.brandVoice.emoji_usage_level === 2 ? 'Minimal' :
+                       dealershipSummary.brandVoice.emoji_usage_level === 3 ? 'Moderate' :
+                       dealershipSummary.brandVoice.emoji_usage_level === 4 ? 'Frequent' : 'Abundant'}
+                    </span>
                   </div>
                 )}
               </div>
               
               {dealershipSummary.brandVoice?.technical_detail_preference && (
-                <p><strong>Technical Detail:</strong> {dealershipSummary.brandVoice.technical_detail_preference}</p>
+                <p><strong>Technical Detail:</strong> {
+                  dealershipSummary.brandVoice.technical_detail_preference === 'feature-heavy' ? 'Feature-Heavy' :
+                  dealershipSummary.brandVoice.technical_detail_preference === 'benefit-focused' ? 'Benefit-Focused' :
+                  dealershipSummary.brandVoice.technical_detail_preference === 'lifestyle-oriented' ? 'Lifestyle-Oriented' :
+                  dealershipSummary.brandVoice.technical_detail_preference
+                }</p>
               )}
               
               {dealershipSummary.brandVoice?.community_connection && (
-                <p><strong>Community Connection:</strong> {dealershipSummary.brandVoice.community_connection}</p>
+                <p><strong>Community Connection:</strong> {
+                  dealershipSummary.brandVoice.community_connection === 'hyper-local' ? 'Hyper-Local' :
+                  dealershipSummary.brandVoice.community_connection === 'regional' ? 'Regional' :
+                  dealershipSummary.brandVoice.community_connection === 'universal' ? 'Universal' :
+                  dealershipSummary.brandVoice.community_connection
+                }</p>
               )}
             </div>
           </div>
@@ -194,25 +224,13 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Go to your dashboard to start creating AI-generated content
+            Load new inventory
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Upload vehicle photos to generate captions
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Schedule automated posts for your inventory
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Review and refine your onboarding settings anytime
+            Generate your first post
           </li>
         </ul>
       </div>
