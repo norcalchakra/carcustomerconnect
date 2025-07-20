@@ -512,33 +512,6 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
         What makes your dealership stand out from the competition? These differentiators will be highlighted in your AI-generated content.
       </p>
 
-      <button
-        type="button"
-        className="add-button"
-        onClick={handleAddDifferentiator}
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.5rem', 
-          backgroundColor: '#f8fafc', 
-          color: '#64748b', 
-          border: '1px solid #e2e8f0', 
-          padding: '0.5rem 0.75rem', 
-          borderRadius: '0.25rem', 
-          fontSize: '0.875rem', 
-          fontWeight: 500, 
-          cursor: 'pointer',
-          marginBottom: '1rem'
-        }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-        Add New Differentiator
-      </button>
-
       <form onSubmit={handleSubmit}>
         {categories.map(category => {
           const categoryDifferentiators = differentiatorsByCategory[category] || [];
@@ -548,35 +521,24 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
           }
           
           return (
-            <div key={category} className="form-section">
+            <div key={category} className="template-stage-section">
               <h3>{getCategoryDisplayName(category)}</h3>
               
               <div className="differentiators-grid">
                 {categoryDifferentiators.map(differentiator => (
-                  <div key={differentiator.id || `new-${differentiator.title}`} style={{ backgroundColor: '#f8fafc', borderRadius: '0.25rem', padding: '1rem', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                      <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#334155', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div key={differentiator.id || `new-${differentiator.title}`} className="template-card">
+                    <div className="card-header">
+                      <h4>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
                         {differentiator.title}
                       </h4>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className="card-actions">
                         <button
                           type="button"
                           onClick={() => handleEditDifferentiator(differentiator)}
-                          style={{ 
-                            backgroundColor: '#f8fafc', 
-                            border: '1px solid #e2e8f0', 
-                            color: '#64748b', 
-                            padding: '0.25rem 0.5rem', 
-                            borderRadius: '0.25rem', 
-                            fontSize: '0.75rem', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.25rem',
-                            cursor: 'pointer'
-                          }}
+                          className="edit-button"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -587,18 +549,7 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDeleteDifferentiator(differentiator.id)}
-                          style={{ 
-                            backgroundColor: '#fef2f2', 
-                            border: '1px solid #fee2e2', 
-                            color: '#ef4444', 
-                            padding: '0.25rem 0.5rem', 
-                            borderRadius: '0.25rem', 
-                            fontSize: '0.75rem', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.25rem',
-                            cursor: 'pointer'
-                          }}
+                          className="delete-button"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 6h18"></path>
@@ -608,11 +559,31 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
                         </button>
                       </div>
                     </div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.5rem 0' }}>{differentiator.description}</p>
-                    <div style={{ display: 'inline-block', backgroundColor: '#f1f5f9', color: '#64748b', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 500 }}>Priority: {differentiator.priority}</div>
+                    <p>
+                      {differentiator.description.length > 120
+                        ? `${differentiator.description.substring(0, 120)}...`
+                        : differentiator.description}
+                    </p>
+                    <div className="tag">Priority: {differentiator.priority}</div>
                   </div>
                 ))}
               </div>
+              
+              <button
+                type="button"
+                className="add-button"
+                onClick={handleAddDifferentiator}
+                style={{
+                  marginBottom: '1.5rem'
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Add New {getCategoryDisplayName(category)} Differentiator
+              </button>
             </div>
           );
         })}
@@ -620,47 +591,40 @@ const DifferentiatorsStep: React.FC<DifferentiatorsStepProps> = ({
         {formData.length === 0 && (
           <div className="no-differentiators">
             <p>No differentiators added yet. Click the "Add Differentiator" button to get started.</p>
+            
+            <button
+              type="button"
+              className="add-button"
+              onClick={handleAddDifferentiator}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              Add New Differentiator
+            </button>
           </div>
         )}
 
         {aiAssistEnabled && aiSuggestions && (
-          <div style={{ 
-            backgroundColor: '#f8fafc', 
-            border: '1px solid #e2e8f0', 
-            borderRadius: '0.25rem', 
-            padding: '1rem', 
-            marginTop: '1.5rem', 
-            marginBottom: '1.5rem' 
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              marginBottom: '0.75rem', 
-              borderBottom: '1px solid #e2e8f0', 
-              paddingBottom: '0.75rem' 
-            }}>
+          <div className="ai-suggestions-container">
+            <div className="ai-suggestions-header">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="3" y1="9" x2="21" y2="9"></line>
                 <line x1="9" y1="21" x2="9" y2="9"></line>
               </svg>
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: '#334155' }}>AI Suggestions</h4>
+              <h4>AI Suggestions</h4>
             </div>
             {isLoading ? (
               <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading suggestions...</p>
             ) : (
               <>
                 {aiSuggestions.differentiators && aiSuggestions.differentiators.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                  <div className="ai-suggestions-grid">
                     {aiSuggestions.differentiators.map((suggestion: any, index: number) => (
-                      <div key={index} style={{ 
-                        backgroundColor: '#fff', 
-                        borderRadius: '0.25rem', 
-                        padding: '1rem', 
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                      }}>
+                      <div key={index} className="ai-suggestion-card">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>

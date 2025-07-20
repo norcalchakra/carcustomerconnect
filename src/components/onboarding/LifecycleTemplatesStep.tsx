@@ -599,9 +599,9 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
             {templatesByStage[stage] && templatesByStage[stage].length > 0 ? (
               <div className="lifecycle-templates-grid">
                 {templatesByStage[stage].map(template => (
-                  <div key={template.id} className="template-card" style={{ backgroundColor: '#f8fafc', borderRadius: '0.25rem', padding: '1rem', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                      <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#334155', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div key={template.id} className="template-card">
+                    <div className="card-header">
+                      <h4>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                           <polyline points="14 2 14 8 20 8"></polyline>
@@ -611,22 +611,11 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
                         </svg>
                         {template.template_name}
                       </h4>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className="card-actions">
                         <button
                           type="button"
                           onClick={() => handleEditTemplate(template)}
-                          style={{ 
-                            backgroundColor: '#f8fafc', 
-                            border: '1px solid #e2e8f0', 
-                            color: '#64748b', 
-                            padding: '0.25rem 0.5rem', 
-                            borderRadius: '0.25rem', 
-                            fontSize: '0.75rem', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.25rem',
-                            cursor: 'pointer'
-                          }}
+                          className="edit-button"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -637,18 +626,7 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDeleteTemplate(template.id || 0)}
-                          style={{ 
-                            backgroundColor: '#fef2f2', 
-                            border: '1px solid #fee2e2', 
-                            color: '#ef4444', 
-                            padding: '0.25rem 0.5rem', 
-                            borderRadius: '0.25rem', 
-                            fontSize: '0.75rem', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.25rem',
-                            cursor: 'pointer'
-                          }}
+                          className="delete-button"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 6h18"></path>
@@ -658,7 +636,7 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
                         </button>
                       </div>
                     </div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                    <p>
                       {template.template_content.length > 120
                         ? `${template.template_content.substring(0, 120)}...`
                         : template.template_content}
@@ -674,20 +652,6 @@ const LifecycleTemplatesStep: React.FC<LifecycleTemplatesStepProps> = ({
               type="button"
               className="add-button"
               onClick={() => handleAddTemplate(stage)}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem', 
-                backgroundColor: '#f8fafc', 
-                color: '#64748b', 
-                border: '1px solid #e2e8f0', 
-                padding: '0.5rem 0.75rem', 
-                borderRadius: '0.25rem', 
-                fontSize: '0.875rem', 
-                fontWeight: 500, 
-                cursor: 'pointer',
-                marginTop: '0.75rem'
-              }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
