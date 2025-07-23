@@ -13,7 +13,7 @@ const FacebookLoginTest: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
-      await mockFacebookApi.initMockFacebookSDK();
+      await mockFacebookApi.mockInitFacebookSDK();
       setIsInitialized(true);
       
       // Check if already connected

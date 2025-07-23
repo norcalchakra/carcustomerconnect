@@ -446,4 +446,80 @@
     flex-direction: column;
     gap: 16px;
   }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .quick-action-button {
+    width: 100%;
+  }
+}
+
+/* Vehicle Quick Actions Styles */
+.vehicle-quick-actions {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.quick-action-button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.quick-action-button.post-button {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.quick-action-button.post-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.quick-action-button.edit-button {
+  background-color: #10b981;
+  color: white;
+}
+
+.quick-action-button.edit-button:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.vehicle-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.days-in-status {
+  font-weight: 500;
+}
+
+.stock-number {
+  font-weight: 600;
+  color: #374151;
 }

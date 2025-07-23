@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import VehicleList from './vehicles/VehicleList';
+
 import VehicleForm from './vehicles/VehicleForm';
 import Modal from './ui/Modal';
-import Debug from './Debug';
-import { Vehicle } from '../lib/api';
+import { SocialPostFormEnhanced } from './captions/SocialPostFormEnhanced';
+
 import { useAuth } from '../context/AuthContext';
 import { fetchAllActivity, RecentActivity } from '../lib/activityService';
 import eventBus, { EVENTS } from '../lib/eventBus';
 import { supabase } from '../lib/supabase';
+
 import './Dashboard.improved.css';
 
 interface DashboardProps {}
@@ -21,7 +22,10 @@ export interface DashboardRefHandle {
 const Dashboard: React.FC<DashboardProps> = () => {
   const { user } = useAuth();
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+
+
+
   const [recentActivity, setRecentActivity] = useState<(RecentActivity & { imageUrl?: string })[]>([]);
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,26 +62,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
     getDealershipId();
   }, [user]);
 
-  // Fetch vehicles for the dealership
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      if (!dealershipId) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*')
-          .eq('dealership_id', dealershipId);
-          
-        if (error) throw error;
-        if (data) setVehicles(data as Vehicle[]);
-      } catch (err) {
-        console.error('Error fetching vehicles:', err);
-      }
-    };
-    
-    fetchVehicles();
-  }, [dealershipId]);
+
+
+
 
   // Function to refresh activity data
   const refreshActivity = useCallback(async () => {
@@ -173,25 +160,37 @@ const Dashboard: React.FC<DashboardProps> = () => {
     };
   }, [dealershipId, refreshActivity]);
 
-  const handleAddVehicle = () => {
-    setIsAddVehicleModalOpen(true);
+
+
+  const handleVehicleSaved = () => {
+    setIsAddVehicleModalOpen(false);
+    // Vehicle saved successfully - user can view it in the workflow dashboard
+    refreshActivity(); // Refresh the activity feed to show the new vehicle
   };
 
-  const handleVehicleSaved = (vehicle: Vehicle) => {
-    setIsAddVehicleModalOpen(false);
-    navigate(`/vehicles/${vehicle.id}`);
-  };
+
 
   return (
     <div className="p-4">
-      {/* Debug Component - Shows dealership information */}
-      <Debug />
+      <div className="dashboard-card quick-actions">
+        <h2>Quick Actions</h2>
+        <div className="action-buttons">
+          <Link to="/workflow" className="action-button workflow-highlight">
+            <span className="action-icon">🔄</span>
+            <span className="action-label">Vehicle Workflow</span>
+          </Link>
 
-      {/* Vehicle List with Status Filters */}
-      <VehicleList
-        onSelectVehicle={(vehicle) => navigate(`/vehicles/${vehicle.id}`)}
-        onAddVehicle={handleAddVehicle}
-      />
+          <button className="action-button" onClick={() => setIsAddVehicleModalOpen(true)}>
+            <span className="action-icon">+</span>
+            <span className="action-label">Add Vehicle</span>
+          </button>
+
+          <button className="action-button" onClick={() => setIsCreatePostModalOpen(true)}>
+            <span className="action-icon">📝</span>
+            <span className="action-label">Create Post</span>
+          </button>
+        </div>
+      </div>
 
       <div className="dashboard-card recent-activity">
         <h2>Recent Activity</h2>
@@ -294,51 +293,31 @@ const Dashboard: React.FC<DashboardProps> = () => {
         </div>
       </div>
 
-      <div className="dashboard-card quick-actions">
-        <h2>Quick Actions</h2>
-        <div className="action-buttons">
-          <Link to="/workflow" className="action-button workflow-highlight">
-            <span className="action-icon">🔄</span>
-            <span className="action-label">Vehicle Workflow</span>
-          </Link>
 
-          <button className="action-button" onClick={() => setIsAddVehicleModalOpen(true)}>
-            <span className="action-icon">+</span>
-            <span className="action-label">Add Vehicle</span>
-          </button>
 
-          <Link to="/captions" className="action-button">
-            <span className="action-icon">📝</span>
-            <span className="action-label">Create Post</span>
-          </Link>
-
-          <Link to="/vehicles" className="action-button">
-            <span className="action-icon">🚗</span>
-            <span className="action-label">View Inventory</span>
-          </Link>
+      <div className="dashboard-card performance-metrics coming-soon">
+        <div className="section-header">
+          <h2>Performance Metrics</h2>
+          <span className="coming-soon-badge">Coming Soon</span>
         </div>
-      </div>
-
-      <div className="dashboard-card performance-metrics">
-        <h2>Performance Metrics</h2>
-        <div className="metrics-grid">
+        <div className="metrics-grid disabled">
           <div className="metric-card">
-            <div className="metric-value">{vehicles.length}</div>
+            <div className="metric-value">47</div>
             <div className="metric-label">Vehicles in Stock</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-value">{recentActivity.filter((a) => a.isSocialPost).length}</div>
+            <div className="metric-value">23</div>
             <div className="metric-label">Social Posts</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-value">142</div>
+            <div className="metric-value">1,284</div>
             <div className="metric-label">Total Engagements</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-value">5</div>
+            <div className="metric-value">12</div>
             <div className="metric-label">Vehicles Sold This Month</div>
           </div>
         </div>
@@ -354,6 +333,33 @@ const Dashboard: React.FC<DashboardProps> = () => {
         <VehicleForm
           onSave={handleVehicleSaved}
           onCancel={() => setIsAddVehicleModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Create Post Modal */}
+      <Modal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+        title="Create Social Media Post"
+        size="lg"
+      >
+        <SocialPostFormEnhanced
+            caption={{
+              id: 0,
+              vehicle_id: 0, // Vehicle-agnostic post
+              event_id: 0,
+              content: '',
+              hashtags: [],
+              created_at: new Date().toISOString(),
+              image_urls: [],
+              posted_to_facebook: false,
+              posted_to_instagram: false
+            }}
+          onPost={(platforms) => {
+            console.log('Posted to platforms:', platforms);
+            setIsCreatePostModalOpen(false);
+            refreshActivity(); // Refresh activity feed
+          }}
         />
       </Modal>
     </div>

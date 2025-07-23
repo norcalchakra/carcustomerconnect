@@ -351,3 +351,182 @@ export const isOpenAIConfigured = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Function to generate a vehicle-agnostic caption for general dealership posts
+export const generateVehicleAgnosticCaption = async (
+  dealership?: Dealership | null,
+  additionalContext?: string
+): Promise<string> => {
+  try {
+    const apiKey = await getOpenAIApiKey();
+    
+    // Get dealership onboarding data for enhanced prompts
+    const onboardingData = dealership ? await getOnboardingData(dealership.id) : null;
+    
+    // Build a comprehensive vehicle-agnostic prompt using the same RAG approach as vehicle-specific captions
+    let prompt = '';
+    
+    // Make the AI notes the central theme if provided
+    if (additionalContext) {
+      prompt = `Create a professional social media post for a car dealership focused on this central theme: "${additionalContext}"\n\n`;
+      prompt += `IMPORTANT: The main message and focus of this post should be about: ${additionalContext}\n\n`;
+    } else {
+      prompt = 'Create a professional social media post for a car dealership (general/vehicle-agnostic content).\n\n';
+    }
+    
+    // Add enhanced dealership information from onboarding data
+    if (onboardingData?.profile || dealership) {
+      const profile = onboardingData?.profile;
+      const fallbackDealership = dealership;
+      
+      prompt += `Dealership Information:\n`;
+      prompt += `Name: ${profile?.legal_name || profile?.dba_name || fallbackDealership?.name || 'Unknown'}\n`;
+      
+      if (profile?.physical_address) {
+        prompt += `Location: ${profile.physical_address}\n`;
+      } else if (fallbackDealership) {
+        const location = `${fallbackDealership.city}, ${fallbackDealership.state} ${fallbackDealership.zip}`;
+        prompt += `Location: ${location}\n`;
+      }
+      
+      if (profile?.primary_phone || fallbackDealership?.phone) {
+        prompt += `Phone: ${profile?.primary_phone || fallbackDealership?.phone}\n`;
+      }
+      
+      if (profile?.website_url || fallbackDealership?.website) {
+        prompt += `Website: ${profile?.website_url || fallbackDealership?.website}\n`;
+      }
+      
+      if (profile?.years_in_business) {
+        prompt += `Years in Business: ${profile.years_in_business}\n`;
+      }
+      
+      if (profile?.dealership_type) {
+        prompt += `Dealership Type: ${profile.dealership_type}\n`;
+      }
+    }
+    
+    // Add brand voice settings with full detail
+    if (onboardingData?.brandVoice) {
+      const brandVoice = onboardingData.brandVoice;
+      prompt += `\nBrand Voice Guidelines:\n`;
+      
+      const formalityLevels = ['Very Casual', 'Casual', 'Balanced', 'Professional', 'Very Formal'];
+      const energyLevels = ['Understated', 'Calm', 'Moderate', 'Energetic', 'High Energy'];
+      
+      prompt += `Formality Level: ${formalityLevels[brandVoice.formality_level - 1] || 'Balanced'} (${brandVoice.formality_level}/5)\n`;
+      prompt += `Energy Level: ${energyLevels[brandVoice.energy_level - 1] || 'Moderate'} (${brandVoice.energy_level}/5)\n`;
+      prompt += `Technical Detail Preference: ${brandVoice.technical_detail_preference}\n`;
+      prompt += `Community Connection: ${brandVoice.community_connection}\n`;
+      prompt += `Emoji Usage Level: ${brandVoice.emoji_usage_level}/5\n`;
+      
+      if (brandVoice.primary_emotions && brandVoice.primary_emotions.length > 0) {
+        prompt += `Primary Emotions to Evoke: ${brandVoice.primary_emotions.join(', ')}\n`;
+      }
+      
+      if (brandVoice.value_propositions && brandVoice.value_propositions.length > 0) {
+        prompt += `Key Value Propositions: ${brandVoice.value_propositions.join(', ')}\n`;
+      }
+      
+      if (brandVoice.tone_keywords && brandVoice.tone_keywords.length > 0) {
+        prompt += `Tone Keywords to Use: ${brandVoice.tone_keywords.join(', ')}\n`;
+      }
+      
+      if (brandVoice.avoid_tone_keywords && brandVoice.avoid_tone_keywords.length > 0) {
+        prompt += `Tone Keywords to Avoid: ${brandVoice.avoid_tone_keywords.join(', ')}\n`;
+      }
+    }
+    
+    // Add competitive differentiators with full detail and priority
+    if (onboardingData?.differentiators && onboardingData.differentiators.length > 0) {
+      prompt += `\nCompetitive Differentiators to Highlight:\n`;
+      onboardingData.differentiators
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 3) // Top 3 differentiators
+        .forEach(diff => {
+          prompt += `- ${diff.title}: ${diff.description}\n`;
+        });
+    }
+    
+    // Add example captions for reference if available
+    if (onboardingData?.exampleCaptions && onboardingData.exampleCaptions.length > 0) {
+      prompt += `\nExample Caption Style References:\n`;
+      onboardingData.exampleCaptions
+        .slice(0, 2) // Use up to 2 examples
+        .forEach((example, index) => {
+          prompt += `Example ${index + 1}: ${example.caption_text}\n`;
+        });
+    }
+    
+    // Emphasize the central theme again in instructions if provided
+    let instructions = `\nInstructions: Create an engaging, professional social media post suitable for Facebook and Instagram. Include relevant hashtags.`;
+    
+    if (additionalContext) {
+      instructions += ` CENTRAL THEME: Make "${additionalContext}" the main focus and central message of this post. Build the entire post around this theme.`;
+    } else {
+      instructions += ` Focus on general dealership content (not vehicle-specific).`;
+    }
+    
+    instructions += ` Follow the brand voice guidelines and highlight the competitive differentiators naturally in the content.`;
+    
+    prompt += instructions;
+    
+    // Log the comprehensive prompt to console for debugging
+    console.log('=== AI Generate - Vehicle-Agnostic Prompt (Full RAG) ===');
+    console.log('Dealership Data:', {
+      profile: onboardingData?.profile,
+      brandVoice: onboardingData?.brandVoice,
+      differentiators: onboardingData?.differentiators,
+      exampleCaptions: onboardingData?.exampleCaptions
+    });
+    console.log('Generated Prompt:', prompt);
+    console.log('=== End Prompt Info ===');
+    
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional social media content creator for car dealerships. Create engaging, concise captions for general dealership social media posts. Follow the provided brand voice guidelines precisely and incorporate the competitive differentiators naturally. Include relevant hashtags. Keep the tone consistent with the dealership\'s brand personality.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+    }
+    
+    const data = await response.json();
+    let content = data.choices[0].message.content;
+    
+    // Clean up the content by removing leading/trailing quotes
+    content = content.trim();
+    if ((content.startsWith('"') && content.endsWith('"')) || 
+        (content.startsWith("'") && content.endsWith("'"))) {
+      content = content.slice(1, -1).trim();
+    }
+    
+    console.log('=== AI Generate - Generated Caption ===');
+    console.log(content);
+    console.log('=== End Generated Caption ===');
+    
+    return content;
+  } catch (err) {
+    console.error('Error generating vehicle-agnostic caption with OpenAI:', err);
+    throw err;
+  }
+};

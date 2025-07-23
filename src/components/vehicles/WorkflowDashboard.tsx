@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import VehicleProgressTracker from './VehicleProgressTracker';
 import SocialPostFormEnhanced from '../captions/SocialPostFormEnhanced';
 import Modal from '../ui/Modal';
+import VehicleForm from './VehicleForm';
 import { supabase } from '../../lib/supabase';
 import './WorkflowDashboard.css';
 
@@ -18,6 +19,7 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
   const [error, setError] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<Vehicle['status'] | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status' | 'progress'>('date');
@@ -334,6 +336,10 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
                   setSelectedVehicle(vehicle);
                   setShowPostModal(true);
                 }}
+                onEditVehicle={() => {
+                  setSelectedVehicle(vehicle);
+                  setShowEditModal(true);
+                }}
               />
             </div>
           ))
@@ -370,6 +376,36 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
             }}
             onPost={() => {
               setShowPostModal(false);
+              setSelectedVehicle(null);
+            }}
+          />
+        </Modal>
+      )}
+
+      {/* Edit Vehicle Modal */}
+      {showEditModal && selectedVehicle && (
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedVehicle(null);
+          }}
+          title={`Edit Vehicle - ${getVehicleDisplayName(selectedVehicle)}`}
+        >
+          <VehicleForm
+            initialVehicle={selectedVehicle}
+            onSave={(updatedVehicle: Vehicle) => {
+              setVehicles(prev => prev.map(v => 
+                v.id === updatedVehicle.id ? updatedVehicle : v
+              ));
+              if (onVehicleUpdate) {
+                onVehicleUpdate(updatedVehicle);
+              }
+              setShowEditModal(false);
+              setSelectedVehicle(null);
+            }}
+            onCancel={() => {
+              setShowEditModal(false);
               setSelectedVehicle(null);
             }}
           />

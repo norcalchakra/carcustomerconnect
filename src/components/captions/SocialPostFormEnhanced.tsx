@@ -5,7 +5,7 @@ import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { generateCaption, isOpenAIConfigured } from '../../lib/openaiApi';
+import { generateCaption, generateVehicleAgnosticCaption, isOpenAIConfigured } from '../../lib/openaiApi';
 import ImageCapture from './ImageCapture';
 import ImageProxy from '../common/ImageProxy';
 import StatusTransitionPrompt from '../vehicles/StatusTransitionPrompt';
@@ -338,8 +338,8 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
   };
 
   const handleGenerateCaption = async () => {
-    if (!currentVehicle || !dealershipData) {
-      setError('Vehicle or dealership data not available for caption generation');
+    if (!dealershipData) {
+      setError('Dealership data not available for caption generation');
       return;
     }
 
@@ -353,11 +353,38 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
         additionalContext = `Specific details: ${aiNotes.trim()}`;
       }
 
-      const generatedCaption = await generateCaption(
-        currentVehicle, 
-        dealershipData, 
-        additionalContext
-      );
+      let generatedCaption;
+      let promptInfo;
+
+      if (currentVehicle) {
+        // Vehicle-specific caption generation
+        promptInfo = {
+          type: 'vehicle-specific',
+          vehicle: currentVehicle,
+          dealership: dealershipData,
+          additionalContext
+        };
+        console.log('AI Generate - Vehicle-specific prompt info:', promptInfo);
+        generatedCaption = await generateCaption(
+          currentVehicle, 
+          dealershipData, 
+          additionalContext
+        );
+      } else {
+        // Vehicle-agnostic caption generation
+        promptInfo = {
+          type: 'vehicle-agnostic',
+          dealership: dealershipData,
+          additionalContext
+        };
+        console.log('AI Generate - Vehicle-agnostic prompt info:', promptInfo);
+        generatedCaption = await generateVehicleAgnosticCaption(
+          dealershipData,
+          additionalContext
+        );
+      }
+
+      console.log('AI Generate - Generated caption:', generatedCaption);
       setPostContent(generatedCaption);
       setSuccess('Caption generated successfully!');
     } catch (error) {
@@ -479,7 +506,7 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
       <div className="post-content-section">
         <div className="content-header">
           <label htmlFor="post-content">Post Content:</label>
-          {isOpenAIAvailable && currentVehicle && dealershipData && (
+          {isOpenAIAvailable && dealershipData && (
             <button
               onClick={handleGenerateCaption}
               disabled={isGeneratingCaption}

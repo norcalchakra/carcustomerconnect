@@ -422,3 +422,63 @@
     justify-content: center;
   }
 }
+
+/* Coming Soon Performance Metrics Styles */
+.dashboard-card.coming-soon {
+  opacity: 0.6;
+  position: relative;
+}
+
+.dashboard-card.coming-soon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.section-header h2 {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.coming-soon-badge {
+  background-color: #e2e8f0;
+  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metrics-grid.disabled {
+  filter: grayscale(100%);
+  color: #a0aec0;
+  position: relative;
+  z-index: 2;
+}
+
+.metrics-grid.disabled .metric-value {
+  color: #a0aec0;
+}
+
+.metrics-grid.disabled .metric-label {
+  color: #cbd5e0;
+}

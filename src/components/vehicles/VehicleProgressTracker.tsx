@@ -7,13 +7,15 @@ interface VehicleProgressTrackerProps {
   onStatusChange?: (newStatus: Vehicle['status']) => void;
   onSuggestedAction?: (action: string) => void;
   onCreatePost?: () => void;
+  onEditVehicle?: () => void;
 }
 
 const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   vehicle,
   onStatusChange,
   onSuggestedAction,
-  onCreatePost
+  onCreatePost,
+  onEditVehicle
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -232,15 +234,27 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
         </div>
       </div>
 
-      {/* Create Post Button - Only in Expanded View */}
-      {onCreatePost && (
+      {/* Quick Actions - Create Post and Edit Vehicle */}
+      {(onCreatePost || onEditVehicle) && (
         <div className="vehicle-quick-actions">
-          <button
-            onClick={onCreatePost}
-            className="quick-action-button post-button"
-          >
-            📱 Create Post
-          </button>
+          <div className="action-buttons">
+            {onCreatePost && (
+              <button
+                onClick={onCreatePost}
+                className="quick-action-button post-button"
+              >
+                📱 Create Post
+              </button>
+            )}
+            {onEditVehicle && (
+              <button
+                onClick={onEditVehicle}
+                className="quick-action-button edit-button"
+              >
+                ✏️ Edit Vehicle
+              </button>
+            )}
+          </div>
           
           <div className="vehicle-meta">
             <span className="days-in-status">

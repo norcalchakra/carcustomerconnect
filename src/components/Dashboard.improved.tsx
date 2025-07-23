@@ -141,10 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ dealershipId = 4 }) => {
               <span className="action-label">Create Post</span>
             </Link>
             
-            <Link to="/vehicles" className="action-button">
-              <span className="action-icon">🚗</span>
-              <span className="action-label">View Inventory</span>
-            </Link>
+
           </div>
         </div>
         
