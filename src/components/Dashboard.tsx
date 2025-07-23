@@ -26,6 +26,11 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const itemsPerPage = 5;
 
   // Fetch dealership ID for the current user
   useEffect(() => {
@@ -86,16 +91,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
       }
 
       console.log('Fetching activity for dealership:', dealershipId);
-      const activity = await fetchAllActivity(dealershipId);
+      // Fetch more items than we display per page to have data for pagination
+      const activity = await fetchAllActivity(dealershipId, 50);
       console.log('Activity fetched:', activity);
       setRecentActivity(activity);
+      
+      // Calculate total pages
+      setTotalPages(Math.max(1, Math.ceil(activity.length / itemsPerPage)));
+      // Reset to first page when refreshing data
+      setCurrentPage(1);
     } catch (err) {
       console.error('Error fetching activity:', err);
       setError('Failed to load recent activity');
     } finally {
       setLoading(false);
     }
-  }, [dealershipId]);
+  }, [dealershipId, itemsPerPage]);
 
   // Handle viewing post details
   const navigate = useNavigate();
@@ -195,50 +206,90 @@ const Dashboard: React.FC<DashboardProps> = () => {
               <p>Start by adding vehicles or creating social media posts.</p>
             </div>
           ) : (
-            <ul className="activity-list">
-              {recentActivity.map((activity) => (
-                <li key={String(activity.id)} className="activity-item">
-                  <div className="activity-header">
-                    <span className="activity-status">{activity.status}</span>
-                    <span className="activity-time">{activity.time}</span>
-                  </div>
+            <>
+              <ul className="activity-list">
+                {/* Show only items for the current page */}
+                {recentActivity
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((activity) => (
+                    <li key={String(activity.id)} className="activity-item">
+                      <div className="activity-header">
+                        <span className="activity-status">{activity.status}</span>
+                        <span className="activity-time">{activity.time}</span>
+                      </div>
 
-                  <div className="activity-vehicle">
-                    <Link to={`/vehicles/${activity.vehicleId}`}>
-                      {activity.vehicle}
-                    </Link>
-                  </div>
+                      <div className="activity-vehicle">
+                        <Link to={`/vehicles/${activity.vehicleId}`}>
+                          {activity.vehicle}
+                        </Link>
+                      </div>
 
-                  <div className="activity-content">
-                    {activity.isSocialPost ? (
-                      <>
-                        <div className="abbreviated-content">
-                          {activity.notes && activity.notes.length > 60 
-                            ? `${activity.notes.substring(0, 60)}...` 
-                            : activity.notes}
+                      <div className="activity-content">
+                        {activity.isSocialPost ? (
+                          <>
+                            <div className="abbreviated-content">
+                              {activity.notes && activity.notes.length > 60 
+                                ? `${activity.notes.substring(0, 60)}...` 
+                                : activity.notes}
+                            </div>
+                            <button
+                              className="view-details-btn"
+                              onClick={() => handleViewPostDetails(activity.id)}
+                            >
+                              View Full Post
+                            </button>
+                          </>
+                        ) : (
+                          <div>{activity.notes}</div>
+                        )}
+                      </div>
+
+                      {activity.isSocialPost && renderPlatformBadges(activity.platforms)}
+
+                      {activity.isSocialPost && activity.imageUrl && (
+                        <div className="activity-image">
+                          <img src={activity.imageUrl} alt="Post preview" />
                         </div>
-                        <button
-                          className="view-details-btn"
-                          onClick={() => handleViewPostDetails(activity.id)}
-                        >
-                          View Full Post
-                        </button>
-                      </>
-                    ) : (
-                      <div>{activity.notes}</div>
-                    )}
+                      )}
+                    </li>
+                  ))}
+              </ul>
+              
+              {/* Pagination controls */}
+              {recentActivity.length > 0 && (
+                <div className="pagination-controls">
+                  <div className="pagination-info">
+                    Showing {Math.min(recentActivity.length, (currentPage - 1) * itemsPerPage + 1)}-
+                    {Math.min(recentActivity.length, currentPage * itemsPerPage)} of {recentActivity.length}
                   </div>
-
-                  {activity.isSocialPost && renderPlatformBadges(activity.platforms)}
-
-                  {activity.isSocialPost && activity.imageUrl && (
-                    <div className="activity-image">
-                      <img src={activity.imageUrl} alt="Post preview" />
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  <div className="pagination-buttons">
+                    <button 
+                      className="pagination-button"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    >
+                      Previous
+                    </button>
+                    <span className="pagination-page-info">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button 
+                      className="pagination-button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <button 
+                    className="view-all-button"
+                    onClick={() => window.open('/activity', '_blank')}
+                  >
+                    View All Activity
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

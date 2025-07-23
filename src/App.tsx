@@ -9,6 +9,7 @@ import FacebookTest from './pages/FacebookTest';
 import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import VinScannerPage from './pages/VinScannerPage';
 import DealerOnboardingPage from './pages/DealerOnboardingPage';
+import ActivityPage from './components/activity/ActivityPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocialPostForm } from './components/captions/SocialPostForm';
 import { SocialPostDetail } from './components/social/SocialPostDetail';
@@ -57,6 +58,7 @@ const AppContent: React.FC = () => {
             <Route path="/captions" element={<ProtectedRoute element={<SocialPostForm caption={{ id: 0, content: '', vehicle_id: 0, event_id: 0, hashtags: [] }} />} />} />
             <Route path="/social/posts/:id" element={<ProtectedRoute element={<SocialPostDetail />} />} />
             <Route path="/dealer-onboarding" element={<ProtectedRoute element={<DealerOnboardingPage />} />} />
+            <Route path="/activity" element={<ProtectedRoute element={<ActivityPage />} />} />
           </Routes>
         </main>
       </div>
