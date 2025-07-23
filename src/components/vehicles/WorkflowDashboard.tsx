@@ -21,6 +21,7 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
   const [dealershipId, setDealershipId] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<Vehicle['status'] | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status' | 'progress'>('date');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch dealership ID
   useEffect(() => {
@@ -137,6 +138,19 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
       filtered = filtered.filter(v => v.status === filterStatus);
     }
     
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(vehicle => 
+        vehicle.make.toLowerCase().includes(term) ||
+        vehicle.model.toLowerCase().includes(term) ||
+        vehicle.year.toString().includes(term) ||
+        (vehicle.vin && vehicle.vin.toLowerCase().includes(term)) ||
+        (vehicle.stock_number && vehicle.stock_number.toLowerCase().includes(term)) ||
+        (vehicle.color && vehicle.color.toLowerCase().includes(term))
+      );
+    }
+    
     // Sort vehicles
     return filtered.sort((a, b) => {
       switch (sortBy) {
@@ -156,12 +170,6 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
 
   const getVehicleDisplayName = (vehicle: Vehicle) => {
     return `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
-  };
-
-  const getDaysInStatus = (vehicle: Vehicle) => {
-    const createdDate = new Date(vehicle.created_at || Date.now());
-    const daysDiff = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-    return daysDiff;
   };
 
   const stats = getStatusStats();
@@ -184,9 +192,25 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
         </p>
       </div>
 
-      {/* Status Overview */}
+      {/* Status Overview - Clickable Cards */}
       <div className="status-overview">
-        <div className="stat-card acquired">
+        <div 
+          className={`stat-card acquired clickable ${filterStatus === 'all' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('all')}
+          title="Click to show all vehicles"
+        >
+          <div className="stat-icon">📊</div>
+          <div className="stat-content">
+            <div className="stat-number">{vehicles.length}</div>
+            <div className="stat-label">All Vehicles</div>
+          </div>
+        </div>
+        
+        <div 
+          className={`stat-card acquired clickable ${filterStatus === 'acquired' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('acquired')}
+          title="Click to filter by Acquired vehicles"
+        >
           <div className="stat-icon">📥</div>
           <div className="stat-content">
             <div className="stat-number">{stats.acquired}</div>
@@ -194,7 +218,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
           </div>
         </div>
         
-        <div className="stat-card in-service">
+        <div 
+          className={`stat-card in-service clickable ${filterStatus === 'in_service' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('in_service')}
+          title="Click to filter by In Service vehicles"
+        >
           <div className="stat-icon">🔧</div>
           <div className="stat-content">
             <div className="stat-number">{stats.in_service}</div>
@@ -202,7 +230,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
           </div>
         </div>
         
-        <div className="stat-card ready-for-sale">
+        <div 
+          className={`stat-card ready-for-sale clickable ${filterStatus === 'ready_for_sale' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('ready_for_sale')}
+          title="Click to filter by Ready for Sale vehicles"
+        >
           <div className="stat-icon">✨</div>
           <div className="stat-content">
             <div className="stat-number">{stats.ready_for_sale}</div>
@@ -210,7 +242,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
           </div>
         </div>
         
-        <div className="stat-card sold">
+        <div 
+          className={`stat-card sold clickable ${filterStatus === 'sold' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('sold')}
+          title="Click to filter by Sold vehicles"
+        >
           <div className="stat-icon">🎉</div>
           <div className="stat-content">
             <div className="stat-number">{stats.sold}</div>
@@ -221,6 +257,23 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
 
       {/* Filters and Controls */}
       <div className="dashboard-controls">
+        <div className="search-section">
+          <label htmlFor="vehicle-search">Search Vehicles:</label>
+          <div className="search-input-container">
+            <input
+              id="vehicle-search"
+              type="text"
+              placeholder="Search by make, model, year, VIN, stock #, color..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <div className="search-icon">
+              🔍
+            </div>
+          </div>
+        </div>
+        
         <div className="filter-section">
           <label htmlFor="status-filter">Filter by Status:</label>
           <select
@@ -277,28 +330,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
                 vehicle={vehicle}
                 onStatusChange={(newStatus) => handleStatusChange(vehicle.id, newStatus)}
                 onSuggestedAction={(action) => handleSuggestedAction(vehicle, action)}
+                onCreatePost={() => {
+                  setSelectedVehicle(vehicle);
+                  setShowPostModal(true);
+                }}
               />
-              
-              <div className="vehicle-quick-actions">
-                <button
-                  onClick={() => {
-                    setSelectedVehicle(vehicle);
-                    setShowPostModal(true);
-                  }}
-                  className="quick-action-button post-button"
-                >
-                  📱 Create Post
-                </button>
-                
-                <div className="vehicle-meta">
-                  <span className="days-in-status">
-                    {getDaysInStatus(vehicle)} days in current status
-                  </span>
-                  <span className="stock-number">
-                    Stock #{vehicle.stock_number}
-                  </span>
-                </div>
-              </div>
             </div>
           ))
         )}

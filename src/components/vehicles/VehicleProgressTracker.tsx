@@ -6,12 +6,14 @@ interface VehicleProgressTrackerProps {
   vehicle: Vehicle;
   onStatusChange?: (newStatus: Vehicle['status']) => void;
   onSuggestedAction?: (action: string) => void;
+  onCreatePost?: () => void;
 }
 
 const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   vehicle,
   onStatusChange,
-  onSuggestedAction
+  onSuggestedAction,
+  onCreatePost
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -229,6 +231,27 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
           <span className="stat-value">{getProgressPercentage()}%</span>
         </div>
       </div>
+
+      {/* Create Post Button - Only in Expanded View */}
+      {onCreatePost && (
+        <div className="vehicle-quick-actions">
+          <button
+            onClick={onCreatePost}
+            className="quick-action-button post-button"
+          >
+            📱 Create Post
+          </button>
+          
+          <div className="vehicle-meta">
+            <span className="days-in-status">
+              {getDaysInStatus()} days in current status
+            </span>
+            <span className="stock-number">
+              Stock #{vehicle.stock_number}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
