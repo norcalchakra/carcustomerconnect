@@ -42,6 +42,41 @@
   margin-bottom: 32px;
 }
 
+/* Vehicles Grid - Optimized for scalability */
+.vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* Responsive grid for different screen sizes */
+@media (min-width: 1200px) {
+  .vehicles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .vehicles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.vehicle-workflow-card {
+  /* Container for each vehicle card */
+  position: relative;
+}
+
 .stat-card {
   background: white;
   border-radius: 12px;

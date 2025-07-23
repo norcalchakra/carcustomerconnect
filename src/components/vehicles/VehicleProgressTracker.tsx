@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Vehicle } from '../../lib/api';
 import './VehicleProgressTracker.css';
 
@@ -13,6 +13,8 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   onStatusChange,
   onSuggestedAction
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const stages = [
     { key: 'acquired', label: 'Acquired', icon: '📥' },
     { key: 'in_service', label: 'In Service', icon: '🔧' },
@@ -22,6 +24,7 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
 
   const currentStageIndex = stages.findIndex(stage => stage.key === vehicle.status);
   const nextStage = stages[currentStageIndex + 1];
+  const currentStage = stages[currentStageIndex];
 
   // Get suggested actions based on current status
   const getSuggestedActions = (status: Vehicle['status']) => {
@@ -72,10 +75,77 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
     }
   };
 
+  const getDaysInStatus = () => {
+    return Math.floor((Date.now() - new Date(vehicle.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getProgressPercentage = () => {
+    return Math.round(((currentStageIndex + 1) / stages.length) * 100);
+  };
+
+  if (!isExpanded) {
+    // Compact view - minimalist card
+    return (
+      <div className="vehicle-progress-tracker compact" onClick={() => setIsExpanded(true)}>
+        <div className="compact-header">
+          <div className="vehicle-identity">
+            <span className="vehicle-name">{vehicle.year} {vehicle.make} {vehicle.model}</span>
+            <span className="stock-number">#{vehicle.stock_number}</span>
+          </div>
+          <button className="expand-button" title="Click to expand details">
+            <span className="expand-icon">▼</span>
+          </button>
+        </div>
+        
+        <div className="compact-status">
+          <div className="status-indicator">
+            <div 
+              className="status-dot"
+              style={{ backgroundColor: getStatusColor(vehicle.status) }}
+            >
+              {currentStage?.icon}
+            </div>
+            <span className="status-text">{currentStage?.label}</span>
+          </div>
+          
+          <div className="compact-progress">
+            <div className="progress-mini-bar">
+              <div 
+                className="progress-fill"
+                style={{ 
+                  width: `${getProgressPercentage()}%`,
+                  backgroundColor: getStatusColor(vehicle.status)
+                }}
+              />
+            </div>
+            <span className="progress-text">{getProgressPercentage()}%</span>
+          </div>
+        </div>
+        
+        <div className="compact-meta">
+          <span className="days-indicator">{getDaysInStatus()}d in stage</span>
+          {nextStage && (
+            <span className="next-stage">Next: {nextStage.label}</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded view - full details (original design)
   return (
-    <div className="vehicle-progress-tracker">
+    <div className="vehicle-progress-tracker expanded">
       <div className="progress-header">
-        <h3>Vehicle Journey Progress</h3>
+        <div className="header-top">
+          <h3>Vehicle Journey Progress</h3>
+          <button 
+            className="collapse-button" 
+            onClick={() => setIsExpanded(false)}
+            title="Collapse to compact view"
+          >
+            <span className="collapse-icon">▲</span>
+          </button>
+        </div>
         <div className="vehicle-info">
           <span className="vehicle-name">{vehicle.year} {vehicle.make} {vehicle.model}</span>
           <span className="stock-number">Stock #{vehicle.stock_number}</span>
@@ -152,15 +222,11 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
       <div className="progress-stats">
         <div className="stat-item">
           <span className="stat-label">Days in Current Stage</span>
-          <span className="stat-value">
-            {Math.floor((Date.now() - new Date(vehicle.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24))}
-          </span>
+          <span className="stat-value">{getDaysInStatus()}</span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Progress</span>
-          <span className="stat-value">
-            {Math.round(((currentStageIndex + 1) / stages.length) * 100)}%
-          </span>
+          <span className="stat-value">{getProgressPercentage()}%</span>
         </div>
       </div>
     </div>
