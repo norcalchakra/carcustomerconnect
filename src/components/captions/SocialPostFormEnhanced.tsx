@@ -44,10 +44,17 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
   const [dealershipData, setDealershipData] = useState<Dealership | null>(null);
   const [isOpenAIAvailable, setIsOpenAIAvailable] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
+  const [aiNotes, setAiNotes] = useState<string>('');
   
   // New state for status transition workflow
   const [showStatusPrompt, setShowStatusPrompt] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | undefined>(vehicle);
+
+  // Handle image capture callback
+  const handleImageCaptured = (previewUrl: string, storageUrl: string | null) => {
+    setImageUrls(prev => [...prev, previewUrl]);
+    setStorageUrls(prev => [...prev, storageUrl]);
+  };
   const [justPosted, setJustPosted] = useState(false);
 
   // Fetch dealership ID and data for the current user
@@ -120,6 +127,8 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
     
     initFacebook();
   }, []);
+
+
 
   const createSocialPost = async (
     platform: string, 
@@ -338,7 +347,17 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
     setError(null);
 
     try {
-      const generatedCaption = await generateCaption(currentVehicle, dealershipData);
+      // Format the AI notes as additional context for the prompt
+      let additionalContext = '';
+      if (aiNotes.trim()) {
+        additionalContext = `Specific details: ${aiNotes.trim()}`;
+      }
+
+      const generatedCaption = await generateCaption(
+        currentVehicle, 
+        dealershipData, 
+        additionalContext
+      );
       setPostContent(generatedCaption);
       setSuccess('Caption generated successfully!');
     } catch (error) {
@@ -435,6 +454,27 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
         </div>
       )}
 
+      {/* Notes for AI */}
+      <div className="ai-notes-section">
+        <div className="ai-notes-header">
+          <label htmlFor="ai-notes">
+            <span className="ai-notes-icon">🎯</span>
+            Notes for AI
+          </label>
+          <span className="ai-notes-description">
+            The AI will make this the main focus of your post. Enter the key topic you want to highlight
+          </span>
+        </div>
+        <input
+          id="ai-notes"
+          type="text"
+          value={aiNotes}
+          onChange={(e) => setAiNotes(e.target.value)}
+          placeholder="e.g., brake service completed, oil change special, new arrival"
+          className="ai-notes-input"
+        />
+      </div>
+
       {/* Post Content */}
       <div className="post-content-section">
         <div className="content-header">
@@ -462,11 +502,8 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
       <div className="image-section">
         <h4>Add Images</h4>
         <ImageCapture
-          onImagesChange={(urls, storage) => {
-            setImageUrls(urls);
-            setStorageUrls(storage);
-          }}
-          maxImages={4}
+          onImageCaptured={handleImageCaptured}
+          dealershipId={dealershipId}
         />
         
         {imageUrls.length > 0 && (

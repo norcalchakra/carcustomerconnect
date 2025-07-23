@@ -38,6 +38,76 @@
   border-radius: 4px;
 }
 
+/* Notes for AI Section */
+.ai-notes-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  position: relative;
+}
+
+.ai-notes-section::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 12px;
+  z-index: -1;
+  opacity: 0.1;
+}
+
+.ai-notes-header {
+  margin-bottom: 12px;
+}
+
+.ai-notes-header label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.ai-notes-icon {
+  font-size: 1.2rem;
+}
+
+.ai-notes-description {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.4;
+  display: block;
+}
+
+.ai-notes-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.ai-notes-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ai-notes-input::placeholder {
+  color: #94a3b8;
+  font-style: italic;
+}
+
 /* Platform Selection */
 .platform-selection {
   margin-bottom: 24px;
