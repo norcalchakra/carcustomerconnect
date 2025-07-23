@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Caption, Vehicle, VehicleEvent } from '../../lib/api';
 import { mockInitFacebookSDK, mockIsFacebookConnected, mockLoginWithFacebook, mockGetUserPages, mockPostToFacebookPage } from '../../lib/mockFacebookApi';
 import eventBus, { EVENTS } from '../../lib/eventBus';
@@ -32,22 +32,9 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [isScheduled, setIsScheduled] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(['https://example.com/mock-image.jpg']);
   const [postContent, setPostContent] = useState<string>(caption.content);
-  const [characterCount, setCharacterCount] = useState<number>(caption.content.length);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   
-  // Character limits for different platforms
-  const CHAR_LIMITS = {
-    facebook: 5000,
-    instagram: 2200,
-    google: 1500
-  };
-  
-  // Get the most restrictive character limit based on selected platforms
-  const getCharacterLimit = () => {
-    if (platforms.length === 0) return CHAR_LIMITS.facebook;
-    return Math.min(...platforms.map(p => CHAR_LIMITS[p as keyof typeof CHAR_LIMITS]));
-  };
+  // Character limits removed as they're no longer needed after removing the content editing section
   
   // Fetch dealership ID for the current user
   useEffect(() => {
@@ -72,11 +59,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     getDealershipId();
   }, [user]);
   
-  // Initialize content from caption
-  useEffect(() => {
-    setPostContent(caption.content);
-    setCharacterCount(caption.content.length);
-  }, [caption]);
+  // Caption content is initialized in the state declaration
   
   // Initialize Mock Facebook SDK on component mount
   useEffect(() => {
@@ -154,22 +137,6 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     setShowScheduler(!showScheduler);
     if (isScheduled) {
       setIsScheduled(false);
-    }
-  };
-  
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setPostContent(newContent);
-    setCharacterCount(newContent.length);
-  };
-  
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-    // Focus the textarea when entering edit mode
-    if (!isEditing && contentRef.current) {
-      setTimeout(() => {
-        contentRef.current?.focus();
-      }, 0);
     }
   };
   
@@ -393,68 +360,71 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
             </div>
           )}
           
-          <div className="post-preview">
-            <div className="content-header">
-              <h3>Post Content</h3>
+          <div className="image-section">
+            <div className="image-header">
+              <h4>Images</h4>
               <button 
-                className="btn btn-sm btn-outline-primary edit-btn"
-                onClick={toggleEditMode}
+                className="btn btn-sm btn-outline-primary"
+                onClick={handleImageUpload}
               >
-                {isEditing ? 'Done Editing' : 'Edit Content'}
+                Add Image
               </button>
             </div>
             
-            {isEditing ? (
-              <div className="content-editor">
-                <textarea
-                  ref={contentRef}
-                  value={postContent}
-                  onChange={handleContentChange}
-                  className="content-textarea"
-                  maxLength={getCharacterLimit()}
-                />
-                <div className="character-count">
-                  <span className={characterCount > getCharacterLimit() * 0.9 ? 'near-limit' : ''}>
-                    {characterCount} / {getCharacterLimit()} characters
-                  </span>
-                </div>
+            {imageUrls.length > 0 ? (
+              <div className="image-preview">
+                {imageUrls.map((url, index) => (
+                  <div key={index} className="preview-image-container">
+                    <img src={url} alt="Preview" className="preview-image" />
+                    <button 
+                      className="remove-image-btn"
+                      onClick={() => handleRemoveImage(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="content-preview">
-                {postContent}
+              <div className="no-images">
+                No images added. Posts with images typically get more engagement.
               </div>
             )}
+          </div>
+          
+          <div className="caption-section">
+            <div className="caption-header">
+              <h4>Caption</h4>
+            </div>
             
-            <div className="image-section">
-              <div className="image-header">
-                <h4>Images</h4>
-                <button 
-                  className="btn btn-sm btn-outline-primary"
-                  onClick={handleImageUpload}
-                >
-                  Add Image
-                </button>
-              </div>
+            <div className="caption-input-container">
+              <textarea 
+                className="caption-textarea"
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
+                placeholder="Write your caption here..."
+                rows={4}
+              />
               
-              {imageUrls.length > 0 ? (
-                <div className="image-preview">
-                  {imageUrls.map((url, index) => (
-                    <div key={index} className="preview-image-container">
-                      <img src={url} alt="Preview" className="preview-image" />
-                      <button 
-                        className="remove-image-btn"
-                        onClick={() => handleRemoveImage(index)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+              <div className="caption-actions">
+                <button 
+                  className="btn btn-secondary ai-caption-btn"
+                  onClick={() => {
+                    setIsGeneratingCaption(true);
+                    // Simulate AI caption generation
+                    setTimeout(() => {
+                      setPostContent("AI generated caption for your post! #carcustomerconnect #newcar");
+                      setIsGeneratingCaption(false);
+                    }, 1500);
+                  }}
+                  disabled={isGeneratingCaption}
+                >
+                  {isGeneratingCaption ? 'Generating...' : 'Generate with AI'}
+                </button>
+                <div className="character-count">
+                  {postContent.length} characters
                 </div>
-              ) : (
-                <div className="no-images">
-                  No images added. Posts with images typically get more engagement.
-                </div>
-              )}
+              </div>
             </div>
           </div>
           
