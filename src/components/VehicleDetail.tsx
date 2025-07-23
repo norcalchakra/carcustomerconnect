@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Vehicle, VehicleEvent, eventsApi, vehiclesApi } from '../lib/api';
+import { Vehicle, vehiclesApi } from '../lib/api';
 import Modal from './ui/Modal';
 import VehicleForm from './vehicles/VehicleForm';
-import EventForm from './events/EventForm';
-import EventTimeline from './events/EventTimeline';
-import { CaptionManager } from './captions/CaptionManager';
-import { useAuth } from '../context/AuthContext';
+import { SocialPostForm } from './captions/SocialPostForm';
+import VehicleProgressTracker from './vehicles/VehicleProgressTracker';
+import StatusTransitionPrompt from './vehicles/StatusTransitionPrompt';
+
+import eventBus, { EVENTS } from '../lib/eventBus';
+import './VehicleDetail.css';
 
 interface VehicleDetailProps {}
 
 const VehicleDetail: React.FC<VehicleDetailProps> = () => {
-  const { /* user not needed here */ } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null);
-  const [events, setEvents] = useState<VehicleEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<VehicleEvent | null>(null);
+  const [generatedCaption, setGeneratedCaption] = useState<any>(null);
+  const [showStatusTransition, setShowStatusTransition] = useState(false);
+
 
   // Format helpers
   const formatDate = (dateString: string | null) => {
@@ -48,9 +50,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
         const vehicleData = await vehiclesApi.getById(parseInt(id));
         setCurrentVehicle(vehicleData);
         
-        // Fetch events for this vehicle
-        const vehicleEvents = await eventsApi.getForVehicle(parseInt(id));
-        setEvents(vehicleEvents);
+        // Events are no longer needed - using workflow system instead
       } catch (err) {
         console.error('Error fetching vehicle data:', err);
         setError('Failed to load vehicle data');
@@ -71,9 +71,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleAddEvent = () => {
-    setIsAddEventModalOpen(true);
-  };
+
 
   const handleVehicleUpdated = (updatedVehicle: Vehicle) => {
     setCurrentVehicle(updatedVehicle);
@@ -99,22 +97,8 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
         };
       });
       
-      // Create an event for this status change
-      // Make sure event_type is compatible with the API
-      const eventType = newStatus === 'in_service' ? 'service_complete' : newStatus;
-      await eventsApi.create({
-        vehicle_id: currentVehicle.id,
-        event_type: eventType,
-        notes: `Vehicle status updated to ${newStatus}`,
-        posted_to_facebook: false,
-        posted_to_instagram: false,
-        posted_to_google: false,
-        post_id: null
-      });
-      
-      // Refresh events
-      const updatedEvents = await eventsApi.getForVehicle(currentVehicle.id);
-      setEvents(updatedEvents);
+      // Emit event for dashboard refresh
+      eventBus.emit(EVENTS.ACTIVITY_UPDATED, currentVehicle);
     } catch (err) {
       console.error('Error updating vehicle status:', err);
       setError('Failed to update vehicle status');
@@ -123,19 +107,63 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
     }
   };
 
-  const handleEventSaved = (newEvent: VehicleEvent) => {
-    setEvents(prev => [...prev, newEvent]);
-    setIsAddEventModalOpen(false);
+
+
+
+
+  const handleCreatePost = async () => {
+    if (!currentVehicle) return;
     
-    // If this is a status change event, update the vehicle status
-    if (newEvent.event_type === 'acquired') {
-      setCurrentVehicle(prev => ({ ...prev, status: 'acquired' }));
-    } else if (newEvent.event_type === 'service_complete') {
-      setCurrentVehicle(prev => ({ ...prev, status: 'in_service' }));
-    } else if (newEvent.event_type === 'ready_for_sale') {
-      setCurrentVehicle(prev => ({ ...prev, status: 'ready_for_sale' }));
-    } else if (newEvent.event_type === 'sold') {
-      setCurrentVehicle(prev => ({ ...prev, status: 'sold' }));
+    // Create an empty caption - users will generate content using the "Generate with AI" button
+    const emptyCaption = {
+      id: Date.now(),
+      content: '', // Start with empty content
+      vehicle_id: currentVehicle.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    setGeneratedCaption(emptyCaption);
+    setIsCreatePostModalOpen(true);
+  };
+
+  // Handle successful post creation
+  const handlePostSuccess = (platforms: string[]) => {
+    if (platforms.length > 0) {
+      setIsCreatePostModalOpen(false);
+      setShowStatusTransition(true);
+      
+      // Emit event for dashboard refresh
+      eventBus.emit(EVENTS.ACTIVITY_UPDATED);
+    }
+  };
+
+  // Handle status change from workflow
+  const handleStatusChange = async (newStatus: Vehicle['status'], notes?: string) => {
+    if (!currentVehicle) return;
+    
+    try {
+      // Update vehicle status using the API
+      const updatedVehicle = await vehiclesApi.update(currentVehicle.id, {
+        ...currentVehicle,
+        status: newStatus
+      });
+      
+      // Update local state with proper type safety
+      setCurrentVehicle(updatedVehicle);
+      
+      // Emit event for dashboard updates
+      eventBus.emit('activity-update', {
+        type: 'status_change',
+        vehicleId: currentVehicle.id,
+        newStatus,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Hide the status transition prompt
+      setShowStatusTransition(false);
+    } catch (error) {
+      console.error('Error updating vehicle status:', error);
     }
   };
 
@@ -251,30 +279,10 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
                 Edit Details
               </button>
               
-              <button 
-                onClick={handleAddEvent}
-                className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                </svg>
-                Add Event
-              </button>
+
               
               <button 
-                onClick={() => {
-                  // Find the most recent event for this vehicle
-                  const latestEvent = events.length > 0 
-                    ? events.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())[0]
-                    : null;
-                  
-                  if (latestEvent) {
-                    setSelectedEvent(latestEvent);
-                    setIsCreatePostModalOpen(true);
-                  } else {
-                    alert('Please add an event first before creating a post.');
-                  }
-                }}
+                onClick={handleCreatePost}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -303,12 +311,13 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               <p>{error}</p>
             </div>
-          ) : (
-            <EventTimeline 
-              events={events} 
-              onAddEvent={handleAddEvent} 
+          ) : currentVehicle ? (
+            <VehicleProgressTracker 
+              vehicle={currentVehicle}
+              onStatusChange={handleStatusChange}
+              onCreatePost={handleCreatePost}
             />
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -326,19 +335,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
         />
       </Modal>
 
-      {/* Add Event Modal */}
-      <Modal
-        isOpen={isAddEventModalOpen}
-        onClose={() => setIsAddEventModalOpen(false)}
-        title="Add Event"
-        size="md"
-      >
-        <EventForm
-          vehicleId={currentVehicle.id}
-          onSave={handleEventSaved}
-          onCancel={() => setIsAddEventModalOpen(false)}
-        />
-      </Modal>
+
 
       {/* Create Post Modal */}
       <Modal
@@ -347,10 +344,28 @@ const VehicleDetail: React.FC<VehicleDetailProps> = () => {
         title="Create Social Media Post"
         size="lg"
       >
-        {selectedEvent && (
-          <CaptionManager 
+        {currentVehicle && generatedCaption && (
+          <SocialPostForm 
+            caption={generatedCaption}
             vehicle={currentVehicle}
-            event={selectedEvent}
+            onPost={handlePostSuccess}
+          />
+        )}
+      </Modal>
+
+      {/* Status Transition Prompt Modal */}
+      <Modal
+        isOpen={showStatusTransition}
+        onClose={() => setShowStatusTransition(false)}
+        title="Update Vehicle Status"
+        size="md"
+      >
+        {currentVehicle && (
+          <StatusTransitionPrompt
+            vehicle={currentVehicle}
+            onStatusChange={handleStatusChange}
+            onDismiss={() => setShowStatusTransition(false)}
+            isVisible={showStatusTransition}
           />
         )}
       </Modal>

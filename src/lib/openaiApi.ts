@@ -87,7 +87,16 @@ export const generateCaption = async (
     }
     
     const data = await response.json();
-    return data.choices[0].message.content;
+    let content = data.choices[0].message.content;
+    
+    // Clean up the content by removing leading/trailing quotes
+    content = content.trim();
+    if ((content.startsWith('"') && content.endsWith('"')) || 
+        (content.startsWith("'") && content.endsWith("'"))) {
+      content = content.slice(1, -1).trim();
+    }
+    
+    return content;
   } catch (err) {
     console.error('Error generating caption with OpenAI:', err);
     throw err;
