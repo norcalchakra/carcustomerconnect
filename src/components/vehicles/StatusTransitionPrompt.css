@@ -1,0 +1,389 @@
+.status-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.status-transition-prompt {
+  background: white;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.success-icon {
+  font-size: 24px;
+}
+
+.prompt-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.vehicle-info {
+  padding: 16px 24px;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vehicle-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+.current-status .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.quick-advance-section {
+  padding: 24px;
+}
+
+.suggestion-message {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.quick-advance-card {
+  background-color: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.next-status-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.next-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.next-status-description {
+  color: #374151;
+  font-size: 14px;
+}
+
+.reasons-list {
+  margin-bottom: 16px;
+}
+
+.reasons-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.reasons-list ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.reasons-list li {
+  margin-bottom: 4px;
+}
+
+.quick-advance-button {
+  width: 100%;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+}
+
+.quick-advance-button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.quick-advance-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  margin: 16px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.divider span {
+  padding: 0 16px;
+  color: #6b7280;
+  font-size: 14px;
+  background-color: white;
+}
+
+.custom-status-section {
+  padding: 0 24px 24px 24px;
+}
+
+.custom-status-section h4 {
+  margin: 0 0 16px 0;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-options {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.status-option:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.status-option.selected {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.status-option.current {
+  background-color: #f0fdf4;
+  border-color: #10b981;
+  cursor: not-allowed;
+}
+
+.status-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.option-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.option-label {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.option-description {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.current-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #10b981;
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.notes-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.notes-section label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.notes-section textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 12px;
+}
+
+.notes-section textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.update-status-button {
+  width: 100%;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+}
+
+.update-status-button:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.update-status-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prompt-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+}
+
+.skip-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.skip-button:hover {
+  color: #374151;
+  background-color: #f3f4f6;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .status-transition-overlay {
+    padding: 10px;
+  }
+  
+  .status-transition-prompt {
+    max-height: 95vh;
+  }
+  
+  .prompt-header {
+    padding: 20px 20px 16px 20px;
+  }
+  
+  .vehicle-info,
+  .quick-advance-section,
+  .custom-status-section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  
+  .divider {
+    padding: 0 20px;
+  }
+  
+  .prompt-footer {
+    padding: 16px 20px;
+  }
+}

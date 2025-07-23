@@ -297,6 +297,11 @@ const Dashboard: React.FC<DashboardProps> = () => {
       <div className="dashboard-card quick-actions">
         <h2>Quick Actions</h2>
         <div className="action-buttons">
+          <Link to="/workflow" className="action-button workflow-highlight">
+            <span className="action-icon">🔄</span>
+            <span className="action-label">Vehicle Workflow</span>
+          </Link>
+
           <button className="action-button" onClick={() => setIsAddVehicleModalOpen(true)}>
             <span className="action-icon">+</span>
             <span className="action-label">Add Vehicle</span>

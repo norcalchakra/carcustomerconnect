@@ -10,6 +10,7 @@ import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import VinScannerPage from './pages/VinScannerPage';
 import DealerOnboardingPage from './pages/DealerOnboardingPage';
 import ActivityPage from './components/activity/ActivityPage';
+import WorkflowDashboard from './components/vehicles/WorkflowDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocialPostForm } from './components/captions/SocialPostForm';
 import { SocialPostDetail } from './components/social/SocialPostDetail';
@@ -50,6 +51,7 @@ const AppContent: React.FC = () => {
             <Route path="/login" element={!user ? <Auth /> : <Navigate to="/" />} />
             <Route path="/" element={<ProtectedRoute element={<Dashboard />} />} />
             <Route path="/dashboard" element={<Navigate to="/" />} />
+            <Route path="/workflow" element={<ProtectedRoute element={<WorkflowDashboard />} />} />
             <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
             <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
             <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />

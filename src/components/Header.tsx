@@ -35,6 +35,12 @@ const Header: React.FC<HeaderProps> = () => {
               Dashboard
             </Link>
             <Link 
+              to="/workflow" 
+              className="px-3 py-2 rounded hover:bg-blue-700 bg-green-600"
+            >
+              🚗 Workflow
+            </Link>
+            <Link 
               to="/settings" 
               className="px-3 py-2 rounded hover:bg-blue-700"
             >
