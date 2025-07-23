@@ -438,3 +438,56 @@
     height: 80px;
   }
 }
+
+/* Notes Section */
+.notes-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.notes-header {
+  margin-bottom: 12px;
+}
+
+.notes-header h4 {
+  font-size: 1.1rem;
+  color: #333;
+  margin: 0 0 4px 0;
+}
+
+.notes-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.notes-input-container {
+  position: relative;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.notes-textarea::placeholder {
+  color: #a0aec0;
+}

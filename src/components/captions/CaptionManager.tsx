@@ -20,12 +20,10 @@ export const CaptionManager: React.FC<CaptionManagerProps> = ({ vehicle, event }
         } else {
           // Create a dummy caption if none exists
           const dummyCaption: Caption = {
-            id: 'temp-' + Date.now(),
+            vehicle_id: vehicle.id,
+            event_id: event.id,
             content: '',
-            eventId: String(event.id),
-            vehicleId: String(vehicle.id),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            hashtags: []
           };
           setSelectedCaption(dummyCaption);
         }
@@ -33,12 +31,10 @@ export const CaptionManager: React.FC<CaptionManagerProps> = ({ vehicle, event }
         console.error('Error checking for existing caption:', err);
         // Create a dummy caption if there's an error
         const dummyCaption: Caption = {
-          id: 'temp-' + Date.now(),
+          vehicle_id: vehicle.id,
+          event_id: event.id,
           content: '',
-          eventId: String(event.id),
-          vehicleId: String(vehicle.id),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          hashtags: []
         };
         setSelectedCaption(dummyCaption);
       }
@@ -52,6 +48,8 @@ export const CaptionManager: React.FC<CaptionManagerProps> = ({ vehicle, event }
       {selectedCaption && (
         <SocialPostForm 
           caption={selectedCaption}
+          vehicle={vehicle}
+          event={event}
           onPost={() => {}}
         />
       )}

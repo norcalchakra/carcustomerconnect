@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Caption, Vehicle, VehicleEvent } from '../../lib/api';
+import { Caption, Vehicle, VehicleEvent, Dealership } from '../../lib/api';
 import { mockInitFacebookSDK, mockIsFacebookConnected, mockLoginWithFacebook, mockGetUserPages, mockPostToFacebookPage } from '../../lib/mockFacebookApi';
 import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import './SocialPostForm.css';
+import { generateCaption, isOpenAIConfigured } from '../../lib/openaiApi';
+import './SocialPostForm.improved.css';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -30,34 +31,55 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [showScheduler, setShowScheduler] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>(['https://example.com/mock-image.jpg']);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [postContent, setPostContent] = useState<string>(caption.content);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
-  
+  const [dealershipData, setDealershipData] = useState<Dealership | null>(null);
+  const [isOpenAIAvailable, setIsOpenAIAvailable] = useState<boolean>(false);
+  const [notes, setNotes] = useState<string>('');
+
   // Character limits removed as they're no longer needed after removing the content editing section
-  
-  // Fetch dealership ID for the current user
+
+  // Fetch dealership ID and data for the current user
   useEffect(() => {
-    const getDealershipId = async () => {
+    const getDealershipData = async () => {
       if (!user) return;
       
       try {
         const { data, error } = await supabase
           .from('dealerships')
-          .select('id')
+          .select('*')
           .eq('user_id', user.id)
           .single();
         
         if (error) throw error;
-        if (data) setDealershipId(data.id);
+        if (data) {
+          setDealershipId(data.id);
+          setDealershipData(data as Dealership);
+        }
       } catch (err) {
-        console.error('Error fetching dealership:', err);
-        setError('Failed to load dealership information');
+        console.error('Error fetching dealership data:', err);
       }
     };
     
-    getDealershipId();
+    getDealershipData();
   }, [user]);
+
+  // Check if OpenAI API is configured
+  useEffect(() => {
+    const checkOpenAIConfig = async () => {
+      try {
+        const available = await isOpenAIConfigured();
+        setIsOpenAIAvailable(available);
+      } catch (err) {
+        console.error('Error checking OpenAI configuration:', err);
+        setIsOpenAIAvailable(false);
+      }
+    };
+    
+    checkOpenAIConfig();
+  }, []);
+
   
   // Caption content is initialized in the state declaration
   
@@ -392,6 +414,23 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
             )}
           </div>
           
+          <div className="notes-section">
+            <div className="notes-header">
+              <h4>Notes for AI</h4>
+              <p className="notes-description">🎯 <strong>The AI will make this the main focus of your post.</strong> Enter the key topic you want to highlight (e.g., "brake service completed", "oil change special", "new arrival")</p>
+            </div>
+            
+            <div className="notes-input-container">
+              <textarea 
+                className="notes-textarea"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Enter the main topic for your post (e.g., 'brake service completed', 'oil change special')..."
+                rows={2}
+              />
+            </div>
+          </div>
+          
           <div className="caption-section">
             <div className="caption-header">
               <h4>Caption</h4>
@@ -409,17 +448,39 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
               <div className="caption-actions">
                 <button 
                   className="btn btn-secondary ai-caption-btn"
-                  onClick={() => {
+                  onClick={async () => {
                     setIsGeneratingCaption(true);
-                    // Simulate AI caption generation
-                    setTimeout(() => {
-                      setPostContent("AI generated caption for your post! #carcustomerconnect #newcar");
+                    try {
+                      if (!vehicle) {
+                        // Handle missing vehicle data gracefully
+                        setError('Vehicle information is missing. Using generic caption instead.');
+                        setPostContent("Check out this amazing vehicle at our dealership! #carcustomerconnect #newcar");
+                        return;
+                      }
+                      
+                      // Generate caption using OpenAI with RAG from dealer and vehicle information
+                      // Include notes as additional context if provided
+                      const additionalContext = notes.trim() ? `${caption.content}\n\nSpecific details: ${notes}` : caption.content;
+                      const generatedCaption = await generateCaption(
+                        vehicle, 
+                        dealershipData,
+                        additionalContext
+                      );
+                      
+                      setPostContent(generatedCaption);
+                    } catch (err) {
+                      console.error('Error generating caption with AI:', err);
+                      setError(`Failed to generate caption: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                      // Fallback to a generic caption if AI fails
+                      setPostContent("Check out this amazing vehicle at our dealership! #carcustomerconnect #newcar");
+                    } finally {
                       setIsGeneratingCaption(false);
-                    }, 1500);
+                    }
                   }}
                   disabled={isGeneratingCaption}
+                  title={!isOpenAIAvailable ? 'OpenAI API not configured' : !vehicle ? 'Vehicle information required' : notes.trim() ? `Generate caption focused on: ${notes}` : 'Generate caption with AI'}
                 >
-                  {isGeneratingCaption ? 'Generating...' : 'Generate with AI'}
+                  {isGeneratingCaption ? 'Generating...' : notes.trim() ? `Generate Caption About: ${notes.slice(0, 20)}${notes.length > 20 ? '...' : ''}` : 'Generate with AI'}
                 </button>
                 <div className="character-count">
                   {postContent.length} characters
