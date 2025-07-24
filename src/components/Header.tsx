@@ -35,28 +35,10 @@ const Header: React.FC<HeaderProps> = () => {
               Dashboard
             </Link>
             <Link 
-              to="/workflow" 
-              className="px-3 py-2 rounded hover:bg-blue-700 bg-green-600"
-            >
-              🚗 Workflow
-            </Link>
-            <Link 
               to="/settings" 
               className="px-3 py-2 rounded hover:bg-blue-700"
             >
               Settings
-            </Link>
-            <Link 
-              to="/facebook-test" 
-              className="px-3 py-2 rounded hover:bg-blue-700"
-            >
-              FB Test
-            </Link>
-            <Link 
-              to="/simple-facebook-test" 
-              className="px-3 py-2 rounded hover:bg-blue-700"
-            >
-              Simple FB
             </Link>
             <Link 
               to="/vin-scanner" 
@@ -76,12 +58,6 @@ const Header: React.FC<HeaderProps> = () => {
           {user && (
             <>
               <span className="text-sm">{user.email}</span>
-              <Link 
-                to="/captions" 
-                className="px-3 py-2 rounded hover:bg-blue-700"
-              >
-                Captions
-              </Link>
               <button 
                 onClick={handleLogout}
                 className="bg-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-800"
