@@ -368,8 +368,13 @@ export const generateVehicleAgnosticCaption = async (
     
     // Make the AI notes the central theme if provided
     if (additionalContext) {
-      prompt = `Create a professional social media post for a car dealership focused on this central theme: "${additionalContext}"\n\n`;
-      prompt += `IMPORTANT: The main message and focus of this post should be about: ${additionalContext}\n\n`;
+      prompt = `Create a professional social media post for a car dealership.
+
+`;
+      prompt += `IMPORTANT: Use the following details to inspire the post content, but do not repeat them verbatim or label them as "Specific details":
+${additionalContext}
+
+`;
     } else {
       prompt = 'Create a professional social media post for a car dealership (general/vehicle-agnostic content).\n\n';
     }
@@ -462,7 +467,7 @@ export const generateVehicleAgnosticCaption = async (
     let instructions = `\nInstructions: Create an engaging, professional social media post suitable for Facebook and Instagram. Include relevant hashtags.`;
     
     if (additionalContext) {
-      instructions += ` CENTRAL THEME: Make "${additionalContext}" the main focus and central message of this post. Build the entire post around this theme.`;
+      instructions += ` Use the provided details to inspire the content and theme of the post, but do not directly quote or label them as "Specific details".`;
     } else {
       instructions += ` Focus on general dealership content (not vehicle-specific).`;
     }
@@ -493,7 +498,7 @@ export const generateVehicleAgnosticCaption = async (
         messages: [
           {
             role: 'system',
-            content: 'You are a professional social media content creator for car dealerships. Create engaging, concise captions for general dealership social media posts. Follow the provided brand voice guidelines precisely and incorporate the competitive differentiators naturally. Include relevant hashtags. Keep the tone consistent with the dealership\'s brand personality.'
+            content: 'You are a professional social media content creator for car dealerships. Create engaging, concise captions for general dealership social media posts. Follow the provided brand voice guidelines precisely and incorporate the competitive differentiators naturally. Include relevant hashtags. Keep the tone consistent with the dealership\'s brand personality. IMPORTANT: When given specific details to inspire content, use them to inform the theme and substance of your post but DO NOT repeat them verbatim or include phrases like "Specific details:" in your output.'
           },
           {
             role: 'user',
