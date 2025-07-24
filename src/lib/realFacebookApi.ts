@@ -23,6 +23,40 @@ interface FacebookPostResponse {
   id: string;
 }
 
+// Helper function to convert data URL to blob
+const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
+  const response = await fetch(dataURL);
+  return response.blob();
+};
+
+// Helper function to upload photo to Facebook using FormData
+const uploadPhotoToFacebook = async (
+  pageId: string, 
+  pageAccessToken: string, 
+  message: string, 
+  imageBlob: Blob
+): Promise<string> => {
+  const formData = new FormData();
+  formData.append('source', imageBlob);
+  formData.append('caption', message);
+  formData.append('access_token', pageAccessToken);
+
+  const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/photos`, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('Facebook photo upload error:', errorData);
+    throw new Error(`Facebook photo upload failed: ${errorData.error?.message || 'Unknown error'}`);
+  }
+
+  const result = await response.json();
+  console.log('Facebook photo upload successful:', result);
+  return result.id || result.post_id;
+};
+
 // Helper function to make Facebook API calls
 const callFacebookAPI = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
   const baseUrl = `https://graph.facebook.com/${FACEBOOK_CONFIG.apiVersion}`;
@@ -91,22 +125,105 @@ export const postToRealFacebookPage = async (
       access_token: pageAccessToken
     };
 
-    // If we have images, we need to handle them differently
+    // If we have images, upload them properly to Facebook
     if (imageUrls && imageUrls.length > 0) {
-      // For now, we'll post the first image with the message
-      // Facebook API requires images to be uploaded first or referenced by URL
-      const imageUrl = imageUrls[0];
+      console.log('Processing images for Facebook upload...');
       
-      // If it's a data URL, we need to upload it first
-      if (imageUrl.startsWith('data:')) {
-        console.log('Uploading image data to Facebook...');
-        // For data URLs, we would need to upload to Facebook first
-        // This is more complex and requires additional API calls
-        // For now, we'll post without the image and log a warning
-        console.warn('Data URL images not yet supported for real Facebook posting');
-      } else if (imageUrl.startsWith('http')) {
-        // External URL - Facebook can fetch this directly
-        postData.link = imageUrl;
+      // For single image, we can post directly with the photo
+      if (imageUrls.length === 1) {
+        const imageUrl = imageUrls[0];
+        
+        if (imageUrl.startsWith('data:')) {
+          // Convert data URL to blob and upload
+          console.log('Converting data URL to blob for Facebook upload...');
+          const blob = await dataURLToBlob(imageUrl);
+          return await uploadPhotoToFacebook(pageId, pageAccessToken, message, blob);
+        } else if (imageUrl.startsWith('http')) {
+          // Use external URL directly
+          postData.url = imageUrl;
+          delete postData.message; // When posting photo, message goes in different field
+          postData.caption = message;
+          
+          // Post to photos endpoint instead of feed
+          const response = await callFacebookAPI(
+            `/${pageId}/photos`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(postData)
+            }
+          );
+          
+          console.log('Facebook photo post response:', response);
+          return response.id || response.post_id;
+        }
+      } else {
+        // Multiple images - upload each photo first, then create post with attached_media
+        console.log(`Multiple images detected (${imageUrls.length}), uploading all images...`);
+        
+        const attachedMedia = [];
+        
+        for (let i = 0; i < imageUrls.length; i++) {
+          const imageUrl = imageUrls[i];
+          console.log(`Processing image ${i + 1}/${imageUrls.length}: ${imageUrl}`);
+          
+          if (imageUrl.startsWith('http')) {
+            try {
+              // Upload photo without publishing (published=false)
+              const photoData = {
+                url: imageUrl,
+                published: false,
+                access_token: pageAccessToken
+              };
+              
+              const photoResponse = await callFacebookAPI(
+                `/${pageId}/photos`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(photoData)
+                }
+              );
+              
+              if (photoResponse.id) {
+                attachedMedia.push({ media_fbid: photoResponse.id });
+                console.log(`Successfully uploaded image ${i + 1}, photo ID: ${photoResponse.id}`);
+              }
+            } catch (error) {
+              console.error(`Failed to upload image ${i + 1}:`, error);
+            }
+          }
+        }
+        
+        if (attachedMedia.length > 0) {
+          // Create post with all attached media
+          const multiPostData = {
+            message: message,
+            attached_media: attachedMedia,
+            access_token: pageAccessToken
+          };
+          
+          console.log(`Creating Facebook post with ${attachedMedia.length} images...`);
+          const response = await callFacebookAPI(
+            `/${pageId}/feed`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(multiPostData)
+            }
+          );
+          
+          console.log('Multi-image Facebook post created successfully:', response);
+          return response.id;
+        } else {
+          console.warn('No images could be uploaded, falling back to text-only post');
+        }
       }
     }
 

@@ -263,12 +263,41 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
         }
         
         console.log('Posting to Facebook page:', page.name);
+        console.log('Image URLs being sent to Facebook:', imageUrls);
+        console.log('Storage URLs available:', storageUrls);
+        
+        // Use actual image URLs instead of placeholders
+        const actualImageUrls = imageUrls.filter(url => {
+          // Filter out placeholder URLs and blob URLs that can't be used by Facebook
+          return url && !url.startsWith('temp-image-') && !url.startsWith('blob:');
+        });
+        
+        // If we have blob URLs, we need to use the storage URLs instead
+        const finalImageUrls = [];
+        for (let i = 0; i < imageUrls.length; i++) {
+          const imageUrl = imageUrls[i];
+          const storageUrl = storageUrls[i];
+          
+          if (imageUrl.startsWith('blob:') && storageUrl) {
+            // Use the storage URL for blob images
+            finalImageUrls.push(storageUrl);
+            console.log(`Using storage URL for blob image: ${storageUrl}`);
+          } else if (!imageUrl.startsWith('temp-image-') && !imageUrl.startsWith('blob:')) {
+            // Use the original URL for non-blob images
+            finalImageUrls.push(imageUrl);
+            console.log(`Using original URL: ${imageUrl}`);
+          } else {
+            console.warn(`Skipping unusable image URL: ${imageUrl}`);
+          }
+        }
+        
+        console.log('Final image URLs for Facebook:', finalImageUrls);
         
         const result = await postToFacebookPage(
           page.id,
           page.access_token,
           postContent,
-          imageUrls
+          finalImageUrls
         );
         
         console.log('Post created successfully:', result);
