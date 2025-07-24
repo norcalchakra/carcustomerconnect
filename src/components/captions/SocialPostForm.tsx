@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Caption, Vehicle, VehicleEvent, Dealership } from '../../lib/api';
-import { mockInitFacebookSDK, mockIsFacebookConnected, mockLoginWithFacebook, mockGetUserPages, mockPostToFacebookPage } from '../../lib/mockFacebookApi';
+import { initFacebookSDK, isFacebookConnected, loginWithFacebook, getUserPages, postToFacebookPage } from '../../lib/hybridFacebookApi';
 import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
@@ -90,8 +90,8 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   useEffect(() => {
     const initFacebook = async () => {
       try {
-        await mockInitFacebookSDK();
-        const connected = mockIsFacebookConnected();
+        await initFacebookSDK();
+        const connected = isFacebookConnected();
         setFacebookConnected(connected);
         
         if (connected) {
@@ -99,7 +99,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           const accessToken = localStorage.getItem('mock_fb_access_token'); // Use mock storage key
           if (accessToken) {
             try {
-              const pages = await mockGetUserPages(accessToken);
+              const pages = await getUserPages(accessToken);
               setFacebookPages(pages);
               if (pages.length > 0) {
                 setSelectedFacebookPage(pages[0].id);
@@ -124,9 +124,9 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
     try {
       setError(null);
       console.log('Connecting to Facebook using mock implementation...');
-      const accessToken = await mockLoginWithFacebook();
+      const accessToken = await loginWithFacebook();
       console.log('Got mock access token:', accessToken);
-      const pages = await mockGetUserPages(accessToken);
+      const pages = await getUserPages(accessToken);
       console.log('Got mock pages:', pages);
       
       setFacebookPages(pages);
@@ -264,7 +264,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
         
         console.log('Posting to Facebook page:', page.name);
         
-        const result = await mockPostToFacebookPage(
+        const result = await postToFacebookPage(
           page.id,
           page.access_token,
           postContent,

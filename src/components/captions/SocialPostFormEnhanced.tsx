@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Caption, Vehicle, VehicleEvent, Dealership, vehiclesApi } from '../../lib/api';
-import { mockInitFacebookSDK, mockIsFacebookConnected, mockLoginWithFacebook, mockGetUserPages, mockPostToFacebookPage } from '../../lib/mockFacebookApi';
+import { initFacebookSDK, isFacebookConnected, loginWithFacebook, getUserPages, postToFacebookPage } from '../../lib/hybridFacebookApi';
 import eventBus, { EVENTS } from '../../lib/eventBus';
 import { socialPostsApi, SocialPostInsert } from '../../lib/socialPostsApi.improved';
 import { useAuth } from '../../context/AuthContext';
@@ -106,14 +106,14 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
   useEffect(() => {
     const initFacebook = async () => {
       try {
-        await mockInitFacebookSDK();
-        const connected = mockIsFacebookConnected();
+        await initFacebookSDK();
+        const connected = isFacebookConnected();
         setFacebookConnected(connected);
         
         if (connected) {
           const accessToken = localStorage.getItem('mock_fb_access_token');
           if (accessToken) {
-            const pages = await mockGetUserPages(accessToken);
+            const pages = await getUserPages(accessToken);
             setFacebookPages(pages);
             if (pages.length > 0) {
               setSelectedFacebookPage(pages[0].id);
@@ -127,8 +127,6 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
     
     initFacebook();
   }, []);
-
-
 
   const createSocialPost = async (
     platform: string, 
@@ -211,7 +209,7 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
         
         console.log('Posting to Facebook page:', page.name);
         
-        const result = await mockPostToFacebookPage(
+        const result = await postToFacebookPage(
           page.id,
           page.access_token,
           postContent,
@@ -312,10 +310,10 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
 
   const handleFacebookLogin = async () => {
     try {
-      const result = await mockLoginWithFacebook();
-      if (result.success) {
+      const token = await loginWithFacebook();
+      if (token) {
         setFacebookConnected(true);
-        const pages = await mockGetUserPages(result.accessToken);
+        const pages = await getUserPages(token);
         setFacebookPages(pages);
         if (pages.length > 0) {
           setSelectedFacebookPage(pages[0].id);

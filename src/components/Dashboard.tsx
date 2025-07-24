@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import VehicleForm from './vehicles/VehicleForm';
 import Modal from './ui/Modal';
 import { SocialPostFormEnhanced } from './captions/SocialPostFormEnhanced';
+import FacebookCredentialsTest from './FacebookCredentialsTest';
 
 import { useAuth } from '../context/AuthContext';
 import { fetchAllActivity, RecentActivity } from '../lib/activityService';
@@ -191,6 +192,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
           </button>
         </div>
       </div>
+
+      {/* Facebook Integration Test - Only for testing credentials */}
+      <FacebookCredentialsTest />
 
       <div className="dashboard-card recent-activity">
         <h2>Recent Activity</h2>
