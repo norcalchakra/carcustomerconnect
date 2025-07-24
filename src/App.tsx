@@ -52,6 +52,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<ProtectedRoute element={<Dashboard />} />} />
             <Route path="/dashboard" element={<Navigate to="/" />} />
             <Route path="/workflow" element={<ProtectedRoute element={<WorkflowDashboard />} />} />
+            <Route path="/workflow/:vehicleId" element={<ProtectedRoute element={<WorkflowDashboard />} />} />
             <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
             <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
             <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Vehicle, vehiclesApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import VehicleProgressTracker from './VehicleProgressTracker';
@@ -14,6 +15,7 @@ interface WorkflowDashboardProps {
 
 const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }) => {
   const { user } = useAuth();
+  const { vehicleId } = useParams<{ vehicleId?: string }>();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
   const [filterStatus, setFilterStatus] = useState<Vehicle['status'] | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status' | 'progress'>('date');
   const [searchTerm, setSearchTerm] = useState('');
+  const [highlightedVehicleId, setHighlightedVehicleId] = useState<number | null>(null);
 
   // Fetch dealership ID
   useEffect(() => {
@@ -68,6 +71,31 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
 
     fetchVehicles();
   }, [dealershipId]);
+
+  // Handle vehicle highlighting from URL parameter
+  useEffect(() => {
+    if (vehicleId && vehicles.length > 0) {
+      const targetVehicleId = parseInt(vehicleId, 10);
+      const targetVehicle = vehicles.find(v => v.id === targetVehicleId);
+      
+      if (targetVehicle) {
+        setHighlightedVehicleId(targetVehicleId);
+        
+        // Scroll to the vehicle card after a short delay to ensure rendering
+        setTimeout(() => {
+          const vehicleElement = document.getElementById(`vehicle-card-${targetVehicleId}`);
+          if (vehicleElement) {
+            vehicleElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedVehicleId(null);
+        }, 3000);
+      }
+    }
+  }, [vehicleId, vehicles]);
 
   const handleStatusChange = async (vehicleId: number, newStatus: Vehicle['status']) => {
     try {
@@ -327,7 +355,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
           </div>
         ) : (
           filteredVehicles.map((vehicle) => (
-            <div key={vehicle.id} className="vehicle-workflow-card">
+            <div 
+              key={vehicle.id} 
+              id={`vehicle-card-${vehicle.id}`}
+              className={`vehicle-workflow-card ${highlightedVehicleId === vehicle.id ? 'highlighted' : ''}`}
+            >
               <VehicleProgressTracker
                 vehicle={vehicle}
                 onStatusChange={(newStatus) => handleStatusChange(vehicle.id, newStatus)}

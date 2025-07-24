@@ -187,18 +187,11 @@ export const SocialPostDetail: React.FC<SocialPostDetailProps> = ({
       
       <div className="post-engagement">
         <h3>Engagement</h3>
-        <div className="engagement-metrics">
-          <div className="metric">
-            <span className="metric-value">{post.engagement?.likes || 0}</span>
-            <span className="metric-label">Likes</span>
-          </div>
-          <div className="metric">
-            <span className="metric-value">{post.engagement?.comments || 0}</span>
-            <span className="metric-label">Comments</span>
-          </div>
-          <div className="metric">
-            <span className="metric-value">{post.engagement?.shares || 0}</span>
-            <span className="metric-label">Shares</span>
+        <div className="coming-soon-notification">
+          <div className="coming-soon-icon">📊</div>
+          <div className="coming-soon-content">
+            <h4>Real-time Engagement Metrics</h4>
+            <p>Coming Soon! We're working on bringing you live engagement data including likes, comments, shares, and reach analytics.</p>
           </div>
         </div>
       </div>

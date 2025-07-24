@@ -19,11 +19,12 @@ export interface ActivityEvent {
 export interface RecentActivity {
   id: string | number; // Changed to string | number to support compound IDs
   vehicle: string;
-  vehicleId: number;
+  vehicleId: number | null; // Allow null for generic posts
   status: string;
   time: string;
   notes?: string;
   isSocialPost?: boolean;
+  isGenericPost?: boolean; // Added to distinguish generic posts
   platforms?: string[];
 }
 
@@ -231,7 +232,7 @@ export const fetchAllActivity = async (dealershipId: number, limit: number = 10)
       return [];
     }
     
-    // Convert vehicle events to RecentActivity format
+    // Convert vehicle events to RecentActivity format with original timestamps
     const vehicleActivities = events ? events.map((event: any) => {
       const vehicleYear = event.vehicles?.year || 'Unknown';
       const vehicleMake = event.vehicles?.make || 'Unknown';
@@ -244,32 +245,50 @@ export const fetchAllActivity = async (dealershipId: number, limit: number = 10)
         status: getStatusDisplayText(event.event_type),
         time: formatRelativeTime(event.created_at),
         notes: event.notes,
-        isSocialPost: false
+        isSocialPost: false,
+        originalTimestamp: event.created_at // Keep original timestamp for sorting
       };
     }) : [];
     
-    // Convert social posts to RecentActivity format
+    // Convert social posts to RecentActivity format with original timestamps
     const socialActivities = socialPosts ? socialPosts.map((post: any) => {
       // Cast to the correct type
       const socialPost = post as unknown as SocialPost & { vehicles?: any };
       
-      const vehicleYear = socialPost.vehicles?.year || 'Unknown';
-      const vehicleMake = socialPost.vehicles?.make || 'Unknown';
-      const vehicleModel = socialPost.vehicles?.model || 'Unknown';
+      // Check if this is a generic post (no vehicle associated)
+      const isGenericPost = !socialPost.vehicle_id || socialPost.vehicle_id === 0 || 
+                           !socialPost.vehicles || 
+                           (!socialPost.vehicles.year && !socialPost.vehicles.make && !socialPost.vehicles.model);
+      
+      let vehicleDisplay;
+      let vehicleId;
+      
+      if (isGenericPost) {
+        vehicleDisplay = 'General Post';
+        vehicleId = null; // Use null to indicate generic post
+      } else {
+        const vehicleYear = socialPost.vehicles?.year || 'Unknown';
+        const vehicleMake = socialPost.vehicles?.make || 'Unknown';
+        const vehicleModel = socialPost.vehicles?.model || 'Unknown';
+        vehicleDisplay = `${vehicleYear} ${vehicleMake} ${vehicleModel}`;
+        vehicleId = socialPost.vehicle_id;
+      }
       
       return {
         id: socialPost.id!,
-        vehicleId: socialPost.vehicle_id || 0,
-        vehicle: `${vehicleYear} ${vehicleMake} ${vehicleModel}`,
+        vehicleId: vehicleId,
+        vehicle: vehicleDisplay,
         status: 'Social Media Post',
         time: formatRelativeTime(socialPost.created_at || ''),
         notes: socialPost.content,
         isSocialPost: true,
-        platforms: socialPost.platform ? [socialPost.platform] : []
+        isGenericPost: isGenericPost,
+        platforms: socialPost.platform ? [socialPost.platform] : [],
+        originalTimestamp: socialPost.created_at // Keep original timestamp for sorting
       };
     }) : [];
     
-    // Combine and sort all activities by date (newest first)
+    // Combine all activities
     const allActivities = [...vehicleActivities, ...socialActivities];
     
     // Ensure unique IDs by prefixing with source type
@@ -278,18 +297,18 @@ export const fetchAllActivity = async (dealershipId: number, limit: number = 10)
       activity.id = activity.isSocialPost ? `social_${activity.id}` : `vehicle_${activity.id}`;
     });
     
+    // Sort by original timestamp (newest first)
     allActivities.sort((a, b) => {
-      // Try to parse the relative time strings or fall back to string comparison
-      const dateA = new Date(b.time).getTime();
-      const dateB = new Date(a.time).getTime();
+      const timestampA = new Date(a.originalTimestamp || '').getTime();
+      const timestampB = new Date(b.originalTimestamp || '').getTime();
       
-      // If both are valid dates, compare them
-      if (!isNaN(dateA) && !isNaN(dateB)) {
-        return dateA - dateB;
-      }
-      
-      // Otherwise fall back to string comparison
-      return b.time.localeCompare(a.time);
+      // Sort newest first (descending order)
+      return timestampB - timestampA;
+    });
+    
+    // Remove the temporary originalTimestamp field before returning
+    allActivities.forEach(activity => {
+      delete (activity as any).originalTimestamp;
     });
     
     // Limit to requested number

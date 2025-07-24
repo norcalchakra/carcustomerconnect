@@ -218,9 +218,15 @@ const Dashboard: React.FC<DashboardProps> = () => {
                       </div>
 
                       <div className="activity-vehicle">
-                        <Link to={`/vehicles/${activity.vehicleId}`}>
-                          {activity.vehicle}
-                        </Link>
+                        {activity.isGenericPost ? (
+                          <Link to="/activity">
+                            {activity.vehicle}
+                          </Link>
+                        ) : (
+                          <Link to={`/workflow/${activity.vehicleId}`}>
+                            {activity.vehicle}
+                          </Link>
+                        )}
                       </div>
 
                       <div className="activity-content">
