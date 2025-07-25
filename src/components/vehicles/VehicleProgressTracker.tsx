@@ -8,6 +8,7 @@ interface VehicleProgressTrackerProps {
   onSuggestedAction?: (action: string) => void;
   onCreatePost?: () => void;
   onEditVehicle?: () => void;
+  onDeleteVehicle?: () => void;
 }
 
 const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
@@ -15,7 +16,8 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   onStatusChange,
   onSuggestedAction,
   onCreatePost,
-  onEditVehicle
+  onEditVehicle,
+  onDeleteVehicle
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -252,6 +254,20 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
                 className="quick-action-button edit-button"
               >
                 ✏️ Edit Vehicle
+              </button>
+            )}
+            {onDeleteVehicle && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
+                    onDeleteVehicle();
+                  }
+                }}
+                className="quick-action-button delete-button"
+                title="Delete Vehicle"
+              >
+                🗑️ Delete
               </button>
             )}
           </div>

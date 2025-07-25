@@ -122,6 +122,31 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
     }
   };
 
+  const handleDeleteVehicle = async (vehicleId: number) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // This will now perform a soft delete (sets is_deleted = true)
+      const deletedVehicle = await vehiclesApi.delete(vehicleId);
+      
+      // Update the UI by removing the deleted vehicle from the list
+      setVehicles(prevVehicles => prevVehicles.filter(v => v.id !== vehicleId));
+      
+      // Show success message
+      setError(null);
+      
+      // Optional: Show a toast notification
+      // You can implement a toast system or use a library like react-toastify
+      console.log('Vehicle soft deleted:', deletedVehicle);
+      
+    } catch (err) {
+      console.error('Error deleting vehicle:', err);
+      setError('Failed to delete vehicle. Please try again.');
+    }
+  };
+
   const handleSuggestedAction = (vehicle: Vehicle, action: string) => {
     setSelectedVehicle(vehicle);
     
@@ -372,6 +397,7 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
                   setSelectedVehicle(vehicle);
                   setShowEditModal(true);
                 }}
+                onDeleteVehicle={() => handleDeleteVehicle(vehicle.id)}
               />
             </div>
           ))

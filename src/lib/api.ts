@@ -16,24 +16,26 @@ export type Dealership = Database['public']['Tables']['dealerships']['Row'];
 
 // Vehicle API
 export const vehiclesApi = {
-  // Get all vehicles for a dealership
+  // Get all non-deleted vehicles for a dealership
   getAll: async (dealershipId: number) => {
     const { data, error } = await supabase
       .from('vehicles')
       .select('*')
       .eq('dealership_id', dealershipId)
+      .is('is_deleted', false)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     return data as Vehicle[];
   },
 
-  // Get a single vehicle by ID
+  // Get a single non-deleted vehicle by ID
   getById: async (id: number) => {
     const { data, error } = await supabase
       .from('vehicles')
       .select('*')
       .eq('id', id)
+      .is('is_deleted', false)
       .single();
     
     if (error) throw error;
@@ -98,49 +100,95 @@ export const vehiclesApi = {
     return data as Vehicle;
   },
 
-  // Delete a vehicle
+  // Soft delete a vehicle by setting is_deleted to true
   delete: async (id: number) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('vehicles')
-      .delete()
-      .eq('id', id);
+      .update({ is_deleted: true })
+      .eq('id', id)
+      .select()
+      .single();
     
     if (error) throw error;
-    return true;
+    return data as Vehicle;
   },
-
-  // Get vehicles by status
+  
+  // Get all non-deleted vehicles for a dealership
+  getAll: async (dealershipId: number) => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('dealership_id', dealershipId)
+      .is('is_deleted', false)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data as Vehicle[];
+  },
+  
+  // Get a single non-deleted vehicle by ID
+  getById: async (id: number) => {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('id', id)
+      .is('is_deleted', false)
+      .single();
+    
+    if (error) throw error;
+    return data as Vehicle;
+  },
+  
+  // Get vehicles by status (non-deleted only)
   getByStatus: async (dealershipId: number, status: Vehicle['status']) => {
     const { data, error } = await supabase
       .from('vehicles')
       .select('*')
       .eq('dealership_id', dealershipId)
       .eq('status', status)
+      .is('is_deleted', false)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     return data as Vehicle[];
   },
-
-  // Count vehicles by status
+  
+  // Count vehicles by status (non-deleted only)
   countByStatus: async (dealershipId: number) => {
     const { data, error } = await supabase
       .from('vehicles')
-      .select('status')
-      .eq('dealership_id', dealershipId);
+      .select('status, count', { count: 'exact' })
+      .eq('dealership_id', dealershipId)
+      .is('is_deleted', false)
+      .group('status');
     
     if (error) throw error;
     
+    // Initialize counts for all statuses
     const counts = {
       acquired: 0,
       in_service: 0,
       ready_for_sale: 0,
-      sold: 0
+      sold: 0,
+      total: 0
     };
-    
-    data.forEach(vehicle => {
-      counts[vehicle.status as keyof typeof counts]++;
-    });
+
+    // Get counts for each status
+    for (const status of Object.keys(counts)) {
+      if (status === 'total') continue;
+      
+      const { count, error } = await supabase
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .eq('dealership_id', dealershipId)
+        .eq('status', status)
+        .is('is_deleted', false);
+      
+      if (error) throw error;
+      
+      counts[status as keyof typeof counts] = count || 0;
+      counts.total += count || 0;
+    }
     
     return counts;
   }
