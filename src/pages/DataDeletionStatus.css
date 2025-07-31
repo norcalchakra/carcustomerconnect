@@ -1,0 +1,388 @@
+.status-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.status-content {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 3rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  line-height: 1.6;
+}
+
+.status-content h1 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 1rem;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #ecf0f1;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.error-state, .not-found-state {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.error-state h1, .not-found-state h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  border: none;
+}
+
+.status-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 2rem 0;
+  border: 2px solid #e9ecef;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.status-icon {
+  font-size: 3rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.status-info h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  text-transform: capitalize;
+}
+
+.confirmation-id {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.status-details {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1.5rem;
+}
+
+.status-message {
+  margin-bottom: 2rem;
+}
+
+.status-message h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.status-message p {
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.timeline {
+  display: grid;
+  gap: 1rem;
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 4px;
+  border-left: 4px solid #3498db;
+}
+
+.timeline-item strong {
+  color: #2c3e50;
+}
+
+.timeline-item span {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.info-box {
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.pending-info {
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+}
+
+.pending-info h3 {
+  color: #856404;
+  margin-top: 0;
+}
+
+.pending-info p, .pending-info li {
+  color: #856404;
+}
+
+.progress-info {
+  background-color: #d1ecf1;
+  border: 2px solid #17a2b8;
+}
+
+.progress-info h3 {
+  color: #0c5460;
+  margin-top: 0;
+}
+
+.progress-info p, .progress-info li {
+  color: #0c5460;
+}
+
+.success-info {
+  background-color: #d4edda;
+  border: 2px solid #28a745;
+}
+
+.success-info h3 {
+  color: #155724;
+  margin-top: 0;
+}
+
+.success-info p, .success-info li {
+  color: #155724;
+}
+
+.error-info {
+  background-color: #f8d7da;
+  border: 2px solid #dc3545;
+}
+
+.error-info h3 {
+  color: #721c24;
+  margin-top: 0;
+}
+
+.error-info p, .error-info li {
+  color: #721c24;
+}
+
+.completion-details, .error-actions {
+  margin-top: 1rem;
+}
+
+.completion-details h4, .error-actions h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.info-box ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
+}
+
+.contact-section {
+  background-color: #e8f4fd;
+  padding: 2rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  border: 2px solid #17a2b8;
+}
+
+.contact-section h3 {
+  color: #17a2b8;
+  margin-top: 0;
+  text-align: center;
+}
+
+.contact-info {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.contact-item {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #17a2b8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contact-item strong {
+  color: #2c3e50;
+}
+
+.contact-item a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.contact-item a:hover {
+  text-decoration: underline;
+}
+
+.help-section {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  border-left: 4px solid #6c757d;
+}
+
+.help-section h3 {
+  color: #2c3e50;
+  margin-top: 0;
+}
+
+.help-section p, .help-section li {
+  color: #2c3e50;
+}
+
+.help-section ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.refresh-button, .home-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refresh-button {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.refresh-button:hover {
+  background-color: #138496;
+}
+
+.home-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.home-button:hover {
+  background-color: #545b62;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .status-content {
+    margin: 0 1rem;
+    padding: 2rem 1.5rem;
+  }
+  
+  .status-content h1 {
+    font-size: 2rem;
+  }
+  
+  .status-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .status-icon {
+    font-size: 2.5rem;
+  }
+  
+  .timeline-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .contact-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .refresh-button, .home-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-container {
+    padding: 1rem 0;
+  }
+  
+  .status-content {
+    margin: 0 0.5rem;
+    padding: 1.5rem 1rem;
+  }
+  
+  .status-content h1 {
+    font-size: 1.8rem;
+  }
+  
+  .status-card {
+    padding: 1.5rem;
+  }
+  
+  .contact-section {
+    padding: 1.5rem;
+  }
+}

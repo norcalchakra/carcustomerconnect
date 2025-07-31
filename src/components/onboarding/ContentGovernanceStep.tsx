@@ -45,8 +45,9 @@ const ContentGovernanceStep: React.FC<ContentGovernanceStepProps> = ({
       if (aiAssistEnabled && dealershipId) {
         setIsLoading(true);
         try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('content_governance', {
-            dealershipId
+          const suggestions = await dealerOnboardingApi.getAISuggestions({
+            dealership_id: dealershipId,
+            section: 'content_governance'
           });
           setAiSuggestions(suggestions);
         } catch (err) {

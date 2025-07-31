@@ -9,6 +9,9 @@ import FacebookTest from './pages/FacebookTest';
 import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import VinScannerPage from './pages/VinScannerPage';
 import DealerOnboardingPage from './pages/DealerOnboardingPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import DataDeletion from './pages/DataDeletion';
+import DataDeletionStatus from './pages/DataDeletionStatus';
 import ActivityPage from './components/activity/ActivityPage';
 import WorkflowDashboard from './components/vehicles/WorkflowDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -62,6 +65,9 @@ const AppContent: React.FC = () => {
             <Route path="/social/posts/:id" element={<ProtectedRoute element={<SocialPostDetail />} />} />
             <Route path="/dealer-onboarding" element={<ProtectedRoute element={<DealerOnboardingPage />} />} />
             <Route path="/activity" element={<ProtectedRoute element={<ActivityPage />} />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/data-deletion" element={<DataDeletion />} />
+            <Route path="/data-deletion-status" element={<DataDeletionStatus />} />
           </Routes>
         </main>
       </div>

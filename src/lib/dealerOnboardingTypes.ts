@@ -61,6 +61,7 @@ export interface ContentGovernance {
   id: number;
   never_mention: string[];
   always_include: string[];
+  content_guidelines?: string;
   hashtag_strategy: {
     branded: string[];
     location: string[];
@@ -79,6 +80,34 @@ export interface ExampleCaption {
   price_range?: string;
   lifecycle_stage: 'acquisition' | 'service' | 'ready_for_sale' | 'delivery';
   caption_text: string;
+  caption_type?: string;
+  platform?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Individual technical integration item
+export interface TechnicalIntegration {
+  id?: number;
+  system: string;
+  integration_type: string;
+  api_key?: string;
+  enabled: boolean;
+}
+
+// Customization parameters
+export interface CustomizationParameters {
+  id?: number;
+  dealership_id: number;
+  theme_colors?: string[];
+  logo_url?: string;
+  custom_fields?: Record<string, any>;
+  preferences?: Record<string, any>;
+  seasonal_adaptations?: Record<string, any>;
+  vehicle_type_preferences?: Record<string, any>;
+  price_range_messaging?: Record<string, any>;
+  compliance_templates?: Record<string, any>;
   created_at?: string;
   updated_at?: string;
 }

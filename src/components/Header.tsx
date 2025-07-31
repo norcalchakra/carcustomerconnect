@@ -52,6 +52,18 @@ const Header: React.FC<HeaderProps> = () => {
             >
               Dealer Onboarding
             </Link>
+            <Link 
+              to="/privacy-policy" 
+              className="px-3 py-2 rounded hover:bg-blue-700 bg-purple-600"
+            >
+              Privacy Policy
+            </Link>
+            <Link 
+              to="/data-deletion" 
+              className="px-3 py-2 rounded hover:bg-blue-700 bg-red-600"
+            >
+              Data Deletion
+            </Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">

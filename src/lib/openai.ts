@@ -25,40 +25,51 @@ export interface CaptionResponse {
 export const generateCaption = async (request: CaptionRequest): Promise<CaptionResponse> => {
   const { vehicle, event, dealershipName, additionalNotes } = request;
   
-  // Prepare vehicle details
-  const vehicleDetails = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
-  const vehicleFeatures = [
-    vehicle.color ? `Color: ${vehicle.color}` : null,
-    vehicle.mileage ? `Mileage: ${vehicle.mileage}` : null,
-    vehicle.price ? `Price: $${vehicle.price}` : null,
-  ].filter(Boolean).join(', ');
-  
   // Map event type to marketing context
   const eventContext = getEventContext(event.event_type);
   
-  // Prepare the prompt
+  // Prepare vehicle specifications with only existing properties
+  const vehicleSpecs = [
+    `Year: ${vehicle.year}`,
+    `Make: ${vehicle.make}`,
+    `Model: ${vehicle.model}`,
+    vehicle.color ? `Color: ${vehicle.color}` : null,
+    vehicle.mileage ? `Mileage: ${vehicle.mileage.toLocaleString()} miles` : null,
+    vehicle.price ? `Price: $${vehicle.price.toLocaleString()}` : null,
+    vehicle.stock_number ? `Stock #: ${vehicle.stock_number}` : null,
+    vehicle.vin ? `VIN: ${vehicle.vin}` : null,
+    vehicle.features ? `Features: ${Array.isArray(vehicle.features) ? vehicle.features.join(', ') : vehicle.features}` : null,
+    vehicle.description ? `Description: ${vehicle.description}` : null
+  ].filter(Boolean);
+
+  // Prepare the prompt with explicit instructions for Facebook post
   const prompt = `
-    Create an engaging social media post for a car dealership about a ${vehicleDetails}.
+    Create an engaging FACEBOOK POST for a car dealership about this vehicle:
+    ${vehicle.year} ${vehicle.make} ${vehicle.model}
     
-    Vehicle details:
-    - ${vehicleFeatures}
-    - Stock #: ${vehicle.stock_number}
-    - VIN: ${vehicle.vin}
+    VEHICLE SPECIFICATIONS:
+    ${vehicleSpecs.join('\n    ')}
     
-    Event type: ${eventContext.description}
+    EVENT CONTEXT:
+    - Type: ${eventContext.description}
+    - Desired Tone: ${eventContext.tone}
     
-    ${additionalNotes ? `Additional notes: ${additionalNotes}` : ''}
+    ${additionalNotes ? `ADDITIONAL INSTRUCTIONS: ${additionalNotes}\n` : ''}
+    DEALERSHIP NAME: ${dealershipName}
     
-    Dealership name: ${dealershipName}
+    POST REQUIREMENTS:
+    1. Write a compelling, conversational caption (2-3 sentences)
+    2. HIGHLIGHT the most attractive features of this specific vehicle
+    3. Include a clear CALL TO ACTION based on the event type
+    4. Use an enthusiastic but professional tone
+    5. Include 3-5 relevant, specific hashtags
+    6. Keep it concise and scannable for social media
     
-    Please write a compelling, conversational caption that highlights the vehicle's features and creates urgency based on the event type.
-    The caption should be 2-3 sentences, followed by a call to action.
+    IMPORTANT: Focus on what makes this vehicle special and why someone would want to buy it.
     
-    Also include 3-5 relevant hashtags that would work well on social media.
-    
-    Format your response as:
-    CAPTION: [your caption text]
-    HASHTAGS: [comma-separated hashtags without the # symbol]
+    Format your response exactly as follows:
+    CAPTION: [your caption text here]
+    HASHTAGS: [comma,separated,hashtags,no,spaces]
   `;
   
   try {

@@ -75,9 +75,10 @@ const CustomizationStep: React.FC<CustomizationStepProps> = ({
       if (aiAssistEnabled && dealershipId) {
         setIsLoading(true);
         try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('customization', {
-            dealershipId,
-            section: currentSection
+          const suggestions = await dealerOnboardingApi.getAISuggestions({
+            dealership_id: dealershipId,
+            section: 'customization',
+            current_data: { section: currentSection }
           });
           setAiSuggestions(suggestions);
         } catch (err) {

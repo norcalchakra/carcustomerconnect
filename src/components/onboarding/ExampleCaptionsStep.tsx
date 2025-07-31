@@ -53,8 +53,9 @@ const ExampleCaptionsStep: React.FC<ExampleCaptionsStepProps> = ({
       if (aiAssistEnabled && dealershipId) {
         setIsLoading(true);
         try {
-          const suggestions = await dealerOnboardingApi.getAiSuggestions('example_captions', {
-            dealershipId
+          const suggestions = await dealerOnboardingApi.getAISuggestions({
+            dealership_id: dealershipId,
+            section: 'example_captions'
           });
           setAiSuggestions(suggestions);
         } catch (err) {
