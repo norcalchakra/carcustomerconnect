@@ -17,6 +17,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:https": "node start-https-dev.js",
     "build": "tsc && vite build",
     "build:prod": "tsc && vite build --mode production",
     "preview": "vite preview",

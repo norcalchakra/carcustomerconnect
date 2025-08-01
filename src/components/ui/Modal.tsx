@@ -67,24 +67,24 @@ const Modal: React.FC<ModalProps> = ({
       <div className="fixed inset-0 bg-black bg-opacity-50 z-[9998]" onClick={onClose}></div>
       
       {/* Modal Container */}
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
         <div 
           ref={modalRef}
-          className={`comic-panel comic-panel-primary bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto ${
-            size === 'sm' ? 'max-w-md' :
-            size === 'md' ? 'max-w-lg' :
-            size === 'lg' ? 'max-w-2xl' :
-            'max-w-4xl'
+          className={`comic-panel comic-panel-primary bg-white rounded-none sm:rounded-lg shadow-xl w-full h-screen sm:h-auto sm:min-h-0 sm:max-h-[90vh] flex flex-col ${
+            size === 'sm' ? 'sm:max-w-md' :
+            size === 'md' ? 'sm:max-w-lg' :
+            size === 'lg' ? 'sm:max-w-2xl' :
+            'sm:max-w-4xl'
           }`}
         >
           {/* Header with Speech Bubble */}
-          <div className="relative p-4">
+          <div className="relative p-4 sm:p-4 flex-shrink-0">
             <div className="speech-bubble speech-bubble-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 mb-0">{title}</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-0">{title}</h2>
             </div>
             <button
               onClick={onClose}
-              className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center font-bold text-lg"
+              className="absolute top-2 right-2 sm:top-2 sm:right-2 w-8 h-8 sm:w-8 sm:h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center font-bold text-lg sm:text-lg"
               style={{ zIndex: 100, pointerEvents: 'auto' }}
             >
               ×
@@ -92,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
           </div>
           
           {/* Modal Content */}
-          <div className="px-6 pb-6" style={{ overflow: 'visible' }}>
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
             {children}
           </div>
         </div>

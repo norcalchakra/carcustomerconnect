@@ -73,13 +73,13 @@ const AppContent: React.FC = () => {
             <Route path="/data-deletion-status" element={<DataDeletionStatus />} />
             {/* Development-only test routes */}
             {import.meta.env.DEV && (
-              <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}>
-                <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />
-                <Route path="/simple-facebook-test" element={<ProtectedRoute element={<SimpleFacebookTest />} />} />
-                <Route path="/riddler-test" element={<RiddlerAnimationTest />} />
-                <Route path="/action-bubble-test" element={<ActionBubbleTest />} />
-                <Route path="/action-bubble-debug" element={<ActionBubbleDebugTest />} />
-              </React.Suspense>
+              <>
+                <Route path="/facebook-test" element={<ProtectedRoute element={<React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}><FacebookTest /></React.Suspense>} />} />
+                <Route path="/simple-facebook-test" element={<ProtectedRoute element={<React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}><SimpleFacebookTest /></React.Suspense>} />} />
+                <Route path="/riddler-test" element={<React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}><RiddlerAnimationTest /></React.Suspense>} />
+                <Route path="/action-bubble-test" element={<React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}><ActionBubbleTest /></React.Suspense>} />
+                <Route path="/action-bubble-debug" element={<React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}><ActionBubbleDebugTest /></React.Suspense>} />
+              </>
             )}
           </Routes>
         </main>

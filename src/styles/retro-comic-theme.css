@@ -1180,7 +1180,13 @@ nav,
     inset 2px 2px 0 rgba(255, 255, 255, 0.3),
     inset -2px -2px 0 rgba(0, 0, 0, 0.2),
     4px 4px 8px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
+  min-height: fit-content;
+  height: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .comic-panel::before {
@@ -1204,6 +1210,9 @@ nav,
   gap: var(--comic-space-lg);
   padding: var(--comic-space-lg);
   background: var(--comic-paper-cream);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* 2-Panel Layout */
@@ -1214,6 +1223,8 @@ nav,
 /* 3-Panel Layout */
 .comic-grid-3 {
   grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto;
+  align-items: start;
 }
 
 /* 4-Panel Layout */

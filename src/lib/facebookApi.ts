@@ -18,9 +18,20 @@ const FB_CONFIG: FacebookAuthConfig = {
   version: 'v18.0', // Using a recent Facebook Graph API version
 };
 
+// Check if we're running on HTTPS (required by Facebook)
+const isHTTPS = (): boolean => {
+  return window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+};
+
 // Initialize Facebook SDK
 export const initFacebookSDK = (): Promise<void> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    // Check HTTPS requirement
+    if (!isHTTPS() && window.location.hostname !== 'localhost') {
+      reject(new Error('Facebook API requires HTTPS. Please use https:// or run on localhost.'));
+      return;
+    }
+
     // Check if FB SDK is already loaded
     if ((window as any).FB) {
       resolve();
@@ -54,6 +65,11 @@ export const initFacebookSDK = (): Promise<void> => {
 // Login with Facebook and get access token
 export const loginWithFacebook = (): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // Check HTTPS requirement before attempting login
+    if (!isHTTPS() && window.location.hostname !== 'localhost') {
+      reject(new Error('Facebook login requires HTTPS. Please use https:// or run the development server with HTTPS enabled.'));
+      return;
+    }
     (window as any).FB.login((response: any) => {
       if (response.authResponse) {
         const accessToken = response.authResponse.accessToken;

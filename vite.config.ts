@@ -6,7 +6,24 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // Disable HTTPS for local development due to SSL issues
+    // Will use mock Facebook API for testing
+    // https: {
+    //   key: undefined,
+    //   cert: undefined
+    // },
+    host: 'localhost'
+  },
+  preview: {
+    port: 4173,
+    open: true,
+    // Temporarily disable HTTPS for preview to test functionality
+    // https: {
+    //   key: undefined,
+    //   cert: undefined
+    // },
+    host: 'localhost'
   },
   build: {
     // Enable minification
