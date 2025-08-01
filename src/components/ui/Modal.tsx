@@ -29,12 +29,16 @@ const Modal: React.FC<ModalProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       // Prevent scrolling when modal is open
       document.body.style.overflow = 'hidden';
+      // Add modal-open class to trigger defensive CSS
+      document.body.classList.add('modal-open');
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       // Re-enable scrolling when modal is closed
       document.body.style.overflow = 'auto';
+      // Remove modal-open class
+      document.body.classList.remove('modal-open');
     };
   }, [isOpen, onClose]);
 
@@ -57,39 +61,43 @@ const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Determine modal width based on size prop
-  const getModalWidth = () => {
-    switch (size) {
-      case 'sm': return 'modal-sm';
-      case 'md': return 'modal-md';
-      case 'lg': return 'modal-lg';
-      case 'xl': return 'modal-xl';
-      default: return 'modal-md';
-    }
-  };
-
   return (
-    <div className="modal-overlay">
-      <div 
-        ref={modalRef}
-        className={`modal-content ${getModalWidth()}`}
-      >
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button
-            onClick={onClose}
-            className="modal-close"
-          >
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="modal-body">
-          {children}
+    <>
+      {/* Modal Backdrop */}
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-[9998]" onClick={onClose}></div>
+      
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div 
+          ref={modalRef}
+          className={`comic-panel comic-panel-primary bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto ${
+            size === 'sm' ? 'max-w-md' :
+            size === 'md' ? 'max-w-lg' :
+            size === 'lg' ? 'max-w-2xl' :
+            'max-w-4xl'
+          }`}
+        >
+          {/* Header with Speech Bubble */}
+          <div className="relative p-4">
+            <div className="speech-bubble speech-bubble-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-0">{title}</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center font-bold text-lg"
+              style={{ zIndex: 100, pointerEvents: 'auto' }}
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Modal Content */}
+          <div className="px-6 pb-6" style={{ overflow: 'visible' }}>
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

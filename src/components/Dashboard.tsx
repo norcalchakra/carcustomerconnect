@@ -169,166 +169,215 @@ const Dashboard: React.FC<DashboardProps> = () => {
     refreshActivity(); // Refresh the activity feed to show the new vehicle
   };
 
-
-
   return (
-    <div className="p-4">
-      <div className="dashboard-card quick-actions">
-        <h2>Quick Actions</h2>
-        <div className="action-buttons">
-          <Link to="/workflow" className="action-button workflow-highlight">
-            <span className="action-icon">🔄</span>
-            <span className="action-label">Vehicle Workflow</span>
-          </Link>
-
-          <button className="action-button" onClick={() => setIsAddVehicleModalOpen(true)}>
-            <span className="action-icon">+</span>
-            <span className="action-label">Add Vehicle</span>
-          </button>
-
-          <button className="action-button" onClick={() => setIsCreatePostModalOpen(true)}>
-            <span className="action-icon">📝</span>
-            <span className="action-label">Create Post</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Facebook Integration Test - Only for testing credentials */}
-      <FacebookCredentialsTest />
-
-      <div className="dashboard-card recent-activity">
-        <h2>Recent Activity</h2>
-        <div className="activity-container">
-          {loading ? (
-            <div className="loading-indicator">Loading recent activity...</div>
-          ) : error ? (
-            <div className="error-message">{error}</div>
-          ) : recentActivity.length === 0 ? (
-            <div className="empty-state">
-              <p>No recent activity found.</p>
-              <p>Start by adding vehicles or creating social media posts.</p>
+    <div className="min-h-screen bg-gray-50 searchlight-sweep">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="comic-panel comic-panel-primary mb-8">
+          <div className="comic-panel-header">
+            <h1 className="comic-panel-title">Command Center</h1>
+          </div>
+          <div className="comic-panel-content">
+            <div className="speech-bubble speech-bubble-left mb-4">
+              <p className="text-gray-800 font-medium mb-0">Welcome back, Agent! Here's your mission status and vehicle intelligence.</p>
             </div>
-          ) : (
-            <>
-              <ul className="activity-list">
-                {/* Show only items for the current page */}
-                {recentActivity
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((activity) => (
-                    <li key={String(activity.id)} className="activity-item">
-                      <div className="activity-header">
-                        <span className="activity-status">{activity.status}</span>
-                        <span className="activity-time">{activity.time}</span>
-                      </div>
+          </div>
+        </div>
 
-                      <div className="activity-vehicle">
-                        {activity.isGenericPost ? (
-                          <Link to="/activity">
-                            {activity.vehicle}
-                          </Link>
-                        ) : (
-                          <Link to={`/workflow/${activity.vehicleId}`}>
-                            {activity.vehicle}
-                          </Link>
-                        )}
-                      </div>
-
-                      <div className="activity-content">
-                        {activity.isSocialPost ? (
-                          <>
-                            <div className="abbreviated-content">
-                              {activity.notes && activity.notes.length > 60 
-                                ? `${activity.notes.substring(0, 60)}...` 
-                                : activity.notes}
-                            </div>
-                            <button
-                              className="view-details-btn"
-                              onClick={() => handleViewPostDetails(activity.id)}
-                            >
-                              View Full Post
-                            </button>
-                          </>
-                        ) : (
-                          <div>{activity.notes}</div>
-                        )}
-                      </div>
-
-                      {activity.isSocialPost && renderPlatformBadges(activity.platforms)}
-
-                      {activity.isSocialPost && activity.imageUrl && (
-                        <div className="activity-image">
-                          <img src={activity.imageUrl} alt="Post preview" />
-                        </div>
-                      )}
-                    </li>
-                  ))}
-              </ul>
-              
-              {/* Pagination controls */}
-              {recentActivity.length > 0 && (
-                <div className="pagination-controls">
-                  <div className="pagination-info">
-                    Showing {Math.min(recentActivity.length, (currentPage - 1) * itemsPerPage + 1)}-
-                    {Math.min(recentActivity.length, currentPage * itemsPerPage)} of {recentActivity.length}
-                  </div>
-                  <div className="pagination-buttons">
-                    <button 
-                      className="pagination-button"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    >
-                      Previous
-                    </button>
-                    <span className="pagination-page-info">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button 
-                      className="pagination-button"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    >
-                      Next
-                    </button>
-                  </div>
-                  <button 
-                    className="view-all-button"
-                    onClick={() => window.open('/activity', '_blank')}
-                  >
-                    View All Activity
-                  </button>
+        {/* Quick Actions */}
+        <div className="comic-grid comic-grid-3 mb-8">
+          <div className="comic-panel comic-panel-secondary comic-panel-hover">
+            <div className="comic-panel-header">
+              <div className="flex items-center">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <span className="text-2xl">🚗</span>
                 </div>
-              )}
-            </>
-          )}
+                <div className="ml-4">
+                  <h3 className="comic-panel-title text-lg">Add Vehicle</h3>
+                </div>
+              </div>
+            </div>
+            <div className="comic-panel-content">
+              <div className="thought-cloud mb-4">
+                <p className="text-gray-700 mb-0">Time to add another vehicle to our fleet...</p>
+              </div>
+              <button
+                onClick={() => setIsAddVehicleModalOpen(true)}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-bold"
+              >
+                Add Vehicle
+              </button>
+            </div>
+          </div>
+
+          <div className="comic-panel comic-panel-accent comic-panel-hover">
+            <div className="comic-panel-header">
+              <div className="flex items-center">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <span className="text-2xl">💬</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="comic-panel-title text-lg">Create Post</h3>
+                </div>
+              </div>
+            </div>
+            <div className="comic-panel-content">
+              <div className="thought-cloud mb-4">
+                <p className="text-gray-700 mb-0">What story should we tell today?</p>
+              </div>
+              <button
+                onClick={() => setIsCreatePostModalOpen(true)}
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-bold"
+              >
+                Create Post
+              </button>
+            </div>
+          </div>
+
+          <div className="comic-panel comic-panel-action comic-panel-hover">
+            <div className="comic-panel-header">
+              <div className="flex items-center">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <span className="text-2xl">⚙️</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="comic-panel-title text-lg">Vehicle Workflow</h3>
+                </div>
+              </div>
+            </div>
+            <div className="comic-panel-content">
+              <div className="thought-cloud mb-4">
+                <p className="text-gray-700 mb-0">Let's track our sales progress...</p>
+              </div>
+              <Link
+                to="/workflow"
+                className="block w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-bold text-center"
+              >
+                Open Workflow
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
 
-
-
-      <div className="dashboard-card performance-metrics coming-soon">
-        <div className="section-header">
-          <h2>Performance Metrics</h2>
-          <span className="coming-soon-badge">Coming Soon</span>
-        </div>
-        <div className="metrics-grid disabled">
-          <div className="metric-card">
-            <div className="metric-value">47</div>
-            <div className="metric-label">Vehicles in Stock</div>
+        {/* Recent Activity and Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Activity */}
+          <div className="lg:col-span-2">
+            <div className="comic-panel comic-panel-thick" style={{padding: '1rem', margin: '0'}}>
+              <div className="comic-panel-header" style={{marginBottom: '1rem'}}>
+                <h2 className="comic-panel-title">Recent Activity</h2>
+              </div>
+              <div className="comic-panel-content" style={{padding: '0'}}>
+                {loading ? (
+                  <div className="text-center py-3">
+                    <div className="comic-panel-loading">Loading recent activity...</div>
+                  </div>
+                ) : error ? (
+                  <div className="text-red-600 text-center py-3">{error}</div>
+                ) : recentActivity.length === 0 ? (
+                  <div className="text-center py-3">
+                    <p className="text-gray-600">No recent activity found.</p>
+                    <p className="text-gray-500 text-sm">Start by adding vehicles or creating social media posts.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2 mb-3">
+                      {recentActivity
+                        .slice(0, 5) // Show 5 most recent items
+                        .map((activity) => (
+                          <div key={activity.id} className="flex items-start space-x-3 p-2 bg-gray-50 rounded border-l-4 border-blue-500">
+                            <div className="flex-shrink-0">
+                              <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-xs">📊</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-900 font-semibold">{activity.vehicle}</p>
+                              <p className="text-xs text-gray-500">{activity.time}</p>
+                              <p className="text-sm text-gray-700">{activity.notes}</p>
+                            </div>
+                            <div className="flex-shrink-0 flex space-x-1">
+                              {activity.vehicleId && (
+                                <Link
+                                  to={`/workflow?vehicle=${encodeURIComponent(activity.vehicle)}`}
+                                  className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                                >
+                                  View Vehicle
+                                </Link>
+                              )}
+                              {activity.isSocialPost && (
+                                <button
+                                  onClick={() => handleViewPostDetails(activity.id.toString())}
+                                  className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition-colors"
+                                >
+                                  View Post
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                    
+                    {/* View All Activity Link */}
+                    <div className="border-t border-gray-200 pt-2">
+                      <Link
+                        to="/activity"
+                        className="block w-full text-center bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                      >
+                        View All Activity ({recentActivity.length} total)
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="metric-card">
-            <div className="metric-value">23</div>
-            <div className="metric-label">Social Posts</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-value">1,284</div>
-            <div className="metric-label">Total Engagements</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-value">12</div>
-            <div className="metric-label">Vehicles Sold This Month</div>
+          {/* Analytics */}
+          <div className="lg:col-span-1">
+            <div className="comic-panel comic-panel-secondary" style={{padding: '1rem', margin: '0'}}>
+              <div className="comic-panel-header" style={{marginBottom: '1rem'}}>
+                <h2 className="comic-panel-title">Mission Analytics</h2>
+              </div>
+              <div className="comic-panel-content" style={{padding: '0'}}>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="text-center p-2 bg-blue-50 rounded border-2 border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">{recentActivity.length}</div>
+                    <div className="text-xs text-gray-600 font-semibold">Total Activities</div>
+                  </div>
+                  <div className="text-center p-2 bg-green-50 rounded border-2 border-green-200">
+                    <div className="text-2xl font-bold text-green-600">0</div>
+                    <div className="text-xs text-gray-600 font-semibold">Posts Today</div>
+                  </div>
+                  <div className="text-center p-2 bg-purple-50 rounded border-2 border-purple-200">
+                    <div className="text-2xl font-bold text-purple-600">0</div>
+                    <div className="text-xs text-gray-600 font-semibold">Vehicles Added</div>
+                  </div>
+                  <div className="text-center p-2 bg-orange-50 rounded border-2 border-orange-200">
+                    <div className="text-2xl font-bold text-orange-600">0</div>
+                    <div className="text-xs text-gray-600 font-semibold">Pending Tasks</div>
+                  </div>
+                </div>
+                
+                {/* Coming Soon Section */}
+                <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-dashed border-yellow-300">
+                  <div className="text-center">
+                    <div className="exclamation-bubble mb-2">
+                      <span className="text-xs font-bold">Coming Soon!</span>
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 mb-2">Advanced Analytics</h3>
+                    <p className="text-xs text-gray-600 mb-2">
+                      📈 Performance metrics<br/>
+                      📊 Engagement stats<br/>
+                      🎯 Sales tracking<br/>
+                      📱 Multi-platform data
+                    </p>
+                    <div className="speech-bubble speech-bubble-center">
+                      <p className="text-xs text-gray-700 mb-0">Stay tuned for insights!</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

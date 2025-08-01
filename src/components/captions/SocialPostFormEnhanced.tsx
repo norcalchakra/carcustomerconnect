@@ -11,6 +11,7 @@ import ImageProxy from '../common/ImageProxy';
 import StatusTransitionPrompt from '../vehicles/StatusTransitionPrompt';
 import './SocialPostForm.improved.css';
 import '../common/ImageProxy.css';
+import '../../styles/retro-comic-theme.css';
 
 interface SocialPostFormEnhancedProps {
   caption: Caption;
@@ -45,6 +46,32 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
   const [isOpenAIAvailable, setIsOpenAIAvailable] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
   const [aiNotes, setAiNotes] = useState<string>('');
+
+  // Action bubble animation functions
+  const triggerActionBubble = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget;
+
+    // Get button position for fixed positioning
+    const rect = button.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Update CSS custom properties for positioning
+    button.style.setProperty('--bubble-x', `${centerX}px`);
+    button.style.setProperty('--bubble-y', `${centerY}px`);
+
+    button.classList.add('triggered');
+
+    setTimeout(() => {
+      button.classList.remove('triggered');
+    }, 600);
+  };
+  
+  // Random action bubble generator for AI Generate button
+  const getRandomActionBubble = () => {
+    const bubbles = ['pow', 'bam', 'zoom', 'wham', 'kapow', 'zap'];
+    return bubbles[Math.floor(Math.random() * bubbles.length)];
+  };
   
   // New state for status transition workflow
   const [showStatusPrompt, setShowStatusPrompt] = useState(false);
@@ -407,6 +434,19 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
 
       console.log('AI Generate - Generated caption:', generatedCaption);
       setPostContent(generatedCaption);
+      
+      // Manually trigger Joker CSS styling for AI-generated content
+      setTimeout(() => {
+        const textarea = document.getElementById('post-content') as HTMLTextAreaElement;
+        const wrapper = textarea?.closest('.riddler-input-wrapper');
+        if (wrapper && generatedCaption.trim()) {
+          wrapper.classList.add('has-content');
+          // Add typing animation to show the AI generation effect
+          textarea?.classList.add('typing');
+          setTimeout(() => textarea?.classList.remove('typing'), 1500);
+        }
+      }, 100);
+      
       setSuccess('Caption generated successfully!');
     } catch (error) {
       console.error('Error generating caption:', error);
@@ -485,6 +525,7 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
             id="facebook-page"
             value={selectedFacebookPage}
             onChange={(e) => setSelectedFacebookPage(e.target.value)}
+            className="riddler-select"
           >
             {facebookPages.map(page => (
               <option key={page.id} value={page.id}>{page.name}</option>
@@ -513,14 +554,32 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
             The AI will make this the main focus of your post. Enter the key topic you want to highlight
           </span>
         </div>
-        <input
-          id="ai-notes"
-          type="text"
-          value={aiNotes}
-          onChange={(e) => setAiNotes(e.target.value)}
-          placeholder="e.g., brake service completed, oil change special, new arrival"
-          className="ai-notes-input"
-        />
+        <div className="riddler-input-wrapper notes-input-container">
+          <input
+            id="ai-notes"
+            type="text"
+            value={aiNotes}
+            onChange={(e) => {
+              setAiNotes(e.target.value);
+              // Add typing animation
+              e.target.classList.add('typing');
+              setTimeout(() => e.target.classList.remove('typing'), 1500);
+              // Update wrapper class based on content
+              const wrapper = e.target.closest('.riddler-input-wrapper');
+              if (wrapper) {
+                if (e.target.value.trim()) {
+                  wrapper.classList.add('has-content');
+                } else {
+                  wrapper.classList.remove('has-content');
+                }
+              }
+            }}
+            onFocus={(e) => e.target.classList.add('typing')}
+            onBlur={(e) => e.target.classList.remove('typing')}
+            placeholder="e.g., brake service completed, oil change special, new arrival"
+            className="ai-notes-input riddler-input"
+          />
+        </div>
       </div>
 
       {/* Post Content */}
@@ -529,21 +588,50 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
           <label htmlFor="post-content">Post Content:</label>
           {isOpenAIAvailable && dealershipData && (
             <button
-              onClick={handleGenerateCaption}
+              onClick={async (e) => {
+                // Set random action bubble class and data-action on click
+                const randomBubble = getRandomActionBubble();
+                const randomAction = ['POW!', 'ZAP!', 'BOOM!', 'WHAM!'][Math.floor(Math.random() * 4)];
+                e.currentTarget.className = `generate-caption-button riddler-button action-bubble action-bubble-${randomBubble}`;
+                e.currentTarget.setAttribute('data-action', randomAction);
+                
+                triggerActionBubble(e);
+                await handleGenerateCaption();
+              }}
               disabled={isGeneratingCaption}
-              className="generate-caption-button"
+              className="generate-caption-button riddler-button action-bubble action-bubble-pow"
+              data-action="POW!"
             >
               {isGeneratingCaption ? 'Generating...' : '✨ AI Generate'}
             </button>
           )}
         </div>
-        <textarea
-          id="post-content"
-          value={postContent}
-          onChange={(e) => setPostContent(e.target.value)}
-          rows={4}
-          placeholder="Write your post content here..."
-        />
+        <div className="riddler-input-wrapper caption-input-container">
+          <textarea
+            id="post-content"
+            value={postContent}
+            onChange={(e) => {
+              setPostContent(e.target.value);
+              // Add typing animation
+              e.target.classList.add('typing');
+              setTimeout(() => e.target.classList.remove('typing'), 1500);
+              // Update wrapper class based on content
+              const wrapper = e.target.closest('.riddler-input-wrapper');
+              if (wrapper) {
+                if (e.target.value.trim()) {
+                  wrapper.classList.add('has-content');
+                } else {
+                  wrapper.classList.remove('has-content');
+                }
+              }
+            }}
+            onFocus={(e) => e.target.classList.add('typing')}
+            onBlur={(e) => e.target.classList.remove('typing')}
+            rows={4}
+            placeholder="Write your post content here..."
+            className="riddler-input riddler-textarea caption-textarea"
+          />
+        </div>
       </div>
 
       {/* Image Capture */}
@@ -569,17 +657,36 @@ export const SocialPostFormEnhanced: React.FC<SocialPostFormEnhancedProps> = ({
       {/* Post Actions */}
       <div className="post-actions">
         <button
-          onClick={handleImmediatePost}
+          onClick={(e) => {
+            // Set random action bubble class and data-action on click
+            const randomBubble = getRandomActionBubble();
+            const randomAction = ['POW!', 'ZAP!', 'BOOM!', 'WHAM!'][Math.floor(Math.random() * 4)];
+            e.currentTarget.className = `post-now-button riddler-button action-bubble action-bubble-${randomBubble}`;
+            e.currentTarget.setAttribute('data-action', randomAction);
+            
+            triggerActionBubble(e);
+            handleImmediatePost();
+          }}
           disabled={isPosting || platforms.length === 0}
-          className="post-now-button"
+          className="post-now-button riddler-button action-bubble action-bubble-bam"
+          data-action="BAM!"
         >
           {isPosting ? 'Posting...' : 'Post Now'}
         </button>
         
         <button
-          onClick={() => setShowScheduler(!showScheduler)}
+          onClick={(e) => {
+            // Set random action bubble class on click
+            const randomBubble = getRandomActionBubble();
+            e.currentTarget.className = `schedule-button disabled riddler-button action-bubble action-bubble-${randomBubble}`;
+            e.currentTarget.setAttribute('data-action', 'SOON!');
+            
+            triggerActionBubble(e);
+            setShowScheduler(!showScheduler);
+          }}
           disabled
-          className="schedule-button disabled"
+          className="schedule-button disabled riddler-button action-bubble action-bubble-zoom"
+          data-action="SOON!"
         >
           📅 Schedule Post <span className="coming-soon-label">(Coming Soon)</span>
         </button>

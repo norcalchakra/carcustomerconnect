@@ -1,0 +1,414 @@
+/* Superhero Auth Page - Comic Book Theme with Superhero Cars */
+
+.superhero-auth-container {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  overflow: hidden;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+/* Comic Book Background with Superhero Cars */
+.comic-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated Batmobile and Superhero Cars */
+.batmobile-silhouette {
+  position: absolute;
+  font-size: 4rem;
+  color: #ffd700;
+  text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700;
+  animation: float 6s ease-in-out infinite;
+}
+
+.batmobile-1 {
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.batmobile-2 {
+  bottom: 20%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+.superhero-car {
+  position: absolute;
+  font-size: 3rem;
+  color: #ff6b6b;
+  text-shadow: 0 0 15px #ff6b6b;
+  animation: zoom 8s ease-in-out infinite;
+}
+
+.superhero-car-1 {
+  top: 25%;
+  right: 20%;
+  animation-delay: 1s;
+}
+
+.superhero-car-2 {
+  bottom: 30%;
+  left: 20%;
+  animation-delay: 4s;
+}
+
+/* Comic Burst Effects */
+.comic-burst {
+  position: absolute;
+  font-size: 2.5rem;
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.comic-burst-1 {
+  top: 10%;
+  right: 30%;
+  color: #ff4757;
+  text-shadow: 0 0 10px #ff4757;
+  animation-delay: 0.5s;
+}
+
+.comic-burst-2 {
+  bottom: 15%;
+  left: 25%;
+  color: #ffd700;
+  text-shadow: 0 0 15px #ffd700;
+  animation-delay: 2s;
+}
+
+.comic-burst-3 {
+  top: 40%;
+  left: 5%;
+  color: #5dade2;
+  text-shadow: 0 0 12px #5dade2;
+  animation-delay: 3.5s;
+}
+
+/* Main Auth Panel */
+.auth-panel {
+  position: relative;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.9);
+  border: 3px solid #ffd700;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.5),
+    inset 0 0 20px rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Hero Header */
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.bat-signal-auth {
+  font-size: 4rem;
+  color: #ffd700;
+  text-shadow: 0 0 30px #ffd700;
+  animation: glow 2s ease-in-out infinite alternate;
+  margin-bottom: 15px;
+}
+
+.auth-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 0 0 10px 0;
+  letter-spacing: 2px;
+}
+
+.auth-subtitle {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  margin: 0 0 8px 0;
+  letter-spacing: 1px;
+}
+
+.auth-tagline {
+  font-size: 0.9rem;
+  color: #cccccc;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Comic Alert Messages */
+.comic-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  border: 2px solid;
+  animation: slideIn 0.5s ease-out;
+}
+
+.comic-alert-danger {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: #e74c3c;
+  color: #ffffff;
+}
+
+.comic-alert-success {
+  background: rgba(46, 204, 113, 0.2);
+  border-color: #2ecc71;
+  color: #ffffff;
+}
+
+.alert-icon {
+  font-size: 1.2rem;
+}
+
+.alert-text {
+  flex: 1;
+}
+
+/* Superhero Form */
+.superhero-form {
+  width: 100%;
+}
+
+.form-fields {
+  margin-bottom: 25px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffd700;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.label-icon {
+  font-size: 1.1rem;
+}
+
+.superhero-input {
+  width: 100%;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #555;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.superhero-input:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.superhero-input::placeholder {
+  color: #aaaaaa;
+  font-style: italic;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #5dade2;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.action-link:hover {
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+  transform: translateY(-2px);
+}
+
+.link-icon {
+  font-size: 1rem;
+}
+
+/* Hero Action Button */
+.hero-button-container {
+  width: 100%;
+}
+
+.hero-button {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  border: 3px solid #ffd700;
+  border-radius: 15px;
+  color: #000000;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+}
+
+.hero-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+  background: linear-gradient(45deg, #ffed4e, #ffd700);
+}
+
+.hero-button:active {
+  transform: translateY(-1px);
+}
+
+.hero-button-loading {
+  background: linear-gradient(45deg, #95a5a6, #bdc3c7);
+  border-color: #95a5a6;
+  cursor: not-allowed;
+  animation: loading-pulse 1.5s ease-in-out infinite;
+}
+
+.hero-button-loading:hover {
+  transform: none;
+  box-shadow: 0 5px 15px rgba(149, 165, 166, 0.4);
+}
+
+.button-icon {
+  font-size: 1.3rem;
+}
+
+.button-text {
+  font-weight: bold;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes zoom {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(-3deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+@keyframes glow {
+  0% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+  100% { text-shadow: 0 0 30px #ffd700, 0 0 40px #ffd700, 0 0 50px #ffd700; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .superhero-auth-container {
+    padding: 20px;
+  }
+  
+  .auth-panel {
+    padding: 30px 25px;
+    max-width: 100%;
+  }
+  
+  .auth-title {
+    font-size: 1.5rem;
+  }
+  
+  .auth-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .batmobile-silhouette,
+  .superhero-car {
+    font-size: 2.5rem;
+  }
+  
+  .comic-burst {
+    font-size: 2rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .action-link {
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-panel {
+    padding: 25px 20px;
+    border-radius: 15px;
+  }
+  
+  .auth-title {
+    font-size: 1.3rem;
+  }
+  
+  .batmobile-silhouette,
+  .superhero-car {
+    font-size: 2rem;
+  }
+  
+  .comic-burst {
+    font-size: 1.5rem;
+  }
+}

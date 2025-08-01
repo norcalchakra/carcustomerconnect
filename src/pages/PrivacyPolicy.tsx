@@ -1,10 +1,12 @@
 import React from 'react';
+import '../styles/shared-theme.css';
 import './PrivacyPolicy.css';
 
 const PrivacyPolicy: React.FC = () => {
   return (
     <div className="privacy-policy-container">
-      <div className="privacy-policy-content">
+      <div className="shared-container">
+        <div className="shared-card">
         <h1>Privacy Policy</h1>
         <p className="last-updated">Last updated: {new Date().toLocaleDateString()}</p>
         
@@ -212,6 +214,7 @@ const PrivacyPolicy: React.FC = () => {
             <p><strong>Address:</strong> 1025 River Rd, Fulton, CA, 95439</p>
             <p><strong>Subject Line:</strong> Privacy Policy Inquiry</p>
           </div>
+        </div>
         </div>
       </div>
     </div>

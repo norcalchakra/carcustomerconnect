@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authApi } from '../../lib/api';
+import './Auth.css';
 
 type AuthMode = 'signin' | 'signup' | 'reset';
 
@@ -41,56 +42,86 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {mode === 'signin' ? 'Sign in to your account' : 
-             mode === 'signup' ? 'Create a new account' : 
-             'Reset your password'}
+    <div className="superhero-auth-container">
+      {/* Comic Book Background with Superhero Cars */}
+      <div className="comic-background">
+        <div className="batmobile-silhouette batmobile-1">🦇</div>
+        <div className="batmobile-silhouette batmobile-2">🚗</div>
+        <div className="superhero-car superhero-car-1">🏎️</div>
+        <div className="superhero-car superhero-car-2">🚙</div>
+        <div className="comic-burst comic-burst-1">💥</div>
+        <div className="comic-burst comic-burst-2">⚡</div>
+        <div className="comic-burst comic-burst-3">💫</div>
+      </div>
+      
+      {/* Main Auth Panel */}
+      <div className="auth-panel">
+        {/* Hero Header */}
+        <div className="auth-header">
+          <div className="bat-signal-auth">🦇</div>
+          <h1 className="auth-title">GOTHAM AUTO NETWORK</h1>
+          <h2 className="auth-subtitle">
+            {mode === 'signin' ? 'ENTER THE BATCAVE' : 
+             mode === 'signup' ? 'JOIN THE LEAGUE' : 
+             'RECOVER ACCESS'}
           </h2>
+          <div className="auth-tagline">
+            {mode === 'signin' ? 'Access your command center' : 
+             mode === 'signup' ? 'Become a superhero dealer' : 
+             'Restore your powers'}
+          </div>
         </div>
         
+        {/* Alert Messages with Comic Style */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
+          <div className="comic-alert comic-alert-danger">
+            <span className="alert-icon">⚠️</span>
+            <span className="alert-text">{error}</span>
           </div>
         )}
         
         {message && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{message}</span>
+          <div className="comic-alert comic-alert-success">
+            <span className="alert-icon">✅</span>
+            <span className="alert-text">{message}</span>
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
+        {/* Superhero Form */}
+        <form className="superhero-form" onSubmit={handleSubmit}>
+          <div className="form-fields">
+            <div className="input-group">
+              <label htmlFor="email-address" className="field-label">
+                <span className="label-icon">📧</span>
+                Hero Identity (Email)
+              </label>
               <input
                 id="email-address"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="superhero-input"
+                placeholder="Enter your hero email..."
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             
             {mode !== 'reset' && (
-              <div>
-                <label htmlFor="password" className="sr-only">Password</label>
+              <div className="input-group">
+                <label htmlFor="password" className="field-label">
+                  <span className="label-icon">🔐</span>
+                  Secret Code (Password)
+                </label>
                 <input
                   id="password"
                   name="password"
                   type="password"
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   required
-                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${mode === 'signup' ? '' : 'rounded-b-md'} focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                  placeholder="Password"
+                  className="superhero-input"
+                  placeholder="Enter your secret code..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -98,16 +129,19 @@ const Auth: React.FC = () => {
             )}
             
             {mode === 'signup' && (
-              <div>
-                <label htmlFor="confirm-password" className="sr-only">Confirm Password</label>
+              <div className="input-group">
+                <label htmlFor="confirm-password" className="field-label">
+                  <span className="label-icon">🔒</span>
+                  Confirm Secret Code
+                </label>
                 <input
                   id="confirm-password"
                   name="confirmPassword"
                   type="password"
                   autoComplete="new-password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm Password"
+                  className="superhero-input"
+                  placeholder="Confirm your secret code..."
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -115,40 +149,48 @@ const Auth: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
+          {/* Action Links */}
+          <div className="form-actions">
             {mode === 'signin' && (
-              <div className="text-sm">
-                <button 
-                  type="button"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                  onClick={() => setMode('reset')}
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            )}
-            
-            <div className="text-sm">
               <button 
                 type="button"
-                className="font-medium text-blue-600 hover:text-blue-500"
-                onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                className="action-link"
+                onClick={() => setMode('reset')}
               >
-                {mode === 'signin' ? 'Create an account' : 'Sign in instead'}
+                <span className="link-icon">🔑</span>
+                Lost your powers?
               </button>
-            </div>
+            )}
+            
+            <button 
+              type="button"
+              className="action-link"
+              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+            >
+              <span className="link-icon">{mode === 'signin' ? '🦸‍♂️' : '🏠'}</span>
+              {mode === 'signin' ? 'Join the League' : 'Return to Base'}
+            </button>
           </div>
 
-          <div>
+          {/* Hero Action Button */}
+          <div className="hero-button-container">
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              className={`hero-button ${loading ? 'hero-button-loading' : ''}`}
             >
-              {loading ? 'Processing...' : 
-               mode === 'signin' ? 'Sign in' : 
-               mode === 'signup' ? 'Sign up' : 
-               'Reset Password'}
+              <span className="button-icon">
+                {loading ? '⚡' : 
+                 mode === 'signin' ? '🦇' : 
+                 mode === 'signup' ? '🌟' : 
+                 '🔧'}
+              </span>
+              <span className="button-text">
+                {loading ? 'ACTIVATING...' : 
+                 mode === 'signin' ? 'ENTER BATCAVE' : 
+                 mode === 'signup' ? 'JOIN LEAGUE' : 
+                 'RESTORE POWER'}
+              </span>
             </button>
           </div>
         </form>

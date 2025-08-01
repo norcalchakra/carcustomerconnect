@@ -205,6 +205,14 @@ export const SocialPostDetail: React.FC<SocialPostDetailProps> = ({
             View on {post.platform}
           </button>
         )}
+        {post.vehicle_id && (
+          <button 
+            className="btn btn-secondary"
+            onClick={() => navigate(`/workflow?vehicle=${post.vehicle_id}`)}
+          >
+            View Vehicle in Workflow
+          </button>
+        )}
       </div>
     </div>
   );

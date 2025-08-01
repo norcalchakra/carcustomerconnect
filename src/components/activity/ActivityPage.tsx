@@ -130,6 +130,12 @@ const ActivityPage: React.FC = () => {
                       <Link to={`/vehicles/${activity.vehicleId}`}>
                         {activity.vehicle}
                       </Link>
+                      <Link 
+                        to={`/workflow?vehicle=${activity.vehicleId}`}
+                        className="view-vehicle-button"
+                      >
+                        View in Workflow
+                      </Link>
                     </div>
 
                     <div className="activity-content">

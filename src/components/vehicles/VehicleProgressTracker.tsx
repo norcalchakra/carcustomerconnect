@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Vehicle } from '../../lib/api';
 import './VehicleProgressTracker.css';
 
@@ -9,6 +9,8 @@ interface VehicleProgressTrackerProps {
   onCreatePost?: () => void;
   onEditVehicle?: () => void;
   onDeleteVehicle?: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
@@ -17,9 +19,10 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   onSuggestedAction,
   onCreatePost,
   onEditVehicle,
-  onDeleteVehicle
+  onDeleteVehicle,
+  isExpanded = false,
+  onToggleExpand
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   
   const stages = [
     { key: 'acquired', label: 'Acquired', icon: '📥' },
@@ -92,7 +95,7 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
   if (!isExpanded) {
     // Compact view - minimalist card
     return (
-      <div className="vehicle-progress-tracker compact" onClick={() => setIsExpanded(true)}>
+      <div className="vehicle-progress-tracker compact" onClick={onToggleExpand}>
         <div className="compact-header">
           <div className="vehicle-identity">
             <span className="vehicle-name">{vehicle.year} {vehicle.make} {vehicle.model}</span>
@@ -146,7 +149,7 @@ const VehicleProgressTracker: React.FC<VehicleProgressTrackerProps> = ({
           <h3>Vehicle Journey Progress</h3>
           <button 
             className="collapse-button" 
-            onClick={() => setIsExpanded(false)}
+            onClick={onToggleExpand}
             title="Collapse to compact view"
           >
             <span className="collapse-icon">▲</span>

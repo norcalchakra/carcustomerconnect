@@ -29,19 +29,6 @@ export const vehiclesApi = {
     return data as Vehicle[];
   },
 
-  // Get a single non-deleted vehicle by ID
-  getById: async (id: number) => {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .eq('id', id)
-      .is('is_deleted', false)
-      .single();
-    
-    if (error) throw error;
-    return data as Vehicle;
-  },
-
   // Create a new vehicle
   create: async (vehicle: VehicleInsert) => {
     try {
@@ -112,20 +99,7 @@ export const vehiclesApi = {
     if (error) throw error;
     return data as Vehicle;
   },
-  
-  // Get all non-deleted vehicles for a dealership
-  getAll: async (dealershipId: number) => {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .eq('dealership_id', dealershipId)
-      .is('is_deleted', false)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data as Vehicle[];
-  },
-  
+
   // Get a single non-deleted vehicle by ID
   getById: async (id: number) => {
     const { data, error } = await supabase

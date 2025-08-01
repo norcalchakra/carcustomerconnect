@@ -17,6 +17,9 @@ import WorkflowDashboard from './components/vehicles/WorkflowDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SocialPostCreationPage from './components/social/SocialPostCreationPage';
 import { SocialPostDetail } from './components/social/SocialPostDetail';
+import RiddlerAnimationTest from './pages/RiddlerAnimationTest';
+import ActionBubbleTest from './pages/ActionBubbleTest';
+import ActionBubbleDebugTest from './pages/ActionBubbleDebugTest';
 import './App.css';
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
@@ -39,7 +42,7 @@ const AppContent: React.FC = () => {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen comic-paper">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -47,7 +50,7 @@ const AppContent: React.FC = () => {
 
   return (
     <Router>
-      <div className="app-container">
+      <div className="min-h-screen bg-gray-100 comic-theme-foundation urban-skyline twinkling-lights comic-paper">
         {user && <Header />}
         <main className="main-content">
           <Routes>
@@ -68,6 +71,9 @@ const AppContent: React.FC = () => {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/data-deletion" element={<DataDeletion />} />
             <Route path="/data-deletion-status" element={<DataDeletionStatus />} />
+            <Route path="/riddler-test" element={<RiddlerAnimationTest />} />
+            <Route path="/action-bubble-test" element={<ActionBubbleTest />} />
+            <Route path="/action-bubble-debug" element={<ActionBubbleDebugTest />} />
           </Routes>
         </main>
       </div>

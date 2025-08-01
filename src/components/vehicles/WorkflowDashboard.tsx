@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Vehicle, vehiclesApi } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import VehicleProgressTracker from './VehicleProgressTracker';
@@ -7,6 +7,7 @@ import SocialPostFormEnhanced from '../captions/SocialPostFormEnhanced';
 import Modal from '../ui/Modal';
 import VehicleForm from './VehicleForm';
 import { supabase } from '../../lib/supabase';
+import '../../styles/shared-theme.css';
 import './WorkflowDashboard.css';
 
 interface WorkflowDashboardProps {
@@ -16,6 +17,7 @@ interface WorkflowDashboardProps {
 const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }) => {
   const { user } = useAuth();
   const { vehicleId } = useParams<{ vehicleId?: string }>();
+  const [searchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +29,26 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
   const [sortBy, setSortBy] = useState<'date' | 'status' | 'progress'>('date');
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedVehicleId, setHighlightedVehicleId] = useState<number | null>(null);
+  const [expandedVehicleId, setExpandedVehicleId] = useState<number | null>(null);
+
+  // Handle URL search parameters for vehicle filtering
+  useEffect(() => {
+    const vehicleParam = searchParams.get('vehicle');
+    if (vehicleParam) {
+      const vehicleId = parseInt(vehicleParam);
+      if (!isNaN(vehicleId)) {
+        setHighlightedVehicleId(vehicleId);
+        setExpandedVehicleId(vehicleId);
+        // Scroll to the vehicle after a short delay to ensure it's rendered
+        setTimeout(() => {
+          const element = document.getElementById(`vehicle-card-${vehicleId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    }
+  }, [searchParams, vehicles]);
 
   // Fetch dealership ID
   useEffect(() => {
@@ -120,6 +142,11 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
       console.error('Error updating vehicle status:', error);
       setError('Failed to update vehicle status');
     }
+  };
+
+  const handleToggleExpand = (vehicleId: number) => {
+    // If clicking on the same card, toggle it. If clicking on a different card, expand that one.
+    setExpandedVehicleId(prev => prev === vehicleId ? null : vehicleId);
   };
 
   const handleDeleteVehicle = async (vehicleId: number) => {
@@ -398,6 +425,8 @@ const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({ onVehicleUpdate }
                   setShowEditModal(true);
                 }}
                 onDeleteVehicle={() => handleDeleteVehicle(vehicle.id)}
+                isExpanded={expandedVehicleId === vehicle.id}
+                onToggleExpand={() => handleToggleExpand(vehicle.id)}
               />
             </div>
           ))

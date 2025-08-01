@@ -1,0 +1,336 @@
+/* 
+ * Shared Theme CSS - Car Customer Connect
+ * Design system extracted from Dashboard.improved.css
+ * Provides consistent styling across all pages
+ */
+
+/* ===== CSS CUSTOM PROPERTIES (DESIGN TOKENS) ===== */
+:root {
+  /* Colors - Dashboard Reference */
+  --color-primary: #2563eb;
+  --color-primary-hover: #3182ce;
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  
+  /* Text Colors */
+  --color-text-primary: #2d3748;
+  --color-text-secondary: #4a5568;
+  --color-text-muted: #718096;
+  --color-text-link: #4299e1;
+  --color-text-link-hover: #3182ce;
+  
+  /* Background Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f7fafc;
+  --color-bg-muted: #edf2f7;
+  
+  /* Status Colors */
+  --color-success: #48bb78;
+  --color-warning: #ed8936;
+  --color-error: #e53e3e;
+  --color-info: #4299e1;
+  
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-hover: 0 4px 12px rgba(59, 130, 246, 0.3);
+  
+  /* Typography */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  
+  /* Layout */
+  --container-max-width: 1200px;
+  --container-padding: var(--spacing-2xl);
+  --grid-gap-main: var(--spacing-2xl);
+  --grid-gap-secondary: var(--spacing-lg);
+}
+
+/* ===== BASE LAYOUT CLASSES ===== */
+.shared-container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+.shared-page-header {
+  margin-bottom: var(--spacing-3xl);
+  text-align: center;
+}
+
+.shared-page-title {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+}
+
+.shared-page-subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+/* ===== CARD SYSTEM ===== */
+.shared-card {
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  transition: all 0.2s ease;
+}
+
+.shared-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.shared-card-header {
+  margin-top: 0;
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-bg-muted);
+}
+
+.shared-card-content {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ===== GRID SYSTEM ===== */
+.shared-grid {
+  display: grid;
+  gap: var(--grid-gap-main);
+}
+
+.shared-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.shared-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.shared-grid-auto {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.shared-grid-secondary {
+  gap: var(--grid-gap-secondary);
+}
+
+/* ===== BUTTON SYSTEM ===== */
+.shared-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: var(--spacing-sm);
+}
+
+.shared-btn:hover {
+  transform: translateY(-2px);
+}
+
+.shared-btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.shared-btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-hover);
+}
+
+.shared-btn-secondary {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.shared-btn-secondary:hover {
+  background-color: var(--color-bg-muted);
+}
+
+.shared-btn-accent {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.shared-btn-accent:hover {
+  background-color: var(--color-accent-hover);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* ===== FORM SYSTEM ===== */
+.shared-form-group {
+  margin-bottom: var(--spacing-xl);
+}
+
+.shared-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.shared-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  transition: border-color 0.2s ease;
+}
+
+.shared-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.shared-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.shared-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* ===== STATUS & BADGE SYSTEM ===== */
+.shared-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.shared-badge-success {
+  background-color: #f0fff4;
+  color: var(--color-success);
+}
+
+.shared-badge-warning {
+  background-color: #fffbeb;
+  color: var(--color-warning);
+}
+
+.shared-badge-error {
+  background-color: #fff5f5;
+  color: var(--color-error);
+}
+
+.shared-badge-info {
+  background-color: #eff6ff;
+  color: var(--color-info);
+}
+
+/* ===== UTILITY CLASSES ===== */
+.shared-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4xl);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+.shared-error {
+  padding: var(--spacing-lg);
+  background-color: #fff5f5;
+  color: var(--color-error);
+  border-left: 4px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.shared-empty-state {
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.shared-text-center {
+  text-align: center;
+}
+
+.shared-text-muted {
+  color: var(--color-text-muted);
+}
+
+.shared-mb-sm { margin-bottom: var(--spacing-sm); }
+.shared-mb-md { margin-bottom: var(--spacing-md); }
+.shared-mb-lg { margin-bottom: var(--spacing-lg); }
+.shared-mb-xl { margin-bottom: var(--spacing-xl); }
+.shared-mb-2xl { margin-bottom: var(--spacing-2xl); }
+
+.shared-mt-sm { margin-top: var(--spacing-sm); }
+.shared-mt-md { margin-top: var(--spacing-md); }
+.shared-mt-lg { margin-top: var(--spacing-lg); }
+.shared-mt-xl { margin-top: var(--spacing-xl); }
+.shared-mt-2xl { margin-top: var(--spacing-2xl); }
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  :root {
+    --container-padding: var(--spacing-lg);
+    --grid-gap-main: var(--spacing-lg);
+  }
+  
+  .shared-grid-2,
+  .shared-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .shared-page-title {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --container-padding: var(--spacing-md);
+  }
+  
+  .shared-card {
+    padding: var(--spacing-lg);
+  }
+}

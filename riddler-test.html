@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riddler's Form Animations Test</title>
+    <link rel="stylesheet" href="src/styles/retro-comic-theme.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8A2BE2;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            margin-bottom: 30px;
+        }
+        .demo-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎭 The Riddler's Form Animations Test 🎭</h1>
+        
+        <div class="demo-section">
+            <h3>1. Mysterious Input Focus (hover and click to focus)</h3>
+            <div class="riddler-input-wrapper">
+                <input type="text" class="riddler-input" placeholder="Type here to see the mystery unfold..." />
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>2. Enigmatic Textarea (focus and type)</h3>
+            <div class="riddler-input-wrapper">
+                <textarea class="riddler-input riddler-textarea" rows="3" placeholder="Enter your riddle here..."></textarea>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>3. Mysterious Select Dropdown (hover and click)</h3>
+            <div class="riddler-form-group">
+                <label class="riddler-label">Choose your mystery:</label>
+                <select class="riddler-select">
+                    <option>Select a riddle...</option>
+                    <option>What has keys but no locks?</option>
+                    <option>What gets wetter as it dries?</option>
+                    <option>What has a head but no brain?</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>4. Riddler's Button (hover for magic)</h3>
+            <button class="riddler-button" style="padding: 12px 24px; background: #4A90E2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Solve the Riddle
+            </button>
+        </div>
+
+        <div class="demo-section">
+            <h3>Instructions:</h3>
+            <ul>
+                <li><strong>Purple Focus Effects:</strong> Click on inputs to see purple gradient sweep</li>
+                <li><strong>Question Mark Hover:</strong> Hover over input areas to see mystery question marks</li>
+                <li><strong>Typing Animation:</strong> Type in inputs to see pulsing purple glow</li>
+                <li><strong>Button Hover:</strong> Hover over button for sliding light effects</li>
+                <li><strong>Select Dropdown:</strong> Hover and interact with dropdown for purple glow</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Add typing animation when user types
+        document.querySelectorAll('.riddler-input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.add('typing');
+                setTimeout(() => {
+                    this.classList.remove('typing');
+                }, 1500);
+                
+                // Update wrapper class based on content
+                const wrapper = this.closest('.riddler-input-wrapper');
+                if (wrapper) {
+                    if (this.value.trim()) {
+                        wrapper.classList.add('has-content');
+                    } else {
+                        wrapper.classList.remove('has-content');
+                    }
+                }
+            });
+            
+            input.addEventListener('focus', function() {
+                this.classList.add('typing');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.classList.remove('typing');
+            });
+        });
+    </script>
+</body>
+</html>

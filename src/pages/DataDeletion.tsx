@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { submitDataDeletionRequest } from '../lib/facebookDataDeletion';
+import '../styles/shared-theme.css';
 import './DataDeletion.css';
 
 const DataDeletion: React.FC = () => {

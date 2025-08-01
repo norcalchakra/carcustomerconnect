@@ -10,6 +10,7 @@ import ImageCapture from './ImageCapture';
 import ImageProxy from '../common/ImageProxy';
 import './SocialPostForm.improved.css';
 import '../common/ImageProxy.css';
+import '../../styles/retro-comic-theme.css';
 
 interface SocialPostFormProps {
   caption: Caption;
@@ -41,6 +42,26 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
   const [dealershipData, setDealershipData] = useState<Dealership | null>(null);
   const [isOpenAIAvailable, setIsOpenAIAvailable] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
+  
+  // Action bubble animation trigger function
+  const triggerActionBubble = (event: React.MouseEvent<HTMLElement>) => {
+    const element = event.currentTarget;
+    element.classList.remove('triggered');
+    // Force reflow to ensure the class is removed before adding it back
+    element.offsetHeight;
+    element.classList.add('triggered');
+    
+    // Remove the class after animation completes
+    setTimeout(() => {
+      element.classList.remove('triggered');
+    }, 600);
+  };
+  
+  // Random action bubble generator for AI Generate button
+  const getRandomActionBubble = () => {
+    const bubbles = ['pow', 'bam', 'zoom', 'wham', 'kapow', 'zap'];
+    return bubbles[Math.floor(Math.random() * bubbles.length)];
+  };
   
   // Character limits removed as they're no longer needed after removing the content editing section
 
@@ -404,8 +425,12 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
             <h3>Select Platforms</h3>
             <div className="platforms">
               <div 
-                className={`platform ${platforms.includes('facebook') ? 'selected' : ''}`}
-                onClick={() => handleTogglePlatform('facebook')}
+                className={`action-bubble action-bubble-bam platform ${platforms.includes('facebook') ? 'selected' : ''}`}
+                onClick={(e) => {
+                  triggerActionBubble(e);
+                  handleTogglePlatform('facebook');
+                }}
+                data-action="BAM!"
               >
                 <span className="platform-icon facebook">f</span>
                 <span className="platform-name">Facebook</span>
@@ -429,12 +454,12 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           {facebookConnected && platforms.includes('facebook') && (
             <div className="facebook-options">
               <h3>Facebook Options</h3>
-              <div className="form-group">
-                <label>Select Page:</label>
+              <div className="riddler-form-group">
+                <label className="riddler-label">Select Page:</label>
                 <select 
                   value={selectedFacebookPage}
                   onChange={(e) => setSelectedFacebookPage(e.target.value)}
-                  className="form-select"
+                  className="riddler-select"
                 >
                   {facebookPages.map(page => (
                     <option key={page.id} value={page.id}>{page.name}</option>
@@ -483,11 +508,18 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
               <p className="notes-description">🎯 <strong>The AI will make this the main focus of your post.</strong> Enter the key topic you want to highlight (e.g., "brake service completed", "oil change special", "new arrival")</p>
             </div>
             
-            <div className="notes-input-container">
+            <div className="riddler-input-wrapper notes-input-container">
               <textarea 
-                className="notes-textarea"
+                className="riddler-input riddler-textarea notes-textarea"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  // Add typing animation
+                  e.target.classList.add('typing');
+                  setTimeout(() => e.target.classList.remove('typing'), 1500);
+                }}
+                onFocus={(e) => e.target.classList.add('typing')}
+                onBlur={(e) => e.target.classList.remove('typing')}
                 placeholder="Enter the main topic for your post (e.g., 'brake service completed', 'oil change special')..."
                 rows={2}
               />
@@ -499,19 +531,36 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
               <h4>Caption</h4>
             </div>
             
-            <div className="caption-input-container">
+            <div className="riddler-input-wrapper caption-input-container">
               <textarea 
-                className="caption-textarea"
+                className="riddler-input riddler-textarea caption-textarea"
                 value={postContent}
-                onChange={(e) => setPostContent(e.target.value)}
+                onChange={(e) => {
+                  setPostContent(e.target.value);
+                  // Add typing animation
+                  e.target.classList.add('typing');
+                  setTimeout(() => e.target.classList.remove('typing'), 1500);
+                  // Update wrapper class based on content
+                  const wrapper = e.target.closest('.riddler-input-wrapper');
+                  if (wrapper) {
+                    if (e.target.value.trim()) {
+                      wrapper.classList.add('has-content');
+                    } else {
+                      wrapper.classList.remove('has-content');
+                    }
+                  }
+                }}
+                onFocus={(e) => e.target.classList.add('typing')}
+                onBlur={(e) => e.target.classList.remove('typing')}
                 placeholder="Write your caption here..."
                 rows={4}
               />
               
               <div className="caption-actions">
                 <button 
-                  className="btn btn-secondary ai-caption-btn"
-                  onClick={async () => {
+                  className={`riddler-button action-bubble action-bubble-${getRandomActionBubble()} btn btn-secondary ai-caption-btn`}
+                  onClick={async (e) => {
+                    triggerActionBubble(e);
                     setIsGeneratingCaption(true);
                     try {
                       if (!vehicle) {
@@ -542,6 +591,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
                   }}
                   disabled={isGeneratingCaption}
                   title={!isOpenAIAvailable ? 'OpenAI API not configured' : !vehicle ? 'Vehicle information required' : notes.trim() ? `Generate caption focused on: ${notes}` : 'Generate caption with AI'}
+                  data-action={['POW!', 'ZAP!', 'BOOM!', 'WHAM!'][Math.floor(Math.random() * 4)]}
                 >
                   {isGeneratingCaption ? 'Generating...' : notes.trim() ? `Generate Caption About: ${notes.slice(0, 20)}${notes.length > 20 ? '...' : ''}` : 'Generate with AI'}
                 </button>
@@ -554,7 +604,7 @@ export const SocialPostForm: React.FC<SocialPostFormProps> = ({
           
           <div className="post-actions">
             <button 
-              className="btn btn-primary post-now-btn"
+              className="riddler-button btn btn-primary post-now-btn"
               onClick={handleImmediatePost}
               disabled={isPosting || platforms.length === 0}
             >
