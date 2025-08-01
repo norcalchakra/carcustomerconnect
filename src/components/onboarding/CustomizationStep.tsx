@@ -18,9 +18,30 @@ const CustomizationStep: React.FC<CustomizationStepProps> = ({
 }) => {
   const [formData, setFormData] = useState<CustomizationParameters>({
     id: dealershipId || 0,
-    seasonal_adaptations: {},
-    vehicle_type_preferences: {},
-    price_range_messaging: {},
+    dealership_id: dealershipId || 0,
+    seasonal_adaptations: {
+      spring: '',
+      summer: '',
+      fall: '',
+      winter: '',
+      holidays: ''
+    },
+    vehicle_type_preferences: {
+      trucks: '',
+      suvs: '',
+      sedans: '',
+      sports_cars: '',
+      luxury: '',
+      economy: '',
+      electric: '',
+      hybrid: ''
+    },
+    price_range_messaging: {
+      budget: '',
+      mid_range: '',
+      premium: '',
+      luxury: ''
+    },
     compliance_templates: [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -39,6 +60,7 @@ const CustomizationStep: React.FC<CustomizationStepProps> = ({
       // Initialize with default structure
       setFormData({
         id: dealershipId || 0,
+        dealership_id: dealershipId || 0,
         seasonal_adaptations: {
           spring: '',
           summer: '',

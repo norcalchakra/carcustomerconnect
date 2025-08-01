@@ -59,6 +59,7 @@ export interface CompetitiveDifferentiator {
 
 export interface ContentGovernance {
   id: number;
+  dealership_id: number;
   never_mention: string[];
   always_include: string[];
   content_guidelines?: string;
@@ -90,10 +91,17 @@ export interface ExampleCaption {
 // Individual technical integration item
 export interface TechnicalIntegration {
   id?: number;
+  dealership_id?: number;
   system: string;
   integration_type: string;
+  provider_name: string;
+  endpoint_url?: string;
   api_key?: string;
+  status: 'active' | 'inactive' | 'testing' | 'error';
+  configuration: Record<string, any>;
   enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Customization parameters
@@ -104,10 +112,30 @@ export interface CustomizationParameters {
   logo_url?: string;
   custom_fields?: Record<string, any>;
   preferences?: Record<string, any>;
-  seasonal_adaptations?: Record<string, any>;
-  vehicle_type_preferences?: Record<string, any>;
-  price_range_messaging?: Record<string, any>;
-  compliance_templates?: Record<string, any>;
+  seasonal_adaptations?: {
+    spring?: string;
+    summer?: string;
+    fall?: string;
+    winter?: string;
+    holidays?: string;
+  };
+  vehicle_type_preferences?: {
+    trucks?: string;
+    suvs?: string;
+    sedans?: string;
+    sports_cars?: string;
+    luxury?: string;
+    economy?: string;
+    electric?: string;
+    hybrid?: string;
+  };
+  price_range_messaging?: {
+    budget?: string;
+    mid_range?: string;
+    premium?: string;
+    luxury?: string;
+  };
+  compliance_templates?: string[];
   created_at?: string;
   updated_at?: string;
 }

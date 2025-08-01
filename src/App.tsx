@@ -5,8 +5,6 @@ import VehicleDetail from './components/VehicleDetail';
 import Header from './components/Header';
 import Auth from './components/auth/Auth';
 import Settings from './pages/Settings';
-import FacebookTest from './pages/FacebookTest';
-import SimpleFacebookTest from './pages/SimpleFacebookTest';
 import VinScannerPage from './pages/VinScannerPage';
 import DealerOnboardingPage from './pages/DealerOnboardingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -17,10 +15,14 @@ import WorkflowDashboard from './components/vehicles/WorkflowDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SocialPostCreationPage from './components/social/SocialPostCreationPage';
 import { SocialPostDetail } from './components/social/SocialPostDetail';
-import RiddlerAnimationTest from './pages/RiddlerAnimationTest';
-import ActionBubbleTest from './pages/ActionBubbleTest';
-import ActionBubbleDebugTest from './pages/ActionBubbleDebugTest';
 import './App.css';
+
+// Lazy load test components only in development
+const FacebookTest = React.lazy(() => import('./pages/FacebookTest'));
+const SimpleFacebookTest = React.lazy(() => import('./pages/SimpleFacebookTest'));
+const RiddlerAnimationTest = React.lazy(() => import('./pages/RiddlerAnimationTest'));
+const ActionBubbleTest = React.lazy(() => import('./pages/ActionBubbleTest'));
+const ActionBubbleDebugTest = React.lazy(() => import('./pages/ActionBubbleDebugTest'));
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
   const { user, loading } = useAuth();
@@ -61,8 +63,6 @@ const AppContent: React.FC = () => {
             <Route path="/workflow/:vehicleId" element={<ProtectedRoute element={<WorkflowDashboard />} />} />
             <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
             <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
-            <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />
-            <Route path="/simple-facebook-test" element={<ProtectedRoute element={<SimpleFacebookTest />} />} />
             <Route path="/vin-scanner" element={<ProtectedRoute element={<VinScannerPage />} />} />
             <Route path="/captions" element={<ProtectedRoute element={<SocialPostCreationPage />} />} />
             <Route path="/social/posts/:id" element={<ProtectedRoute element={<SocialPostDetail />} />} />
@@ -71,9 +71,16 @@ const AppContent: React.FC = () => {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/data-deletion" element={<DataDeletion />} />
             <Route path="/data-deletion-status" element={<DataDeletionStatus />} />
-            <Route path="/riddler-test" element={<RiddlerAnimationTest />} />
-            <Route path="/action-bubble-test" element={<ActionBubbleTest />} />
-            <Route path="/action-bubble-debug" element={<ActionBubbleDebugTest />} />
+            {/* Development-only test routes */}
+            {import.meta.env.DEV && (
+              <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>}>
+                <Route path="/facebook-test" element={<ProtectedRoute element={<FacebookTest />} />} />
+                <Route path="/simple-facebook-test" element={<ProtectedRoute element={<SimpleFacebookTest />} />} />
+                <Route path="/riddler-test" element={<RiddlerAnimationTest />} />
+                <Route path="/action-bubble-test" element={<ActionBubbleTest />} />
+                <Route path="/action-bubble-debug" element={<ActionBubbleDebugTest />} />
+              </React.Suspense>
+            )}
           </Routes>
         </main>
       </div>

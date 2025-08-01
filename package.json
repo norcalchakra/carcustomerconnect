@@ -18,13 +18,23 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:prod": "tsc && vite build --mode production",
     "preview": "vite preview",
-    "deploy:check": "node scripts/deploy-production.js"
+    "preview:prod": "vite preview --mode production",
+    "analyze": "npx vite-bundle-analyzer dist",
+    "deploy:check": "node scripts/deploy-production.js",
+    "deploy:build": "npm run build:prod && npm run deploy:check",
+    "optimize": "node scripts/optimize-production.js",
+    "audit:security": "node scripts/security-audit.js",
+    "clean": "if exist dist rmdir /s /q dist && if exist node_modules\\.vite rmdir /s /q node_modules\\.vite",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'Linting not configured yet'"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
+    "terser": "^5.43.1",
     "vite": "^5.1.0"
   }
 }
