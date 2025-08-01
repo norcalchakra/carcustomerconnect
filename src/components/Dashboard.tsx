@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchAllActivity, RecentActivity } from '../lib/activityService';
 import eventBus, { EVENTS } from '../lib/eventBus';
 import { supabase } from '../lib/supabase';
+import OnboardingPrompt from './ui/OnboardingPrompt';
 
 import './Dashboard.improved.css';
 
@@ -52,11 +53,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
           .eq('user_id', user.id)
           .single();
 
-        if (error) throw error;
-        if (data) setDealershipId(data.id);
+        if (error) {
+          // If error is "PGRST116" (no rows returned), user has no dealership
+          if (error.code === 'PGRST116') {
+            console.log('No dealership found for user - will show onboarding prompt');
+            setDealershipId(null);
+          } else {
+            throw error;
+          }
+        } else if (data) {
+          setDealershipId(data.id);
+        }
       } catch (err) {
         console.error('Error fetching dealership:', err);
         setError('Failed to load dealership information');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -168,6 +180,73 @@ const Dashboard: React.FC<DashboardProps> = () => {
     // Vehicle saved successfully - user can view it in the workflow dashboard
     refreshActivity(); // Refresh the activity feed to show the new vehicle
   };
+
+  // Debug logging for onboarding prompt logic
+  console.log('Dashboard render - loading:', loading, 'dealershipId:', dealershipId, 'user:', !!user);
+  
+  // Show onboarding prompt if user doesn't have a dealership
+  if (!loading && !dealershipId && user) {
+    console.log('Showing onboarding prompt for user without dealership');
+    return (
+      <>
+        <div className="min-h-screen bg-gray-50 searchlight-sweep onboarding-disabled">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Disabled UI content will be rendered but overlayed */}
+            <div className="comic-panel comic-panel-primary mb-8">
+              <div className="comic-panel-header">
+                <h1 className="comic-panel-title">Command Center</h1>
+              </div>
+              <div className="comic-panel-content">
+                <div className="speech-bubble speech-bubble-left mb-4">
+                  <p className="text-gray-800 font-medium mb-0">Welcome back, Agent! Here's your mission status and vehicle intelligence.</p>
+                </div>
+              </div>
+            </div>
+            {/* Quick Actions - Disabled */}
+            <div className="comic-grid comic-grid-3 mb-8">
+              <div className="comic-panel comic-panel-secondary">
+                <div className="comic-panel-header">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <span className="text-2xl">🚗</span>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="comic-panel-title text-lg">Add Vehicle</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="comic-panel comic-panel-secondary">
+                <div className="comic-panel-header">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <span className="text-2xl">📱</span>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="comic-panel-title text-lg">Create Post</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="comic-panel comic-panel-secondary">
+                <div className="comic-panel-header">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <span className="text-2xl">⚡</span>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="comic-panel-title text-lg">Vehicle Workflow</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <OnboardingPrompt userName={user?.user_metadata?.email?.split('@')[0]} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 searchlight-sweep">
