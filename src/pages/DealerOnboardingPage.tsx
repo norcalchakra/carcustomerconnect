@@ -13,6 +13,7 @@ import {
   ContentGovernance, // eslint-disable-line @typescript-eslint/no-unused-vars
   TechnicalIntegrations // eslint-disable-line @typescript-eslint/no-unused-vars
 } from '../lib/dealerOnboardingTypes';
+import '../styles/shared-theme.css';
 import './DealerOnboardingPage.css';
 import '../styles/modern-onboarding.css';
 
@@ -46,6 +47,8 @@ const DealerOnboardingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [aiAssistEnabled, setAiAssistEnabled] = useState<boolean>(true);
+  const [showDealershipCreation, setShowDealershipCreation] = useState<boolean>(false);
+  const [dealershipName, setDealershipName] = useState<string>('');
   
   // Toggle AI assistance on/off
   const toggleAIAssist = () => {
@@ -74,12 +77,19 @@ const DealerOnboardingPage: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('dealerships')
-          .select('id')
+          .select('id, name')
           .eq('user_id', user.id)
           .single();
 
-        if (error) throw error;
-        if (data) setDealershipId(data.id);
+        if (error && error.code === 'PGRST116') {
+          // No dealership found - show creation form
+          setShowDealershipCreation(true);
+        } else if (error) {
+          throw error;
+        } else if (data) {
+          setDealershipId(data.id);
+          setDealershipName(data.name);
+        }
       } catch (err) {
         console.error('Error fetching dealership:', err);
         setError('Failed to load dealership information');
@@ -416,14 +426,100 @@ const DealerOnboardingPage: React.FC = () => {
     return <div className="loading">Loading...</div>;
   }
   
+  // Handle dealership creation for new users
+  const handleCreateDealership = async () => {
+    if (!dealershipName.trim()) {
+      setError('Please enter a dealership name');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('dealerships')
+        .insert({
+          user_id: user!.id,
+          name: dealershipName.trim(),
+          address: 'TBD',
+          city: 'TBD',
+          state: 'TBD',
+          zip: '00000',
+          phone: '000-000-0000',
+          website: null,
+          created_at: new Date().toISOString()
+        })
+        .select('id, name')
+        .single();
+
+      if (error) throw error;
+      
+      setDealershipId(data.id);
+      setDealershipName(data.name); // Store the name for use in onboarding
+      setShowDealershipCreation(false);
+      setSuccess('Dealership created successfully! Let\'s continue with onboarding.');
+    } catch (err) {
+      console.error('Error creating dealership:', err);
+      setError('Failed to create dealership. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show dealership creation form for new users
+  if (showDealershipCreation) {
+    return (
+      <div className="dealer-onboarding-page dealer-onboarding-container">
+        <div className="onboarding-header">
+          <h1>Welcome to Car Customer Connect!</h1>
+          <p>Let's get you started by creating your dealership profile.</p>
+          
+          {error && <div className="error-message">{error}</div>}
+        </div>
+        
+        <div className="dealership-creation-form">
+          <div className="form-group">
+            <label htmlFor="dealership-name">Dealership Name</label>
+            <input
+              id="dealership-name"
+              type="text"
+              value={dealershipName}
+              onChange={(e) => setDealershipName(e.target.value)}
+              placeholder="Enter your dealership or business name"
+              className="form-input"
+              disabled={loading}
+            />
+            <small className="form-help">
+              This can be your dealership name, business name, or even your personal name if you're an individual dealer.
+            </small>
+          </div>
+          
+          <div className="form-actions">
+            <button 
+              onClick={handleCreateDealership}
+              disabled={loading || !dealershipName.trim()}
+              className="primary-button"
+            >
+              {loading ? 'Creating...' : 'Create Dealership & Continue'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!dealershipId) {
-    return <div className="error">No dealership found. Please create a dealership first.</div>;
+    return <div className="loading">Setting up your dealership...</div>;
   }
   
   return (
     <div className="dealer-onboarding-page dealer-onboarding-container">
       <div className="onboarding-header">
         <h1>Dealer Onboarding</h1>
+        {dealershipName && (
+          <h2 className="dealership-name">Setting up: {dealershipName}</h2>
+        )}
         
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
